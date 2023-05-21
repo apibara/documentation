@@ -1,0 +1,1072 @@
+---
+title: StarkNet data and filter
+description: "This page contains the definition for StarkNet data and filter."
+priority: 60
+updatedAt: 2023-01-15 10:00
+---
+
+# StarkNet data and filter format
+
+Apibara provides data streams for all StarkNet networks:
+
+**StarkNet Mainnet**
+
+ - endpoint: `mainnet.starknet.a5a.ch:443`
+
+**StarkNet Görli Testnet**
+
+ - endpoint: `goerli.starknet.a5a.ch:443`
+
+**StarkNet Görli 2 Testnet**
+
+ - endpoint: `goerli-2.starknet.a5a.ch:443`
+
+
+## Data and filters
+
+Apibara streams are an efficient mechanism to stream any on-chain data directly
+into your application.  One way it achieves great performance is by allowing
+developers to select _exactly_ the data they need.
+
+Developers filter data included in a stream by configuring the stream with a `Filter`.
+The are many types of filters for StarkNet, but they all work in the following way:
+
+ - An empty filter (that is, a filter that has no field set) matches any object (e.g. transaction or event).
+ - If a `FieldElement` field is set, then it's checked by equality. An object is included if and only if its
+ field is equal to the filter.
+ - If a `repeated FieldElement` field is set, then the object's field is prefix-matched. An object is include
+ if and only if its field first `n` elements (where `n` is the length of the filter's field) are equal to the
+ filter.
+ - If a filter has multiple fields set, then it matches an object if and only if all fields match.
+
+**Notice:** all fields in protobuf version 3 are nullable.
+
+Read more in the [`Filter`](#filter) section to learn how to build a filter
+using the Python or Typescript SDKs.
+
+
+## `FieldElement`
+
+All StarkNet data is encoded as _field element_, or _felt_ for short. Apibara encodes field elements as 4 `uint64` fields in big endian representation.
+
+```protobuf
+message FieldElement {
+  fixed64 lo_lo = 1;
+  fixed64 lo_hi = 2;
+  fixed64 hi_lo = 3;
+  fixed64 hi_hi = 4;
+}
+```
+
+## `Filter`
+
+The `Filter` object is used to filter the data included in the stream.
+
+The SDKs provide _builders_ to make building filters more ergonomic.
+You can find more information in the [Python SDK reference](/docs/python-sdk/reference/starknet) or in
+the [Typescript SDK reference](/docs/typescript-sdk/reference/starknet).
+
+<CodeBlock.Multi>
+  <CodeBlock.Language language="Typescript">
+    ```ts
+    import { Filter, FieldElement } from "@apibara/starknet"
+    import { hash } from 'starknet'
+
+    const address = FieldElement.fromBigInt(
+      '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
+    )
+
+    // The event selector is the hash of the event name
+    const transferKey = [
+      FieldElement.fromBigInt(
+        hash.getSelectorFromName('Transfer')
+      )
+    ]
+
+    // Create a basic StarkNet filter:
+    //
+    // - weak header so that it's sent only if any event
+    // or state update also matches
+    // - match all events from the given address and key
+    // - match storage updates for the given address
+    const filter = Filter.create()
+      .withHeader({ weak: true })
+      .addEvent((ev) =>
+        ev.withFromAddress(address).withKeys(transferKey))
+      .withStateUpdate((su) =>
+        su.addStorageDiff((st) => st.withContractAddress(address)))
+      .encode()
+    ```
+  </CodeBlock.Language>
+  <CodeBlock.Language language="Python">
+    ```py
+    from apibara.starknet import EventFilter, Filter, felt
+
+    address = felt.from_hex(
+        "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
+    )
+
+    # `Transfer` selector.
+    # You can get this value either with starknet.py's `ContractFunction.get_selector`
+    # or from starkscan.
+    transfer_key = felt.from_hex(
+        "0x99cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9"
+    )
+
+    filter = (
+        Filter()
+        .with_header(weak=True)
+        .add_event(
+          EventFilter()
+            .with_from_address(address)
+            .with_keys([transfer_key]))
+        .with_state_update(
+            StateUpdateFilter().add_storage_diff(
+                StorageDiffFilter().with_contract_address(address)
+            )
+        )
+        .encode()
+    )
+    ```
+  </CodeBlock.Language>
+</CodeBlock.Multi>
+
+```proto
+message Filter {
+  // Header information.
+  HeaderFilter header = 1;
+  // Transactions.
+  repeated TransactionFilter transactions = 2;
+  // State update.
+  StateUpdateFilter state_update = 3;
+  // Emitted events.
+  repeated EventFilter events = 4;
+  // Messages from L2 to L1.
+  repeated L2ToL1MessageFilter messages = 5;
+}
+```
+
+### `HeaderFilter`
+
+Include this filter to receive block headers.
+
+```protobuf
+message HeaderFilter {
+  // Include header only if any other filter matches.
+  bool weak = 1;
+}
+```
+
+### `TransactionFilter`
+
+Filter transactions. You can further restrict which transactions match by setting one of the transaction-specific filters.
+
+```protobuf
+message TransactionFilter {
+  oneof filter {
+    InvokeTransactionV0Filter invoke_v0 = 1;
+    InvokeTransactionV1Filter invoke_v1 = 2;
+    DeployTransactionFilter deploy = 3;
+    DeclareTransactionFilter declare = 4;
+    L1HandlerTransactionFilter l1_handler = 5;
+    DeployAccountTransactionFilter deploy_account = 6;
+  }
+}
+
+// Receive invoke transactions, v0
+message InvokeTransactionV0Filter {
+  // Filter by contract address.
+  FieldElement contract_address = 1;
+  // Filter by selector.
+  FieldElement entry_point_selector = 2;
+  // Filter by calldata prefix.
+  repeated FieldElement calldata = 3;
+}
+
+// Receive invoke transactions, v1
+message InvokeTransactionV1Filter {
+  // Filter by sender address.
+  FieldElement sender_address = 1;
+  // Filter by calldata prefix.
+  repeated FieldElement calldata = 3;
+}
+
+// Receive deploy transactions.
+message DeployTransactionFilter {
+  // Filter by contract address salt.
+  FieldElement contract_address_salt = 1;
+  // Filter by class hash.
+  FieldElement class_hash = 2;
+  // Filter by calldata prefix.
+  repeated FieldElement constructor_calldata = 4;
+}
+
+// Receive declare transactions.
+message DeclareTransactionFilter {
+  // Filter by class hash.
+  FieldElement class_hash = 1;
+  // Filter by sender address.
+  FieldElement sender_address = 2;
+}
+
+// Receive l1 handler transactions.
+message L1HandlerTransactionFilter {
+  // Filter by contract address.
+  FieldElement contract_address = 1;
+  // Filter by selector.
+  FieldElement entry_point_selector = 2;
+  // Filter by calldata prefix.
+  repeated FieldElement calldata = 3;
+}
+
+// Receive deploy account transactions.
+message DeployAccountTransactionFilter {
+  // Filter by contract address salt.
+  FieldElement contract_address_salt = 1;
+  // Filter by class hash.
+  FieldElement class_hash = 2;
+  // Filter by calldata prefix.
+  repeated FieldElement constructor_calldata = 4;
+}
+```
+
+### `L2ToL1MessageFilter`
+
+Filter messages from L2 to L1.
+
+```protobuf
+// Filter L2 to L1 messages.
+message L2ToL1MessageFilter {
+  // Filter by destination address.
+  FieldElement to_address = 1;
+  // Filter payloads that prefix-match the given data.
+  repeated FieldElement payload = 2;
+}
+```
+
+### `EventFilter`
+
+Filter events.
+
+```protobuf
+message EventFilter {
+  // Filter by contract emitting the event.
+  FieldElement from_address = 1;
+  // Filter keys that prefix-match the given data.
+  repeated FieldElement keys = 2;
+  // Filter data that prefix-match the given data.
+  repeated FieldElement data = 3;
+}
+```
+
+### `StateUpdateFilter`
+
+Include state updates. You need to set at least one of the sub-filters to receive data.
+
+```protobuf
+message StateUpdateFilter {
+  // Filter storage changes.
+  repeated StorageDiffFilter storage_diffs = 1;
+  // Filter declared contracts.
+  repeated DeclaredContractFilter declared_contracts = 2;
+  // Filter deployed contracts.
+  repeated DeployedContractFilter deployed_contracts = 3;
+  // Filter nonces updates.
+  repeated NonceUpdateFilter nonces = 4;
+}
+
+// Filter storage changes.
+message StorageDiffFilter {
+  // Filter by contract address.
+  FieldElement contract_address = 1;
+}
+
+// Filter declared contracts.
+message DeclaredContractFilter {
+  // Filter by class hash.
+  FieldElement class_hash = 1;
+}
+
+// Filter deployed contracts.
+message DeployedContractFilter {
+  // Filter by contract address.
+  FieldElement contract_address = 1;
+  // Filter by class hash.
+  FieldElement class_hash = 2;
+}
+
+// Filter nonce updates.
+message NonceUpdateFilter {
+  // Filter by contract address.
+  FieldElement contract_address = 1;
+  // Filter by new nonce value.
+  FieldElement nonce = 2;
+}
+```
+
+## `Block`
+
+`Block` is the root object included in a StarkNet stream. Its main purpose is to
+group together data generated in the same block so that it can be processed in
+batches. Notice that `status` is always included and represents the block status
+at the moment of streaming.
+
+```protobuf
+message Block {
+  // Block status.
+  BlockStatus status = 1;
+  // Block header.
+  BlockHeader header = 2;
+  // Transactions in the block.
+  repeated TransactionWithReceipt transactions = 3;
+  // State update caused by the block.
+  StateUpdate state_update = 4;
+  // Events emitted in the block.
+  repeated EventWithTransaction events = 5;
+  // Messages to L1 sent in the block.
+  repeated L2ToL1MessageWithTransaction l2_to_l1_messages = 6;
+}
+```
+
+### `BlockHeader`
+
+Block header. This is often used to fetch the block timestamp and hash.
+
+```protobuf
+message BlockHeader {
+  // Hash of the block.
+  FieldElement block_hash = 1;
+  // Hash of the block's parent.
+  FieldElement parent_block_hash = 2;
+  // Block height.
+  uint64 block_number = 3;
+  // Sequencer address.
+  FieldElement sequencer_address = 4;
+  // New state root after the block.
+  FieldElement new_root = 5;
+  // Timestamp when block  was produced.
+  google.protobuf.Timestamp timestamp = 6;
+}
+```
+
+### `BlockStatus`
+
+Block status.
+
+```protobuf
+enum BlockStatus {
+  // Unknown block status.
+  BLOCK_STATUS_UNSPECIFIED = 0;
+  // Block not accepted yet.
+  BLOCK_STATUS_PENDING = 1;
+  // Block accepted on L2.
+  BLOCK_STATUS_ACCEPTED_ON_L2 = 2;
+  // Block finalized on L1.
+  BLOCK_STATUS_ACCEPTED_ON_L1 = 3;
+  // Block was rejected and is not part of the canonical chain anymore.
+  BLOCK_STATUS_REJECTED = 4;
+}
+```
+
+### `TransactionWithReceipt`
+
+A transaction together with its receipt.
+
+```protobuf
+message TransactionWithReceipt {
+  // The transaction
+  Transaction transaction = 1;
+  // The transaction receipt.
+  TransactionReceipt receipt = 2;
+}
+```
+
+### `Transaction`
+
+A StarkNet transaction. The `meta` field contains common fields such as the
+transaction hash. The transaction object also contains information specific
+for each transaction type.
+
+```protobuf
+message Transaction {
+  // Common transaction metadata.
+  TransactionMeta meta = 1;
+  oneof transaction {
+    // Transaction invoking a smart contract, V0.
+    InvokeTransactionV0 invoke_v0 = 2;
+    // Transaction invoking a smart contract, V1.
+    InvokeTransactionV1 invoke_v1 = 3;
+    // Transaction deploying a new smart contract.
+    DeployTransaction deploy = 4;
+    // Transaction declaring a smart contract.
+    DeclareTransaction declare = 5;
+    // Transaction handling a message from L1.
+    L1HandlerTransaction l1_handler = 6;
+    // Transaction deploying a new account.
+    DeployAccountTransaction deploy_account = 7;
+  }
+}
+
+// Common transaction metadata.
+message TransactionMeta {
+  // Transaction hash.
+  FieldElement hash = 1;
+  // Maximum fee to be paid.
+  FieldElement max_fee = 2;
+  // Signature by the user.
+  repeated FieldElement signature = 3;
+  // Nonce.
+  FieldElement nonce = 4;
+  // Version.
+  uint64 version = 5;
+}
+
+// Transaction invoking a smart contract, V0.
+message InvokeTransactionV0 {
+  // Target contract address.
+  FieldElement contract_address = 1;
+  // Selector of the function being invoked.
+  FieldElement entry_point_selector = 2;
+  // Raw calldata.
+  repeated FieldElement calldata = 3;
+}
+
+// Transaction invoking a smart contract, V1.
+message InvokeTransactionV1 {
+  // Address sending the transaction.
+  FieldElement sender_address = 1;
+  // Raw calldata.
+  repeated FieldElement calldata = 2;
+}
+
+// Transaction deploying a new smart contract.
+message DeployTransaction {
+  // Raw calldata passed to the constructor.
+  repeated FieldElement constructor_calldata = 2;
+  // Salt used when computing the contract's address.
+  FieldElement contract_address_salt = 3;
+  // Hash of the class being deployed.
+  FieldElement class_hash = 4;
+}
+
+// Transaction declaring a smart contract.
+message DeclareTransaction {
+  // Class hash.
+  FieldElement class_hash = 1;
+  // Address of the account declaring the class.
+  FieldElement sender_address = 2;
+}
+
+// Transaction handling a message from L1.
+message L1HandlerTransaction {
+  // Target contract address.
+  FieldElement contract_address = 2;
+  // Selector of the function being invoked.
+  FieldElement entry_point_selector = 3;
+  // Raw calldata.
+  repeated FieldElement calldata = 4;
+}
+
+// Transaction deploying a new account.
+message DeployAccountTransaction {
+  // Raw calldata passed to the constructor.
+  repeated FieldElement constructor_calldata = 2;
+  // Salt used when computing the contract's address.
+  FieldElement contract_address_salt = 3;
+  // Hash of the class being deployed.
+  FieldElement class_hash = 4;
+}
+```
+
+### `TransactionReceipt`
+
+Result of the execution of a transaction.
+
+```protobuf
+message TransactionReceipt {
+  // Hash of the transaction.
+  FieldElement transaction_hash = 1;
+  // Transaction's indexe in the list of transactions in a block.
+  uint64 transaction_index = 2;
+  // Feed paid.
+  FieldElement actual_fee = 3;
+  // Messages sent to L1 in the transactions.
+  repeated L2ToL1Message l2_to_l1_messages = 4;
+  // Events emitted in the transaction.
+  repeated Event events = 5;
+}
+```
+
+### `L2ToL1MessageWithTransaction`
+
+Contains a messages from L2 to L1 together with its transaction and receipt.
+
+```protobuf
+message L2ToL1MessageWithTransaction {
+  // The transaction that sent this message.
+  Transaction transaction = 1;
+  // The transaction receipt.
+  TransactionReceipt receipt = 2;
+  // The message.
+  L2ToL1Message message = 3;
+}
+```
+
+### `L2ToL1Message`
+
+A message from L2 to L1.
+
+```protobuf
+message L2ToL1Message {
+  // Destination address.
+  FieldElement to_address = 3;
+  // Data contained in the message.
+  repeated FieldElement payload = 4;
+}
+```
+
+### `EventWithTransaction`
+
+An event together with its transaction and receipt.
+
+```protobuf
+message EventWithTransaction {
+  // The transaction emitting the event.
+  Transaction transaction = 1;
+  // The transaction receipt.
+  TransactionReceipt receipt = 2;
+  // The event.
+  Event event = 3;
+}
+```
+
+### `Event`
+
+A StarkNet event.
+
+```protobuf
+message Event {
+  // Address of the smart contract emitting the event.
+  FieldElement from_address = 1;
+  // Event key.
+  repeated FieldElement keys = 2;
+  // Event data.
+  repeated FieldElement data = 3;
+}
+```
+
+### `StateUpdate`
+
+StarkNet state update. Contains information about storage changes, deployed and
+declared contracts, and nonce updates.
+
+```protobuf
+message StateUpdate {
+  // New state root.
+  FieldElement new_root = 1;
+  // Previous state root.
+  FieldElement old_root = 2;
+  // State difference.
+  StateDiff state_diff = 3;
+}
+
+// Difference in state between blocks.
+message StateDiff {
+  // Storage differences.
+  repeated StorageDiff storage_diffs = 1;
+  // Contracts declared.
+  repeated DeclaredContract declared_contracts = 2;
+  // Contracts deployed.
+  repeated DeployedContract deployed_contracts = 3;
+  // Nonces updated.
+  repeated NonceUpdate nonces = 4;
+}
+
+// Difference in storage values for a contract.
+message StorageDiff {
+  // The contract address.
+  FieldElement contract_address = 1;
+  // Entries that changed.
+  repeated StorageEntry storage_entries = 2;
+}
+
+// Storage entry.
+message StorageEntry {
+  // Storage location.
+  FieldElement key = 1;
+  // Storage value.
+  FieldElement value = 2;
+}
+
+// Contract declared.
+message DeclaredContract {
+  // Class hash of the newly declared contract.
+  FieldElement class_hash = 1;
+}
+
+// Contract deployed.
+message DeployedContract {
+  // Address of the newly deployed contract.
+  FieldElement contract_address = 1;
+  // Class hash of the deployed contract.
+  FieldElement class_hash = 2;
+}
+
+// Nonce update.
+message NonceUpdate {
+  // Contract address.
+  FieldElement contract_address = 1;
+  // New nonce value.
+  FieldElement nonce = 2;
+}
+```
+
+## Protobuf specification
+
+The file `types.proto` contains the `FieldElement` definition.
+
+```protobuf
+syntax = "proto3";
+
+package apibara.starknet.v1alpha2;
+
+// StarkNet field element.
+//
+// Encoded as 4 packed uint64
+message FieldElement {
+  fixed64 lo_lo = 1;
+  fixed64 lo_hi = 2;
+  fixed64 hi_lo = 3;
+  fixed64 hi_hi = 4;
+}
+```
+
+The file `filter.proto` contains the `Filter` definition.
+
+```protobuf
+syntax = "proto3";
+
+package apibara.starknet.v1alpha2;
+
+import "v1alpha2/types.proto";
+
+// Filter describing what data to return for each block.
+message Filter {
+  // Header information.
+  HeaderFilter header = 1;
+  // Transactions.
+  repeated TransactionFilter transactions = 2;
+  // State update.
+  StateUpdateFilter state_update = 3;
+  // Emitted events.
+  repeated EventFilter events = 4;
+  // Messages from L2 to L1.
+  repeated L2ToL1MessageFilter messages = 5;
+}
+
+// Filter header.
+//
+// This filter matches _all_ headers, so it's only necessary
+// to include it in the filter to receive header data.
+message HeaderFilter {
+}
+
+// Filter transactions.
+//
+// An empty transaction filter matches _any_ transaction.
+message TransactionFilter {
+  oneof filter {
+    InvokeTransactionV0Filter invoke_v0 = 1;
+    InvokeTransactionV1Filter invoke_v1 = 2;
+    DeployTransactionFilter deploy = 3;
+    DeclareTransactionFilter declare = 4;
+    L1HandlerTransactionFilter l1_handler = 5;
+    DeployAccountTransactionFilter deploy_account = 6;
+  }
+}
+
+// Receive invoke transactions, v0
+message InvokeTransactionV0Filter {
+  // Filter by contract address.
+  FieldElement contract_address = 1;
+  // Filter by selector.
+  FieldElement entry_point_selector = 2;
+  // Filter by calldata prefix.
+  repeated FieldElement calldata = 3;
+}
+
+// Receive invoke transactions, v1
+message InvokeTransactionV1Filter {
+  // Filter by sender address.
+  FieldElement sender_address = 1;
+  // Filter by calldata prefix.
+  repeated FieldElement calldata = 3;
+}
+
+// Receive deploy transactions.
+message DeployTransactionFilter {
+  // Filter by contract address salt.
+  FieldElement contract_address_salt = 1;
+  // Filter by class hash.
+  FieldElement class_hash = 2;
+  // Filter by calldata prefix.
+  repeated FieldElement constructor_calldata = 4;
+}
+
+// Receive declare transactions.
+message DeclareTransactionFilter {
+  // Filter by class hash.
+  FieldElement class_hash = 1;
+  // Filter by sender address.
+  FieldElement sender_address = 2;
+}
+
+// Receive l1 handler transactions.
+message L1HandlerTransactionFilter {
+  // Filter by contract address.
+  FieldElement contract_address = 1;
+  // Filter by selector.
+  FieldElement entry_point_selector = 2;
+  // Filter by calldata prefix.
+  repeated FieldElement calldata = 3;
+}
+
+// Receive deploy account transactions.
+message DeployAccountTransactionFilter {
+  // Filter by contract address salt.
+  FieldElement contract_address_salt = 1;
+  // Filter by class hash.
+  FieldElement class_hash = 2;
+  // Filter by calldata prefix.
+  repeated FieldElement constructor_calldata = 4;
+}
+
+// Filter L2 to L1 messages.
+message L2ToL1MessageFilter {
+  // Filter by destination address.
+  FieldElement to_address = 1;
+  // Filter payloads that prefix-match the given data.
+  repeated FieldElement payload = 2;
+}
+
+// Filter events.
+message EventFilter {
+  // Filter by contract emitting the event.
+  FieldElement from_address = 1;
+  // Filter keys that prefix-match the given data.
+  repeated FieldElement keys = 2;
+  // Filter data that prefix-match the given data.
+  repeated FieldElement data = 3;
+}
+
+// Filter state update data.
+message StateUpdateFilter {
+  // Filter storage changes.
+  repeated StorageDiffFilter storage_diffs = 1;
+  // Filter declared contracts.
+  repeated DeclaredContractFilter declared_contracts = 2;
+  // Filter deployed contracts.
+  repeated DeployedContractFilter deployed_contracts = 3;
+  // Filter nonces updates.
+  repeated NonceUpdateFilter nonces = 4;
+}
+
+// Filter storage changes.
+message StorageDiffFilter {
+  // Filter by contract address.
+  FieldElement contract_address = 1;
+}
+
+// Filter declared contracts.
+message DeclaredContractFilter {
+  // Filter by class hash.
+  FieldElement class_hash = 1;
+}
+
+// Filter deployed contracts.
+message DeployedContractFilter {
+  // Filter by contract address.
+  FieldElement contract_address = 1;
+  // Filter by class hash.
+  FieldElement class_hash = 2;
+}
+
+// Filter nonce updates.
+message NonceUpdateFilter {
+  // Filter by contract address.
+  FieldElement contract_address = 1;
+  // Filter by new nonce value.
+  FieldElement nonce = 2;
+}
+```
+
+The file `starknet.proto` contains the `Block` definition.
+
+```protobuf
+// Apibara StarkNet Support
+syntax = "proto3";
+
+package apibara.starknet.v1alpha2;
+
+import "google/protobuf/timestamp.proto";
+import "v1alpha2/types.proto";
+
+// A StarkNet block.
+message Block {
+  // Block status.
+  BlockStatus status = 1;
+  // Block header.
+  BlockHeader header = 2;
+  // Transactions in the block.
+  repeated TransactionWithReceipt transactions = 3;
+  // State update caused by the block.
+  StateUpdate state_update = 4;
+  // Events emitted in the block.
+  repeated EventWithTransaction events = 5;
+  // Messages to L1 sent in the block.
+  repeated L2ToL1MessageWithTransaction l2_to_l1_messages = 6;
+}
+
+// Block header.
+message BlockHeader {
+  // Hash of the block.
+  FieldElement block_hash = 1;
+  // Hash of the block's parent.
+  FieldElement parent_block_hash = 2;
+  // Block height.
+  uint64 block_number = 3;
+  // Sequencer address.
+  FieldElement sequencer_address = 4;
+  // New state root after the block.
+  FieldElement new_root = 5;
+  // Timestamp when block  was produced.
+  google.protobuf.Timestamp timestamp = 6;
+}
+
+// Status of a block.
+enum BlockStatus {
+  // Unknown block status.
+  BLOCK_STATUS_UNSPECIFIED = 0;
+  // Block not accepted yet.
+  BLOCK_STATUS_PENDING = 1;
+  // Block accepted on L2.
+  BLOCK_STATUS_ACCEPTED_ON_L2 = 2;
+  // Block finalized on L1.
+  BLOCK_STATUS_ACCEPTED_ON_L1 = 3;
+  // Block was rejected and is not part of the canonical chain anymore.
+  BLOCK_STATUS_REJECTED = 4;
+}
+
+// A transaction with its receipt.
+message TransactionWithReceipt {
+  // The transaction
+  Transaction transaction = 1;
+  // The transaction receipt.
+  TransactionReceipt receipt = 2;
+}
+
+// A transaction.
+message Transaction {
+  // Common transaction metadata.
+  TransactionMeta meta = 1;
+  oneof transaction {
+    // Transaction invoking a smart contract, V0.
+    InvokeTransactionV0 invoke_v0 = 2;
+    // Transaction invoking a smart contract, V1.
+    InvokeTransactionV1 invoke_v1 = 3;
+    // Transaction deploying a new smart contract.
+    DeployTransaction deploy = 4;
+    // Transaction declaring a smart contract.
+    DeclareTransaction declare = 5;
+    // Transaction handling a message from L1.
+    L1HandlerTransaction l1_handler = 6;
+    // Transaction deploying a new account.
+    DeployAccountTransaction deploy_account = 7;
+  }
+}
+
+// Common transaction metadata.
+message TransactionMeta {
+  // Transaction hash.
+  FieldElement hash = 1;
+  // Maximum fee to be paid.
+  FieldElement max_fee = 2;
+  // Signature by the user.
+  repeated FieldElement signature = 3;
+  // Nonce.
+  FieldElement nonce = 4;
+  // Version.
+  uint64 version = 5;
+}
+
+// Transaction invoking a smart contract, V0.
+message InvokeTransactionV0 {
+  // Target contract address.
+  FieldElement contract_address = 1;
+  // Selector of the function being invoked.
+  FieldElement entry_point_selector = 2;
+  // Raw calldata.
+  repeated FieldElement calldata = 3;
+}
+
+// Transaction invoking a smart contract, V1.
+message InvokeTransactionV1 {
+  // Address sending the transaction.
+  FieldElement sender_address = 1;
+  // Raw calldata.
+  repeated FieldElement calldata = 2;
+}
+
+// Transaction deploying a new smart contract.
+message DeployTransaction {
+  // Raw calldata passed to the constructor.
+  repeated FieldElement constructor_calldata = 2;
+  // Salt used when computing the contract's address.
+  FieldElement contract_address_salt = 3;
+  // Hash of the class being deployed.
+  FieldElement class_hash = 4;
+}
+
+// Transaction declaring a smart contract.
+message DeclareTransaction {
+  // Class hash.
+  FieldElement class_hash = 1;
+  // Address of the account declaring the class.
+  FieldElement sender_address = 2;
+}
+
+// Transaction handling a message from L1.
+message L1HandlerTransaction {
+  // Target contract address.
+  FieldElement contract_address = 2;
+  // Selector of the function being invoked.
+  FieldElement entry_point_selector = 3;
+  // Raw calldata.
+  repeated FieldElement calldata = 4;
+}
+
+// Transaction deploying a new account.
+message DeployAccountTransaction {
+  // Raw calldata passed to the constructor.
+  repeated FieldElement constructor_calldata = 2;
+  // Salt used when computing the contract's address.
+  FieldElement contract_address_salt = 3;
+  // Hash of the class being deployed.
+  FieldElement class_hash = 4;
+}
+
+// Result of the execution of a transaction.
+//
+// This message only contains the receipt data, if you also need the
+// transaction, request a `Transaction`.
+message TransactionReceipt {
+  // Hash of the transaction.
+  FieldElement transaction_hash = 1;
+  // Transaction's indexe in the list of transactions in a block.
+  uint64 transaction_index = 2;
+  // Feed paid.
+  FieldElement actual_fee = 3;
+  // Messages sent to L1 in the transactions.
+  repeated L2ToL1Message l2_to_l1_messages = 4;
+  // Events emitted in the transaction.
+  repeated Event events = 5;
+}
+
+// Message sent from L2 to L1 together with its transaction and receipt.
+message L2ToL1MessageWithTransaction {
+  // The transaction that sent this message.
+  Transaction transaction = 1;
+  // The transaction receipt.
+  TransactionReceipt receipt = 2;
+  // The message.
+  L2ToL1Message message = 3;
+}
+
+// Message sent from L2 to L1.
+message L2ToL1Message {
+  // Destination address.
+  FieldElement to_address = 3;
+  // Data contained in the message.
+  repeated FieldElement payload = 4;
+}
+
+// Event emitted by a transaction, together with its transaction and receipt.
+message EventWithTransaction {
+  // The transaction emitting the event.
+  Transaction transaction = 1;
+  // The transaction receipt.
+  TransactionReceipt receipt = 2;
+  // The event.
+  Event event = 3;
+}
+
+// Event emitted by a transaction.
+message Event {
+  // Address of the smart contract emitting the event.
+  FieldElement from_address = 1;
+  // Event key.
+  repeated FieldElement keys = 2;
+  // Event data.
+  repeated FieldElement data = 3;
+}
+
+// State update.
+message StateUpdate {
+  // New state root.
+  FieldElement new_root = 1;
+  // Previous state root.
+  FieldElement old_root = 2;
+  // State difference.
+  StateDiff state_diff = 3;
+}
+
+// Difference in state between blocks.
+message StateDiff {
+  // Storage differences.
+  repeated StorageDiff storage_diffs = 1;
+  // Contracts declared.
+  repeated DeclaredContract declared_contracts = 2;
+  // Contracts deployed.
+  repeated DeployedContract deployed_contracts = 3;
+  // Nonces updated.
+  repeated NonceUpdate nonces = 4;
+}
+
+// Difference in storage values for a contract.
+message StorageDiff {
+  // The contract address.
+  FieldElement contract_address = 1;
+  // Entries that changed.
+  repeated StorageEntry storage_entries = 2;
+}
+
+// Storage entry.
+message StorageEntry {
+  // Storage location.
+  FieldElement key = 1;
+  // Storage value.
+  FieldElement value = 2;
+}
+
+// Contract declared.
+message DeclaredContract {
+  // Class hash of the newly declared contract.
+  FieldElement class_hash = 1;
+}
+
+// Contract deployed.
+message DeployedContract {
+  // Address of the newly deployed contract.
+  FieldElement contract_address = 1;
+  // Class hash of the deployed contract.
+  FieldElement class_hash = 2;
+}
+
+// Nonce update.
+message NonceUpdate {
+  // Contract address.
+  FieldElement contract_address = 1;
+  // New nonce value.
+  FieldElement nonce = 2;
+}
+```
