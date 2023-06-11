@@ -155,7 +155,7 @@ runner = IndexerRunner(
 
 Now we can review the indexer configuration in `initial_configuration`. This method must return an `IndexerConfiguration` object with the following fields:
 
- - `filter`: the [`Filter`](docs/python-sdk/reference/starknet#filter) object used to populate blocks with data.
+ - `filter`: the [`Filter`](/docs/python-sdk/reference/starknet#filter) object used to populate blocks with data.
  - `starting_cursor`: specify after which block to start indexing.
  - `finality`: specify if you need finalized, accepted or pending data.
 
@@ -267,7 +267,7 @@ indexer start --help
 
 ## Chain-aware document storage
 
-This section introduces the concept of [chain-aware storage and why it's needed](docs/python-sdk/reference/indexer#storage).
+This section introduces the concept of [chain-aware storage and why it's needed](/docs/python-sdk/reference/indexer#storage).
 While understanding how storage works is valuable, you can skip this section for now and jump back later.
 
 Now that the indexer is running, you can connect to the Mongo database using the
