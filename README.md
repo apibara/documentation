@@ -7,8 +7,8 @@ rebuilt by combining the documentation from the following repositories:
 
  - [`apibara/documentation`](https://github.com/apibara/documentation): this
    repository. Documentation about the Apibara platform and hosted service.
- - [`apibara/dna`](https://github.com/apibara/dna): documentation about the
-   Direct Node Access (DNA) protocol and self-hosting.
+ - [`apibara/dna`](https://github.com/apibara/dna): documentation about
+   integrations, the Direct Node Access (DNA) protocol, and self-hosting.
  - [`apibara/typescript-sdk`](https://github.com/apibara/typescript-sdk):
    documentation for the Typescript SDK.
  - [`apibara/python-sdk`](https://github.com/apibara/python-sdk): documentation
