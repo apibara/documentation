@@ -1,10 +1,12 @@
 ---
 title: Direct Node Access streaming protocol
-titleShort: "DNA gRPC"
+titleShort: "DNA Protocol"
 description: "The Apibara Direct Node Access streaming protocol is used to stream on-chain data."
-priority: 83
-updatedAt: 2023-01-15 10:00
+priority: 80
+updatedAt: 2023-08-15 10:00
 ---
+
+# DNA Streaming Protocol
 
 The Direct Node Access (DNA) streaming protocol is used to efficiently stream
 any on-chain data from nodes into applications.
@@ -15,93 +17,11 @@ The goals of the protocol are:
  - let clients customize the data they want to receive, reducing the bandwidth required,
  - provide support for data at all stages of finality (pending, accepted, finalized).
 
-## Getting started with DNA
+**Note**: understanding the low-level DNA protocol is not required to use
+Apibara. This page is provided for developers that want to understand more
+about Apibara's implementation details. Knowing how DNA works is useful if you
+want to contribute to Apibara.
 
-If you're using the hosted version of DNA, you need to create a free DNA access token from [the Apibara dashboard](https://app.apibara.com/).
-
-Once you have the token, create a new project in your target language (like Typescript or Python) and install the Apibara SDK.
-
-<CodeBlock.Multi>
-  <CodeBlock.Language language="Typescript SDK">
-    ```txt
-    npm add @apibara/protocol @apibara/starknet
-    ```
-  </CodeBlock.Language>
-  <CodeBlock.Language language="Python SDK">
-    ```txt
-      poetry add apibara
-    ```
-  </CodeBlock.Language>
-</CodeBlock.Multi>
-
-Use one of the example projects to initialize your code:
-
- - [Typescript SDK starter project](https://github.com/apibara/typescript-sdk/tree/main/examples/simple-client)
- - [Python SDK with indexer abstraction](https://github.com/apibara/python-sdk/blob/main/examples/starknet_indexer.py)
- - [Simple Python SDK](https://github.com/apibara/python-sdk/blob/main/examples/simple_client.py)
-
-All starter project read the DNA authentication token from the environment, **it's highly discouraged to commit the access token into the repository**.
-
-<CodeBlock.Multi>
-  <CodeBlock.Language language="Typescript SDK">
-    ```ts
-    import { StreamClient } from '@apibara/protocol'
-
-    // Read token from environment
-    const AUTH_TOKEN = process.env.AUTH_TOKEN
-
-    // Use token when streaming data
-    const client = new StreamClient({
-      url: 'mainnet.starknet.a5a.ch',
-      token: AUTH_TOKEN,
-    })
-    ```
-  </CodeBlock.Language>
-  <CodeBlock.Language language="Python SDK (Indexer)">
-    ```py
-    import os
-
-    from apibara.indexer import (
-      IndexerRunner, IndexerRunnerConfiguration)
-
-    # Read token from environment
-    AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
-
-    # Configure indexer runner
-    runner = IndexerRunner(
-        config=IndexerRunnerConfiguration(
-            stream_url="mainnet.starknet.a5a.ch:443",
-            storage_url="<storage-url>",
-            token=AUTH_TOKEN,
-        ),
-        reset_state=args.reset,
-    )
-    ```
-  </CodeBlock.Language>
-  <CodeBlock.Language language="Python SDK">
-    ```py
-    import os
-
-    from grpc import ssl_channel_credentials
-    from grpc.aio import secure_channel
-
-    from apibara.protocol import (
-      StreamAddress, StreamService, credentials_with_auth_token)
-
-    # Read token from environment
-    AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
-
-    # Create authenticated grpc channel
-    channel = secure_channel(
-        StreamAddress.StarkNet.Mainnet,
-        credentials_with_auth_token(AUTH_TOKEN, ssl_channel_credentials()),
-    )
-
-    # Create stream client from channel
-    (client, stream) = StreamService(channel).stream_data()
-    ```
-  </CodeBlock.Language>
-</CodeBlock.Multi>
 
 ## The protocol
 

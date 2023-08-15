@@ -1,8 +1,8 @@
 ---
 title: Pending data
 description: "The Apibara streaming protocol can send pending data to subscribed clients."
-priority: 81
-updatedAt: 2023-01-15 10:00
+priority: 90
+updatedAt: 2023-08-15 10:00
 ---
 
 # Streaming pending data
@@ -24,11 +24,9 @@ Use cases for optimistic updates are:
 
 ## Requesting pending data
 
-Request pending data when configuring the stream by sending a `StreamDataRequest`
-with _pending finality_. The stream will include `data` messages with `finality`
-set to `DATA_STATUS_PENDING`. Apibara may send multiple pending blocks between
-accepted blocks if it detects pending data changing.
-
+Request pending data when configuring the stream by the `finality`
+configuration to `DATA_STATUS_PENDING`. Apibara may send multiple pending
+blocks between accepted blocks if it detects pending data changing.
 
 
 ```mermaid
@@ -43,7 +41,7 @@ sequenceDiagram
 ## Best practices for handling pending data
 
  - Treat pending data as _"mini"_ chain reorganizations. Invalidate the previous
- pending data before handling the new pending data. The `Indexer` in the Python
- SDK does this automatically for you.
- - Invalidate pending data when receiving a new `data` message. The `Indexer` in
- the Python SDK does this automatically for you.
+ pending data before handling the new pending data. The Apibara integrations do
+ this automatically for you.
+ - Invalidate pending data when receiving a new `data` message. The Apibara integrations
+ do this automatically for you.

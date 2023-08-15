@@ -47,9 +47,6 @@ no plugin is installed.
 
 ```bash
 $ apibara plugins list
-╭──────┬──────┬─────────╮
-│ NAME │ KIND │ VERSION │
-├──────┼──────┼─────────┤
 ```
 
 We use the `apibara plugins install` command to download and install plugins
@@ -74,16 +71,32 @@ Plugin console installed to /home/user/.local/share/apibara/plugins/apibara-sink
 
 ```bash
 $ apibara plugins list
-╭──────────┬──────┬─────────╮
-│ NAME     │ KIND │ VERSION │
-├──────────┼──────┼─────────┤
-│ mongo    │ sink │ 0.1.0   │
-│ postgres │ sink │ 0.1.0   │
-│ webhook  │ sink │ 0.1.0   │
-│ console  │ sink │ 0.1.0   │
-│ parquet  │ sink │ 0.1.0   │
-╰──────────┴──────┴─────────╯
+#  mongo     sink  0.1.0 
+#  postgres  sink  0.1.0 
+#  webhook   sink  0.1.0 
+#  console   sink  0.1.0 
+#  parquet   sink  0.1.0 
 ```
+
+## Creating an Apibara account and API Key
+
+Head over to the [registration page](https://app.apibara.com/auth/register) to
+create an Apibara account.
+
+![Registration page](register.png)
+
+From your dashboard, click on the "New Indexer" button and then select "DNA Key".
+Choose a memorable name for your API Key and then click "Deploy Indexer".
+
+![Create API Key](create-api-key.png)
+
+Finally, copy the API Key to your clipboard. Notice that you can come back to this
+page at any time from your dashboard.
+
+![Copy API Key](copy-api-key.png)
+
+As we will see in the next section, you will need the API Key to authenticate
+with the data streams hosted by Apibara.
 
 
 ## Your first indexer
@@ -101,6 +114,7 @@ export const config = {
   streamUrl: "https://goerli.starknet.a5a.ch",
   startingBlock: 800_000,
   network: "starknet",
+  finality: "DATA_STATUS_ACCEPTED",
   filter: {
     header: {},
   },
@@ -131,6 +145,8 @@ The `config` object accepts the following properties:
  - `startingBlock`: start streaming data from this block.
  - `network`: the type of network, e.g. `starknet` to stream data from Starknet
    or a Starknet-based appchain.
+ - `finality`: data status finality. Can be one of `DATA_STATUS_PENDING`,
+   `DATA_STATUS_ACCEPTED`, or `DATA_STATUS_FINALIZED`. Defaults to accepted.
  - `filter`: the filter used to select onchain data. See the "Networks" section
    in the sidebar to see which networks and data are available.
  - `sinkType`: send data to the specified sink plugin. See the "Integrations"
@@ -154,7 +170,7 @@ there are some differences compared to a traditional Node.js runtime:
 ### Installing dependencies
 
 Unlike Node.js, Deno doesn't manage dependencies through a `package.json` file but they must
-be imported through a CDN. We recommend [ESM.run/JsDelivr)(https://www.jsdelivr.com/esm).
+be imported through a CDN. We recommend [ESM.run/JsDelivr](https://www.jsdelivr.com/esm).
 
 ```js
 import { hash, uint256 } from "https://esm.run/starknet@5.14";
