@@ -1,0 +1,52 @@
+---
+title: Using Typescript with Apibara
+titleShort: "Typescript support"
+description: "Use Typescript to write type-safe indexers. Gain access to libraries such as Zod, Starknet.js, and Viem."
+priority: 89
+updatedAt: 2023-08-19 10:00
+---
+
+# Using Typescript with Apibara
+
+You can use Typescript with Apibara to implement fully type-safe indexers. This
+means you can take advantage of modern Typescript libraries such as Zod,
+Starknet.js, and Viem.
+
+
+## Getting started
+
+You can import types from the `@apibara/indexer` package. Since the Apibara
+runtime is based on Deno, you need to import the package from a CDN such as
+Skypack or ESM.sh. [Please refer to the Deno documentation to learn more about
+importing NPM packages in Deno](https://deno.land/manual/node/cdns).
+
+The following example shows how to use the `@apibara/indexer` package to type
+the exported configuration and transformer function.
+
+```ts
+import type { Config } from "https://esm.sh/@apibara/indexer";
+import type {
+  Block,
+  Starknet,
+} from "https://esm.sh/@apibara/indexer/starknet";
+import type { Console } from "https://esm.sh/@apibara/indexer/sink/console";
+
+export const config: Config<Starknet, Console> = {
+  streamUrl: "https://goerli.starknet.a5a.ch",
+  network: "starknet",
+  filter: {
+    header: {},
+  },
+  startingBlock: 800_000,
+  sinkType: "console",
+  sinkOptions: {},
+};
+
+export default function transform(block: Block) {
+    // transform data here.
+}
+```
+
+You can learn more about the package types and modules [in the package
+repository](https://github.com/apibara/typescript-sdk/tree/main/packages/indexer).
+

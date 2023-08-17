@@ -1,9 +1,9 @@
 ---
 title: Deploying an indexer
-titleShort: Indexer depolyment
+titleShort: Indexer deployment
 description: "Learn how to deploy Apibara indexers using Docker and Docker Compose."
 priority: 85
-updatedAt: 2023-08-16 15:00
+updatedAt: 2023-08-17 15:00
 ---
 
 # Deploying an indexer to production
@@ -76,7 +76,7 @@ Let's add the following snippet to the existing `docker-compose.yml` file, just 
     environment:
       PERSIST_TO_ETCD: http://etcd:2379
       SINK_ID: my-indexer
-      AUTH_TOKEN: dna_<xxx>
+      AUTH_TOKEN: ${AUTH_TOKEN}
 ```
 
 Notice that in this example the indexer source code is contained in a single file named `script.js`.
@@ -92,7 +92,13 @@ image (named `apibara/sink-*`) to reduce your container start time.
 
 ## Running the indexer
 
-You can now start the indexer with `docker compose up`.
+Create a `.env` file with your DNA token in it:
+
+```env
+AUTH_TOKEN=dna_AbC
+```
+
+You can now start the indexer with `docker compose up --env-file=.env`.
 
 Notice that if you restart the indexer, it may take a while (up to one minute)
 before it starts because it needs to acquire the Etcd lock.
