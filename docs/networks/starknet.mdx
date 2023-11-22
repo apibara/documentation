@@ -62,70 +62,66 @@ The SDKs provide _builders_ to make building filters more ergonomic.
 You can find more information in the [Python SDK reference](/docs/python-sdk/reference/starknet) or in
 the [Typescript SDK reference](/docs/typescript-sdk/reference/starknet).
 
-<CodeBlock.Multi>
-  <CodeBlock.Language language="Typescript">
-    ```ts
-    import { Filter, FieldElement } from "@apibara/starknet"
-    import { hash } from 'starknet'
+<CH.Code>
+```ts starknet.ts
+import { Filter, FieldElement } from "@apibara/starknet"
+import { hash } from 'starknet'
 
-    const address = FieldElement.fromBigInt(
-      '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
-    )
+const address = FieldElement.fromBigInt(
+  '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
+)
 
-    // The event selector is the hash of the event name
-    const transferKey = [
-      FieldElement.fromBigInt(
-        hash.getSelectorFromName('Transfer')
-      )
-    ]
+// The event selector is the hash of the event name
+const transferKey = [
+  FieldElement.fromBigInt(
+    hash.getSelectorFromName('Transfer')
+  )
+]
 
-    // Create a basic StarkNet filter:
-    //
-    // - weak header so that it's sent only if any event
-    // or state update also matches
-    // - match all events from the given address and key
-    // - match storage updates for the given address
-    const filter = Filter.create()
-      .withHeader({ weak: true })
-      .addEvent((ev) =>
-        ev.withFromAddress(address).withKeys(transferKey))
-      .withStateUpdate((su) =>
-        su.addStorageDiff((st) => st.withContractAddress(address)))
-      .encode()
-    ```
-  </CodeBlock.Language>
-  <CodeBlock.Language language="Python">
-    ```py
-    from apibara.starknet import EventFilter, Filter, felt
+// Create a basic StarkNet filter:
+//
+// - weak header so that it's sent only if any event
+// or state update also matches
+// - match all events from the given address and key
+// - match storage updates for the given address
+const filter = Filter.create()
+  .withHeader({ weak: true })
+  .addEvent((ev) =>
+    ev.withFromAddress(address).withKeys(transferKey))
+  .withStateUpdate((su) =>
+    su.addStorageDiff((st) => st.withContractAddress(address)))
+  .encode()
+```
+```py starknet.py
+from apibara.starknet import EventFilter, Filter, felt
 
-    address = felt.from_hex(
-        "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
-    )
+address = felt.from_hex(
+    "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
+)
 
-    # `Transfer` selector.
-    # You can get this value either with starknet.py's `ContractFunction.get_selector`
-    # or from starkscan.
-    transfer_key = felt.from_hex(
-        "0x99cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9"
-    )
+# `Transfer` selector.
+# You can get this value either with starknet.py's `ContractFunction.get_selector`
+# or from starkscan.
+transfer_key = felt.from_hex(
+    "0x99cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9"
+)
 
-    filter = (
-        Filter()
-        .with_header(weak=True)
-        .add_event(
-          EventFilter()
-            .with_from_address(address)
-            .with_keys([transfer_key]))
-        .with_state_update(
-            StateUpdateFilter().add_storage_diff(
-                StorageDiffFilter().with_contract_address(address)
-            )
+filter = (
+    Filter()
+    .with_header(weak=True)
+    .add_event(
+      EventFilter()
+        .with_from_address(address)
+        .with_keys([transfer_key]))
+    .with_state_update(
+        StateUpdateFilter().add_storage_diff(
+            StorageDiffFilter().with_contract_address(address)
         )
-        .encode()
     )
-    ```
-  </CodeBlock.Language>
-</CodeBlock.Multi>
+    .encode()
+)
+```
+</CH.Code>
 
 ```proto
 message Filter {
