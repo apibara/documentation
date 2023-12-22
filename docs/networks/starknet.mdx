@@ -11,35 +11,37 @@ Apibara provides data streams for all StarkNet networks:
 
 **StarkNet Mainnet**
 
- - endpoint: `https://mainnet.starknet.a5a.ch`
+- endpoint: `https://mainnet.starknet.a5a.ch`
 
-**StarkNet Görli Testnet**
+**StarkNet Sepolia Testnet**
 
- - endpoint: `https://goerli.starknet.a5a.ch`
+- endpoint: `https://sepolia.starknet.a5a.ch`
 
+**StarkNet Görli Testnet** (deprecated)
+
+- endpoint: `https://goerli.starknet.a5a.ch`
 
 ## Data and filters
 
 Apibara streams are an efficient mechanism to stream any on-chain data directly
-into your application.  One way it achieves great performance is by allowing
+into your application. One way it achieves great performance is by allowing
 developers to select _exactly_ the data they need.
 
 Developers filter data included in a stream by configuring the stream with a `Filter`.
 The are many types of filters for StarkNet, but they all work in the following way:
 
- - An empty filter (that is, a filter that has no field set) matches any object (e.g. transaction or event).
- - If a `FieldElement` field is set, then it's checked by equality. An object is included if and only if its
- field is equal to the filter.
- - If a `repeated FieldElement` field is set, then the object's field is prefix-matched. An object is include
- if and only if its field first `n` elements (where `n` is the length of the filter's field) are equal to the
- filter.
- - If a filter has multiple fields set, then it matches an object if and only if all fields match.
+- An empty filter (that is, a filter that has no field set) matches any object (e.g. transaction or event).
+- If a `FieldElement` field is set, then it's checked by equality. An object is included if and only if its
+  field is equal to the filter.
+- If a `repeated FieldElement` field is set, then the object's field is prefix-matched. An object is include
+  if and only if its field first `n` elements (where `n` is the length of the filter's field) are equal to the
+  filter.
+- If a filter has multiple fields set, then it matches an object if and only if all fields match.
 
 **Notice:** all fields in protobuf version 3 are nullable.
 
 Read more in the [`Filter`](#filter) section to learn how to build a filter
 using the Python or Typescript SDKs.
-
 
 ## `FieldElement`
 
@@ -68,14 +70,14 @@ import { Filter, FieldElement } from "@apibara/starknet"
 import { hash } from 'starknet'
 
 const address = FieldElement.fromBigInt(
-  '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
+'0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7'
 )
 
 // The event selector is the hash of the event name
 const transferKey = [
-  FieldElement.fromBigInt(
-    hash.getSelectorFromName('Transfer')
-  )
+FieldElement.fromBigInt(
+hash.getSelectorFromName('Transfer')
+)
 ]
 
 // Create a basic StarkNet filter:
@@ -85,13 +87,14 @@ const transferKey = [
 // - match all events from the given address and key
 // - match storage updates for the given address
 const filter = Filter.create()
-  .withHeader({ weak: true })
-  .addEvent((ev) =>
-    ev.withFromAddress(address).withKeys(transferKey))
-  .withStateUpdate((su) =>
-    su.addStorageDiff((st) => st.withContractAddress(address)))
-  .encode()
-```
+.withHeader({ weak: true })
+.addEvent((ev) =>
+ev.withFromAddress(address).withKeys(transferKey))
+.withStateUpdate((su) =>
+su.addStorageDiff((st) => st.withContractAddress(address)))
+.encode()
+
+````
 ```py starknet.py
 from apibara.starknet import EventFilter, Filter, felt
 
@@ -120,7 +123,8 @@ filter = (
     )
     .encode()
 )
-```
+````
+
 </CH.Code>
 
 ```proto
