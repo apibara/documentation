@@ -12,7 +12,6 @@ You can use Typescript with Apibara to implement fully type-safe indexers. This
 means you can take advantage of modern Typescript libraries such as Zod,
 Starknet.js, and Viem.
 
-
 ## Getting started
 
 You can import types from the `@apibara/indexer` package. Since the Apibara
@@ -25,10 +24,7 @@ the exported configuration and transformer function.
 
 ```ts
 import type { Config } from "https://esm.sh/@apibara/indexer";
-import type {
-  Block,
-  Starknet,
-} from "https://esm.sh/@apibara/indexer/starknet";
+import type { Block, Starknet } from "https://esm.sh/@apibara/indexer/starknet";
 import type { Console } from "https://esm.sh/@apibara/indexer/sink/console";
 
 export const config: Config<Starknet, Console> = {
@@ -43,10 +39,45 @@ export const config: Config<Starknet, Console> = {
 };
 
 export default function transform(block: Block) {
-    // transform data here.
+  // transform data here.
 }
 ```
 
 You can learn more about the package types and modules [in the package
 repository](https://github.com/apibara/typescript-sdk/tree/main/packages/indexer).
 
+## Monorepo with Node, Bun and Deno
+
+If you're using a monorepo you want to enable Deno only for your indexer's project. You do that by customizing your editor's LSP configuration.
+
+Let's start with the following monorepo with two sub-projects: the frontend (with for example Next.js) and the indexers.
+
+```txt
+.
+├── apps
+│   ├── frontend
+│   │   ├── app
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   └── indexers
+│       ├── deno.json
+│       └── src
+│           └── my-indexer.ts
+├── package.json
+└── turbo.json
+```
+
+If you're using VS Code, you can enable Deno for the `indexers` project only by adding the following configuration to `.vscode/settings.json`.
+
+```json
+{
+  "deno.enable": true,
+  "deno.lint": true,
+  "deno.unstable": false,
+  "deno.enablePaths": ["./apps/indexers"]
+}
+```
+
+After that, you may have to restart the Deno LSP server and you will have autocompletion working in your indexers project.
