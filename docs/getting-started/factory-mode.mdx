@@ -19,7 +19,7 @@ Apibara supports both patterns.
 You can enable _factory mode_ by exporting the `factory` function from your indexer script. Factory mode changes how the indexer behaves, so it's important to read this guide carefully.
 
 - `config.filter` defines which data is streamed by the factory. Data from this stream is passed to the `factory` function.
-- the `factory` callback receives a block and returns an (optional) filter and an (optional) piece of data passed to the integration. If the factory returns a filter, this filter used to stream data that will be passed to the `transform` function. Filters from subsequent calls to `factory` are merged together.
+- the `factory` callback receives a block and returns an (optional) filter and an (optional) piece of data passed to the integration. If the factory returns a filter, this filter is used to stream data that will be passed to the `transform` function. Filters from subsequent calls to `factory` are merged together.
 - the `transform` callback is called with data from the main stream.
 
 The following diagram shows how these 3 components fit together.
