@@ -1,0 +1,155 @@
+---
+title: Factory mode
+titleShort: "Factory mode"
+description: "Enable factory mode to update indexers while they are running."
+priority: 85
+updatedAt: 2024-01-15 12:00
+---
+
+# Factory mode
+
+Some indexers require indexing data from a set of smart contract that is not known at deploy time, but it's determined at runtime.
+This usually happens when:
+
+- the smart contracts are deployed by another smart contract, this is known as _the factory pattern_.
+- on Starknet: users deploy a smart contract by its class hash.
+
+Apibara supports both patterns.
+
+You can enable _factory mode_ by exporting the `factory` function from your indexer script. Factory mode changes how the indexer behaves, so it's important to read this guide carefully.
+
+- `config.filter` defines which data is streamed by the factory. Data from this stream is passed to the `factory` function.
+- the `factory` callback receives a block and returns an (optional) filter and an (optional) piece of data passed to the integration. If the factory returns a filter, this filter used to stream data that will be passed to the `transform` function. Filters from subsequent calls to `factory` are merged together.
+- the `transform` callback is called with data from the main stream.
+
+The following diagram shows how these 3 components fit together.
+
+```tx
+      │
+      │
+
+config.filter
+             ┌─────────┐                    ┌─────────┐
+      │      │         │                    │         │
+ ─────┴──────┤ factory ├── ── ── ── ── ── ──┤ factory ├── ── ── ──
+             │         │                    │         │
+             └─┬───────┘                    └─┬───────┘
+               │                              │
+               │                              │
+               │   ┌───┐ ┌───┐      ┌───┐     │   ┌───┐ ┌───┐
+               │   │   │ │   │      │   │     │   │   │ │   │
+               o───│ T ├─┤ T ├─ ── ─┤ T │     o───│ T ├─┤ T ├─ ──
+                   │   │ │   │      │   │         │   │ │   │
+               ▲   └───┘ └───┘      └───┘     ▲   └───┘ └───┘
+               │                              │
+               │                              │
+               │                              │
+                Filters returned by factories
+                    are merged together
+```
+
+Notice that the `factory` callback is invoke only for finalized and accepted blocks and not for pending blocks.
+
+## Example
+
+The following example shows how to use factory mode to stream data for a Uniswap V2-like contract.
+
+Start by defining the indexer's configuration, the `filter` object returns all `PairCreated` events from the DEX factory.
+
+```ts
+const FACTORY = "0x...";
+const PAIR_CREATED = selector("PairCreated");
+
+export const config = {
+  filter: {
+    header: { weak: true },
+    events: [
+      {
+        fromAddress: FACTORY,
+        keys: [PAIR_CREATED],
+        includeReceipt: false,
+      },
+    ],
+  },
+  // standard configuration.
+  streamUrl,
+  startingBlock,
+};
+```
+
+Then we export the `factory` callback. Exporting this function will automatically enable factory mode.
+In this example, we want to index all events from the pair and we do so by specifying as many event filters for that pair.
+
+We also want to insert data about this pair into our integration (e.g. MongoDB, PostgerSQL), we do that by returning `data` from the callback.
+
+The first time the indexer calls the `factory` it will start streaming data using the returned `filter`. Subsequently, it will merge the stream's filter with the filter returned by the callback and reconnect to the stream.
+
+```ts
+const UPGRADED = selector("Upgraded");
+const ADMIN_CHANGED = selector("AdminChanged");
+const BURN = selector("Burn");
+const MINT = selector("Mint");
+const SWAP = selector("Swap");
+const SYNC = selector("Sync");
+const APPROVAL = selector("Approval");
+const TRANSFER = selector("Transfer");
+
+export function factory({ header, events }) {
+  // Create a filter with events for all pools created in this block.
+  const poolEvents = events.flatMap(({ event }) => {
+    const pairAddress = event.data[2];
+    return [
+      UPGRADED,
+      ADMIN_CHANGED,
+      BURN,
+      MINT,
+      SWAP,
+      SYNC,
+      APPROVAL,
+      TRANSFER,
+    ].map((eventKey) => ({
+      fromAddress: pairAddress,
+      keys: [eventKey],
+      includeReceipt: false,
+    }));
+  });
+
+  // Insert data about the pools created in this block.
+  // Values returned in `data` are handled like values returned from
+  // `transform`.
+  const pools = events.flatMap(({ event, transaction }) => {
+    const token0 = event.data[0];
+    const token1 = event.data[1];
+    const pairAddress = event.data[2];
+    return {
+      type: "PairCreated",
+      createdAt: header.timestamp,
+      createdAtBlockNumber: +header.blockNumber,
+      createdAtTxHash: transaction.meta.hash,
+      pairId: pairAddress,
+      token0Id: token0,
+      token1Id: token1,
+    };
+  });
+
+  return {
+    filter: {
+      header: { weak: true },
+      events: poolEvents,
+    },
+    data: pools,
+  };
+}
+```
+
+Finally, we export the `transform` function that is used to index data from the pairs. The `transform` function works exactly as in the default mode.
+
+```ts
+export default function transform({ header, events }) {
+  return events.flatMap(({ event, transaction }) => {
+    // do something we the events.
+  });
+}
+```
+
+Now you can run the indexer with `apibara run` and it will index all events from the DEX pairs.
