@@ -10,13 +10,12 @@ updatedAt: 2023-08-15 10:00
 
 Apibara is the easiest way to build production-grade indexers:
 
- - **Stream** onchain data into your indexer, receiving exactly the data you need.
- - **Transform** the data into a higher-level representation that maps to your application domain.
- - **Integrate** data with the rest of your application by sending it to other services.
+- **Stream** onchain data into your indexer, receiving exactly the data you need.
+- **Transform** the data into a higher-level representation that maps to your application domain.
+- **Integrate** data with the rest of your application by sending it to other services.
 
 This page will guide you in setting up your development environment for Apibara
 and writing your first indexer.
-
 
 ## Install the CLI tool
 
@@ -26,16 +25,15 @@ Install the `apibara` CLI by running the following command. Note that you need
 your `$PATH`.
 
 ```bash
-curl -sL https://install.apibara.com | bash 
+curl -sL https://install.apibara.com | bash
 ```
 
 After this, create a new terminal and check that `apibara` is installed:
 
 ```bash
 $ apibara --version
-apibara-cli 0.1.0
+apibara-cli 0.4.0
 ```
-
 
 ## Managing plugins
 
@@ -53,12 +51,12 @@ We use the `apibara plugins install` command to download and install plugins
 from GitHub.
 At the moment, the following plugins are available:
 
- - `sink-console`: useful for debugging indexers by printing the output of the
-   transformation step to the standard output.
- - `sink-webhook`: invoke a webhook with the result of the transformation.
- - `sink-postgres`: continuously insert data in the target table.
- - `sink-mongo`: continuously insert data in the target collection.
- - `sink-parquet`: create Parquet datasets.
+- `sink-console`: useful for debugging indexers by printing the output of the
+  transformation step to the standard output.
+- `sink-webhook`: invoke a webhook with the result of the transformation.
+- `sink-postgres`: continuously insert data in the target table.
+- `sink-mongo`: continuously insert data in the target collection.
+- `sink-parquet`: create Parquet datasets.
 
 For example:
 
@@ -71,11 +69,11 @@ Plugin console installed to /home/user/.local/share/apibara/plugins/apibara-sink
 
 ```bash
 $ apibara plugins list
-#  mongo     sink  0.1.0 
-#  postgres  sink  0.1.0 
-#  webhook   sink  0.1.0 
-#  console   sink  0.1.0 
-#  parquet   sink  0.1.0 
+#  mongo     sink  0.1.0
+#  postgres  sink  0.1.0
+#  webhook   sink  0.1.0
+#  console   sink  0.1.0
+#  parquet   sink  0.1.0
 ```
 
 ## Creating an Apibara account and API Key
@@ -113,8 +111,8 @@ Emacs](https://deno.land/manual/getting_started/setup_your_environment).
 Indexers are implemented as Javascript or Typescript scripts.
 Scripts need to export two things:
 
- - a `config` object that contains the indexer configuration.
- - a default function, used to transform each batch of data streamed by Apibara.
+- a `config` object that contains the indexer configuration.
+- a default function, used to transform each batch of data streamed by Apibara.
 
 A minimal script looks like the following:
 
@@ -144,24 +142,22 @@ key from Apibara to consume the hosted stream.
 $ apibara run script.js -A  dna_xxx
 ```
 
-
 ## Configuration
 
 The `config` object accepts the following properties:
 
- - `streamUrl`: the stream URL. Usually it's one of the Apibara hosted streams,
-   but you can point it to a self-hosted stream.
- - `startingBlock`: start streaming data from this block.
- - `network`: the type of network, e.g. `starknet` to stream data from Starknet
-   or a Starknet-based appchain.
- - `finality`: data status finality. Can be one of `DATA_STATUS_PENDING`,
-   `DATA_STATUS_ACCEPTED`, or `DATA_STATUS_FINALIZED`. Defaults to accepted.
- - `filter`: the filter used to select onchain data. See the "Networks" section
-   in the sidebar to see which networks and data are available.
- - `sinkType`: send data to the specified sink plugin. See the "Integrations"
-   section in the sidebar to see which sinks are available.
- - `sinkOptions`: options used to configure the sink.
-
+- `streamUrl`: the stream URL. Usually it's one of the Apibara hosted streams,
+  but you can point it to a self-hosted stream.
+- `startingBlock`: start streaming data from this block.
+- `network`: the type of network, e.g. `starknet` to stream data from Starknet
+  or a Starknet-based appchain.
+- `finality`: data status finality. Can be one of `DATA_STATUS_PENDING`,
+  `DATA_STATUS_ACCEPTED`, or `DATA_STATUS_FINALIZED`. Defaults to accepted.
+- `filter`: the filter used to select onchain data. See the "Networks" section
+  in the sidebar to see which networks and data are available.
+- `sinkType`: send data to the specified sink plugin. See the "Integrations"
+  section in the sidebar to see which sinks are available.
+- `sinkOptions`: options used to configure the sink.
 
 ## Deno Javascript Runtime
 
@@ -169,12 +165,11 @@ Apibara scripts are executed in a secure Deno runtime. The Deno runtime
 implements support for both Javascript and Typescript. At the moment,
 there are some differences compared to a traditional Node.js runtime:
 
- - Dependencies are imported directly from a CDN. 
- - There is no file-system access.
- - There is no network access. If you need it, you can use Apibara to enqueue
-   tasks to a job queue like Inngest.
- - Access to environment variables must be explicitly granted.
-
+- Dependencies are imported directly from a CDN.
+- There is no file-system access.
+- There is no network access. If you need it, you can use Apibara to enqueue
+  tasks to a job queue like Inngest.
+- Access to environment variables must be explicitly granted.
 
 ### Installing dependencies
 
@@ -191,7 +186,6 @@ from this file, re-exporting the functions and classes needed by your
 application. Refer to the official [Deno documentation to learn more about
 managing
 dependencies](https://deno.land/manual@v1.36.1/examples/manage_dependencies).
-
 
 ### Environment variables
 
@@ -223,4 +217,3 @@ $ apibara run --allow-env=testnet.env script.js
 ```
 
 **Note:** the `--allow-env` flag must come before the script name.
-
