@@ -1,0 +1,55 @@
+---
+title: Editor setup
+description: "Setup your code editor to get autocompletion working for Apibara indexers."
+updatedAt: 2024-02-13 10:00
+---
+
+# Setup your code editor for Apibara indexers
+
+Apibara indexers are powered by [the Deno Javascript
+runtime](https://deno.com/). If you haven't used Deno before, you need to setup
+your environment to get the best possible developer experience for Apibara
+indexers.
+
+- [Install the Deno runtime and cli](https://docs.deno.com/runtime/manual/).
+- [Setup your code editor/IDE](https://docs.deno.com/runtime/manual/getting_started/setup_your_environment).
+
+## Monorepo with Node, Bun and Deno
+
+If you're using a monorepo you want to enable Deno only for your indexer's
+project. You do that by customizing your editor's LSP configuration.
+
+Let's start with the following monorepo with two sub-projects: the frontend
+(for example Next.js) and the indexers.
+
+```txt
+.
+├── apps
+│   ├── frontend
+│   │   ├── app
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   └── indexers
+│       ├── deno.json
+│       └── src
+│           └── my-indexer.ts
+├── package.json
+└── turbo.json
+```
+
+If you're using VS Code, you can enable Deno for the `indexers` project only by
+adding the following configuration to `.vscode/settings.json`.
+
+```json [.vscode/settings.json]
+{
+  "deno.enable": true,
+  "deno.lint": true,
+  "deno.unstable": false,
+  "deno.enablePaths": ["./apps/indexers"]
+}
+```
+
+After that, you may have to restart the Deno LSP server and you will have
+autocompletion working in your indexers project.

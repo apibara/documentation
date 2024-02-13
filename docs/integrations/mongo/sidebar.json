@@ -1,0 +1,19 @@
+{
+    "items": [
+        {
+            "name": "Getting started",
+            "type": "page",
+            "path": "/"
+        },
+        {
+            "name": "Options",
+            "type": "page",
+            "path": "/options"
+        },
+        {
+            "name": "Use with MongoDB Atlas",
+            "type": "page",
+            "path": "/how-to-atlas"
+        }
+    ]
+}

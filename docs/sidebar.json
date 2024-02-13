@@ -1,0 +1,123 @@
+{
+    "sections": [
+        {
+            "name": "Getting Started",
+            "path": "/",
+            "items": [
+                {
+                    "name": "Overview",
+                    "type": "page",
+                    "path": "/"
+                },
+                {
+                    "name": "Getting Started",
+                    "type": "page",
+                    "path": "/getting-started"
+                }
+            ]
+        },
+        {
+            "name": "Building indexers",
+            "path": "/indexers",
+            "items": [
+                {
+                    "name": "Overview",
+                    "type": "page",
+                    "path": "/"
+                },
+                {
+                    "name": "Data filter",
+                    "type": "page",
+                    "path": "/filter"
+                },
+                {
+                    "name": "Factory mode",
+                    "type": "page",
+                    "path": "/factory-mode"
+                },
+                {
+                    "name": "Using NPM packages",
+                    "type": "page",
+                    "path": "/using-npm-packages"
+                },
+                {
+                    "name": "Editor setup",
+                    "type": "page",
+                    "path": "/editor-setup"
+                },
+                {
+                    "name": "Permissions",
+                    "type": "group",
+                    "path": "/permissions"
+                },
+                {
+                    "name": "Testing",
+                    "type": "group",
+                    "path": "/testing"
+                },
+                {
+                    "name": "Reference",
+                    "type": "page",
+                    "path": "/reference"
+                }
+            ]
+        },
+        {
+            "name": "Integrations",
+            "path": "/integrations",
+            "items": [
+                {
+                    "name": "Console",
+                    "type": "group",
+                    "path": "/console"
+                },
+                {
+                    "name": "PostgreSQL",
+                    "type": "group",
+                    "path": "/postgres"
+                },
+                {
+                    "name": "MongoDB",
+                    "type": "group",
+                    "path": "/mongo"
+                },
+                {
+                    "name": "Parquet",
+                    "type": "group",
+                    "path": "/parquet"
+                },
+                {
+                    "name": "Webhook",
+                    "type": "group",
+                    "path": "/webhook"
+                }
+            ]
+        },
+        {
+            "name": "DNA Protocol",
+            "path": "/dna",
+            "items": [
+                {
+                    "name": "Overview",
+                    "type": "page",
+                    "path": "/"
+                },
+                {
+                    "name": "Pending data",
+                    "type": "page",
+                    "path": "/pending-data"
+                },
+                {
+                    "name": "Typescript SDK",
+                    "type": "group",
+                    "path": "/typescript-sdk"
+                },
+                {
+                    "name": "Python SDK",
+                    "type": "group",
+                    "path": "/python-sdk"
+                }
+            ]
+        }
+    ]
+}

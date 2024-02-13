@@ -1,0 +1,14 @@
+{
+    "items": [
+        {
+            "name": "Overview",
+            "type": "page",
+            "path": "/"
+        },
+        {
+            "name": "CLI Options",
+            "type": "page",
+            "path": "/options"
+        }
+    ]
+}

@@ -1,0 +1,137 @@
+---
+title: How to access the network
+description: "Learn how to access the network from Apibara indexers."
+diataxis: how-to
+updatedAt: 2023-02-13
+---
+
+# How to access the network
+
+This guide shows you how to access the network from Apibara indexers.
+In other words, this is how to use `fetch` or functions that use `fetch`.
+
+For this guide, we are going to make a simple JSON-RPC. Notice that in practice
+making JSON-RPC requests inside your indexer will considerably slow down
+indexing speed.
+
+```ts [indexer.ts]
+export const config = {
+  streamUrl: "https://goerli.starknet.a5a.ch",
+  startingBlock: 900_000,
+  network: "starknet",
+  filter: {
+    header: { weak: false },
+  },
+  sinkType: "console",
+  sinkOptions: {},
+};
+
+export default async function transform(_block) {
+  const response = await fetch("https://free-rpc.nethermind.io/goerli-juno/", {
+    method: "POST",
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "starknet_specVersion",
+      params: [],
+    }),
+  });
+  const { result } = await response.json();
+  console.log(result);
+  return [];
+}
+```
+
+If you try to run this indexer, you will get the following error. This is
+because by default indexers cannot make network requests.
+
+:::cli-command
+
+```bash [Terminal]
+apibara run indexer.ts -A dna_xxx
+```
+
+```
+2024-02-13T13:51:53.897835Z  INFO acquiring persistence lock
+2024-02-13T13:51:53.897877Z  INFO lock acquired
+2024-02-13T13:51:53.911828Z  INFO status server listening on 0.0.0.0:43991
+2024-02-13T13:51:54.198360Z  INFO handle block batch block=900000 status=finalized
+fatal sink error
+├╴at /dna/sinks/sink-common/src/error.rs:152:14
+├╴failed to transform batch data
+├╴error while streaming data
+│
+╰─▶ indexer script operation failed
+    ├╴at /dna/script/src/script.rs:339:22
+    ├╴failed to run indexer event loop
+    ╰╴error: Error: Requires net access to "free-rpc.nethermind.io", run again with the --allow-net flag
+          at opFetch (ext:deno_fetch/26_fetch.js:73:14)
+          at mainFetch (ext:deno_fetch/26_fetch.js:182:59)
+          at ext:deno_fetch/26_fetch.js:465:9
+          at new Promise (<anonymous>)
+          at fetch (ext:deno_fetch/26_fetch.js:428:18)
+          at transform (file:///path/to/indexer.ts:13:25)
+          at [script]:14:39
+```
+
+:::
+
+## Allow specific hostnames
+
+The best option is to allow specific hostnames. You can do this by using the
+`--allow-net` option and specifying a comma-separated list of allowed hostnames.
+While not always required, **you should use the --allow-net flag before the
+script path**.
+
+:::cli-command
+
+```bash [Terminal]
+apibara run --allow-net=infura.com,free-rpc.nethermind.io indexer.ts -A dna_xxx
+```
+
+```
+2024-02-13T13:57:11.529777Z  INFO acquiring persistence lock
+2024-02-13T13:57:11.529817Z  INFO lock acquired
+2024-02-13T13:57:11.543764Z  INFO status server listening on 0.0.0.0:44903
+2024-02-13T13:57:11.825759Z  INFO handle block batch block=900000 status=finalized
+0.6.0
+2024-02-13T13:57:11.918706Z  INFO []
+```
+
+:::
+
+Notice that `free-rpc.nethermind.io` and `nethermind.io` are two distinct hostnames.
+
+## Allow all hostnames
+
+If you want to grant access to all hostnames, use the `--allow-net` flag without
+any argument. This option is less secure but more convenient.
+
+:::cli-command
+
+```bash [Terminal]
+apibara run --allow-net indexer.ts -A dna_xxx
+```
+
+```
+2024-02-13T13:57:11.529777Z  INFO acquiring persistence lock
+2024-02-13T13:57:11.529817Z  INFO lock acquired
+2024-02-13T13:57:11.543764Z  INFO status server listening on 0.0.0.0:44903
+2024-02-13T13:57:11.825759Z  INFO handle block batch block=900000 status=finalized
+0.6.0
+2024-02-13T13:57:11.918706Z  INFO []
+```
+
+:::
+
+## Top-level await support
+
+Apibara indexers support awaiting at the top level.
+
+```ts [indexer.ts]
+
+const response = await fetch("https://my-endpoint.org");
+const someRemoteObject = await response.json();
+
+export const config = { ... };
+```

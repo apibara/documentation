@@ -1,0 +1,99 @@
+---
+title: Building indexers with Apibara
+description: "Learn how to index onchain data using Apibara."
+diataxis: explanation
+updatedAt: 2024-02-13 10:00
+---
+
+# Building indexers with Apibara
+
+Apibara indexers perform three actions:
+
+- **Stream** onchain data into your indexer, using DNA.
+- **Transform** the data into a higher-level representation that maps to your application domain.
+- **Integrate** data with the rest of your application by sending it to other services.
+
+All three steps are controlled by an _indexer script_, that is a Javascript or Typescript file.
+
+At minimum, a script needs to export the following:
+
+- `config`: contains the stream and sink (integration) configuration.
+- a default function used to transform raw onchain data.
+
+Optionally, indexers can export a `factory` function to [enable factory
+mode](/docs/indexers/factory-mode). Factory mode changes the indexer behavior
+and it's documented separately.
+
+## Permissions
+
+By default, Apibara indexers have no access to environment variables, network,
+and the filesystem. This is done to protect your system from malicious
+Javascript dependencies. [Refer to the permissions section to learn more about
+it](/docs/indexers/permissions).
+
+## Configuration
+
+The `config` object configures both the stream and the sink.
+
+- `streamUrl`: the stream URL. Operators can override this field with the `--stream-url` CLI flag.
+- `startingBlock`: start streaming data from this block.
+- `network`: the network type, e.g. `starknet` to stream data from Starknet or a Starknet-based appchain.
+- `finality`: data status finality. Can be one of `DATA_STATUS_PENDING`,
+  `DATA_STATUS_ACCEPTED`, or `DATA_STATUS_FINALIZED`. Defaults to accepted.
+- `filter`: the filter used to select onchain data. [Learn more about data filtering here](/docs/indexers/filter).
+- `sinkType`: send data to the specified sink plugin. See the "Integrations"
+  section in the sidebar to see which sinks are available.
+- `sinkOptions`: options used to configure the sink.
+
+If you're using Typescript, you can make the `config` object type-safe by importing the appropriate types:
+
+```ts [indexer.ts]
+import type {
+  Config,
+  NetworkOptions,
+  SinkOptions,
+} from "https://esm.sh/@apibara/indexer";
+
+export const config: Config<NetworkOptions, SinkOptions> = {
+  streamUrl,
+  // ...
+};
+```
+
+You can also further restrict the network and sink options. In this case your
+editor will provide autocompletion for the available `sinkOptions`.
+Refer to the [editor setup page](/docs/indexers/editor-setup) to learn how to
+configure your editor for Apibara.
+
+```ts [indexer.ts]
+import type { Config, NetworkOptions } from "https://esm.sh/@apibara/indexer";
+import type { Console } from "https://esm.sh/@apibara/indexer/sink/console";
+
+export const config: Config<NetworkOptions, Console> = {
+  streamUrl,
+  // ...
+  sinkType: "console",
+  sinkOptions: {},
+};
+```
+
+## Data transformation
+
+All indexers must export a default function (usually called `transform`) that
+accepts a single parameter and returns a JSON object passed to the downstream
+integration.
+
+```ts [indexer.ts]
+export default function transform(block) {
+  // Do something here.
+  return data;
+}
+```
+
+The transform function can be `async` in case you need to perform async
+operations like network access ([read more about network access
+here](/docs/indexers/network-access)).
+
+Notice that the value returned by the transform function **must be JSON-encodable**.
+For web3 applications, this means you need to convert `BigInt` to either a
+`number` or a `string` (recommended).

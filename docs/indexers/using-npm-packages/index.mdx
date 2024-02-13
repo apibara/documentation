@@ -1,0 +1,27 @@
+---
+title: Using NPM packages
+description: "Learn how to load NPM packages inside Apibara indexers."
+updatedAt: 2024-02-13 10:00
+---
+
+# Using NPM packages
+
+Apibara indexers are powered by the Deno Javascript runtime, this makes them
+incredibly fast and self-contained.
+
+Indexers dependencies are loaded from external CDNs like:
+
+- [ESM.sh](https://esm.sh/). This is the recommended choice.
+- [JsDelivr](https://www.jsdelivr.com/).
+
+You can read more about managing dependencies on [the official Deno
+documentation](https://docs.deno.com/runtime/tutorials/manage_dependencies).
+
+## Examples
+
+The following script loads common utilities from Starknet.js and Viem.
+
+```ts [indexer.ts]
+import { hash, uint256 } from "https://esm.run/starknet@5.14";
+import { formatUnits } from "https://esm.run/viem@1.4";
+```

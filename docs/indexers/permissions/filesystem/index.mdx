@@ -1,0 +1,69 @@
+---
+title: How to access the filesystem
+description: "Learn how to access the filesystem from Apibara indexers."
+diataxis: how-to
+updatedAt: 2023-02-13 10:00
+---
+
+# How to access the filesystem
+
+This guide shows you how to access the filesystem from Apibara indexers. After
+reading this guide, you'll be able to use the [Deno filesystem
+API](https://docs.deno.com/deploy/api/runtime-fs) from within your indexer.
+
+## Reading files
+
+Consider the following indexer that reads a list of smart contract addresses
+from a file.
+
+```ts [indexer.ts]
+const addresses = await Deno.readTextFile("/path/to/file.txt");
+console.log(addresses);
+
+export const config = {
+  streamUrl: "https://goerli.starknet.a5a.ch",
+  startingBlock: 900_000,
+  network: "starknet",
+  filter: {
+    header: { weak: false },
+  },
+  sinkType: "console",
+  sinkOptions: {},
+};
+
+export default async function transform(_block) {
+  return [];
+}
+```
+
+If you run it you will get the following error.
+
+:::cli-command
+
+```bash [Terminal]
+apibara run indexer.ts -A dna_xxx
+```
+
+```
+sink configuration error
+├╴at /dna/sinks/sink-common/src/error.rs:142:14
+├╴failed to load configuration from script
+│
+╰─▶ indexer script operation failed
+    ├╴at /dna/script/src/script.rs:339:22
+    ├╴failed to run indexer event loop
+    ╰╴error: Error: Requires read access to "/path/to/file.txt", run again with the --allow-read flag
+          at Object.readTextFile (ext:deno_fs/30_fs.js:751:29)
+          at file:///path/to/indexer.ts:1:30
+```
+
+:::
+
+You can grant access to the file with the `--allow-read` flag. Without
+arguments, the flag grants access to any directory and file. You can restrict
+access with a comma-separated list of files and directories.
+
+## Writing files
+
+The Apibara CLI provides write access to the filesystem using the `--allow-write` flag.
+This flag works exactly the same as the read flag.

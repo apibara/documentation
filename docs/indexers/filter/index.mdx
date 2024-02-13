@@ -1,0 +1,144 @@
+---
+title: Filtering onchain data
+description: "Learn how to use filters to get exactly the onchain data you need."
+diataxis: explanation
+updatedAt: 2024-02-13 10:00
+---
+
+# Filtering onchain data
+
+Apibara DNA streams deliver only the data needed by your application, that's
+how they achieve their unbeatable performance and price.
+
+For this to happen, the DNA server needs to know what data your application needs,
+this is done through _filters_. This guide explains how filters work at a high-level,
+without going into network-specific details.
+
+Find network-specific information in the following pages:
+
+- [Starknet](/docs/networks/starknet/filter).
+
+## Why we need filters
+
+Apibara DNA filters data for the following reasons:
+
+- Better developer experience: our servers go through all onchain data so you
+  don't have to. By filtering data server side, your application only gets what
+  is needed.
+- Faster indexing speed: we use advanced techniques like bitmaps to quickly
+  filter through millions of blocks of data.
+- Reduced cost: network egress fees are expensive. Filtering data before
+  sending it over public networks reduces our and ultimately your cost.
+
+## How filters work
+
+Filters are _applied_ on all blocks, from genesis up to the most recent pending
+block. If any filter _matches_, the DNA stream sends this data (grouped by
+block) to the client.
+
+As an example, let's consider a theoretical blockchain where a block is
+comprised of the following pieces:
+
+- header: contains block hash, timestamp, etc.
+- transactions: an ordered list of transactions submitted by users.
+- receipts: an ordered list of transaction receipts.
+- logs/events: logs/events emitted by executing transactions.
+
+The filter for this blockchain will have the following filters available:
+
+- header: always include it or not.
+- transactions: filter by sender or target contract.
+- logs/events: filter by contract emitting the event or by the event type.
+
+Notice that as a developer you can include multiple transaction and log filters.
+**A transaction or log is included if any filter matches**. Furthermore,
+**transactions, receipts, and logs ordering is preserved** independently of the filters
+order.
+
+A transaction/log filter matches if _all_ filter conditions match.
+
+A single filter can produce multiple pieces of data, for example a transaction filter
+can also send the receipt of a matching transaction like in the following diagram.
+
+```txt
+╔════════════════════════╗
+║         Block          ║
+║┌──────────────────────┐║
+║│  Transactions        │║
+║├──────────────────────┤║                                ╔════════════════════════╗
+║│  0xA to 0xC          │║       {                        ║          Data          ║
+║├──────────────────────┤║         transactions: [        ║┌──────────────────────┐║
+║│  0xA to 0xD          │║           { from: "0xA" }      ║│  Transactions        │║
+║├──────────────────────┤║         ]                      ║├──────────────────────┤║
+║│  ...                 │║       }                        ║│  0xA to 0xC          │║
+║├──────────────────────┤║                │               ║├──────────────────────┤║
+║│  0xB to 0xD          │║                │               ║│  0xA to 0xD          │║
+║└──────────────────────┘║─────────filter(●)─────────────▶️║└──────────────────────┘║
+║┌──────────────────────┐║                                ║┌──────────────────────┐║
+║│  Receipts            │║                                ║│  Receipts            │║
+║├──────────────────────┤║                                ║├──────────────────────┤║
+║│  0xA to 0xC          │║                                ║│  0xA to 0xC          │║
+║├──────────────────────┤║                                ║├──────────────────────┤║
+║│  0xA to 0xD          │║                                ║│  0xA to 0xD          │║
+║├──────────────────────┤║                                ║└──────────────────────┘║
+║│  ...                 │║                                ╚════════════════════════╝
+║├──────────────────────┤║
+║│  0xB to 0xD          │║
+║└──────────────────────┘║
+╚════════════════════════╝
+```
+
+### Examples
+
+**Example 1**
+
+The following filter matches all transactions from address `0xA` OR `0xB`.
+
+```ts
+const filter = {
+  transactions: [{ from: "0xA" }, { from: "0xB" }],
+};
+```
+
+**Example 2**
+
+The following filter matches all transactions from address `0xA` to `0xC`.
+All other transactions from `0xA` will not match.
+
+```ts
+const filter = {
+  transactions: [{ from: "0xA", to: "0xC" }],
+};
+```
+
+**Example 3**
+
+The following filter matches _all transactions_.
+
+```ts
+const filter = {
+  transactions: [{}],
+};
+```
+
+**Example 4**
+
+The following filter is equivalent to the previous example, but performs extra
+work on the server. In general, this is not an issue since the server
+deduplicates data.
+
+```ts
+const filter = {
+  transactions: [
+    { from: "0xA" }, // First filter transactions from 0xA...
+    {}, // Then re-scan and include all transactions.
+  ],
+};
+```
+
+## Weak header filter
+
+Header filters can be configured to be _weak_. Weak filters will return data
+only if any other filter matches.
+This is used to receive block headers while avoiding receiving blocks that
+contain no information about your application.

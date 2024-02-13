@@ -1,0 +1,24 @@
+{
+    "items": [
+        {
+            "name": "Overview",
+            "type": "page",
+            "path": "/"
+        },
+        {
+            "name": "Environment",
+            "type": "page",
+            "path": "/environment"
+        },
+        {
+            "name": "Network",
+            "type": "page",
+            "path": "/network"
+        },
+        {
+            "name": "Filesystem",
+            "type": "page",
+            "path": "/filesystem"
+        }
+    ]
+}

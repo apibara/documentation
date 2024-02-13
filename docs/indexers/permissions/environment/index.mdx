@@ -1,0 +1,129 @@
+---
+title: How to access environment variables
+description: "Learn how to access environment variables from Apibara indexers."
+diataxis: how-to
+updatedAt: 2023-02-13
+---
+
+# How to access environment variables
+
+This guide will show you how to grant access to environment variables to an
+Apibara indexer.
+
+You script can access any environment variable with the `Deno.env.get` function.
+This function returns the value of the environment variable or an undefined value
+if the variable is not set.
+
+```ts
+const value = Deno.env.get("MY_VAR");
+```
+
+Usually, environment variables are used to configure and indexer for different
+deployments (e.g. testnet and mainnet). In this example we use environment
+variables to change the indexer's starting block.
+
+```ts [indexer.ts]
+export const config = {
+  streamUrl: "https://goerli.starknet.a5a.ch",
+  startingBlock: Number(Deno.env.get("STARTING_BLOCK") || 0),
+  network: "starknet",
+  filter: {
+    header: { weak: false },
+  },
+  sinkType: "console",
+  sinkOptions: {},
+};
+
+export default async function transform(_block) {
+  return [];
+}
+```
+
+If you run this example you will get an error like the following.
+
+:::cli-command
+
+```bash [Terminal]
+apibara run indexer.ts -A dna_xxx
+```
+
+```
+sink configuration error
+├╴at /dna/sinks/sink-common/src/error.rs:142:14
+├╴failed to load configuration from script
+│
+╰─▶ indexer script operation failed
+    ├╴at /dna/script/src/script.rs:339:22
+    ├╴failed to run indexer event loop
+    ╰╴error: Error: Requires env access to "STARTING_BLOCK", run again with the --allow-env flag
+          at Object.getEnv [as get] (ext:runtime/30_os.js:86:14)
+          at file:///path/to/indexer.ts:3:34
+```
+
+:::
+
+## Allow access to existing environment variables
+
+The easiest way to solve this issue is by allowing the indexer to access
+existing environment variables.
+
+First we set the `STARTING_BLOCK` variable in the current shell session.
+
+```bash [Terminal]
+export STARTING_BLOCK=100000
+```
+
+Then we run the script again, this time with the `--allow-env-from-env` flag.
+This flag takes a comma-separated list of environment variables the indexer can
+access. Notice that **the position of the flag is significant, it must come
+before the script name**.
+
+:::cli-command
+
+```bash [Terminal]
+apibara run --allow-env-from-env=STARTING_BLOCK indexer.ts -A dna_xxx
+```
+
+```
+2024-02-13T13:33:32.619668Z  INFO acquiring persistence lock
+2024-02-13T13:33:32.619718Z  INFO lock acquired
+2024-02-13T13:33:32.634648Z  INFO status server listening on 0.0.0.0:32987
+2024-02-13T13:33:33.005900Z  INFO handle block batch block=100000 status=finalized
+2024-02-13T13:33:33.006784Z  INFO []
+2024-02-13T13:33:33.006846Z  INFO handle block batch block=100001 status=finalized
+2024-02-13T13:33:33.007102Z  INFO []
+```
+
+:::
+
+## Using .env files
+
+The Apibara CLI can load environment variables from .env files.
+
+Create a `testnet.env` file with the following content.
+
+```bash [testnet.env]
+STARTING_BLOCK=200000
+```
+
+Then run the CLI again, this time with the `--allow-env` flag. This flag accepts
+the path to a .env file. Like the previous flag, **the position of the flag is
+significant, it must come before the script name**.
+
+:::cli-command
+
+```bash [Terminal]
+apibara run --allow-env=testnet.env indexer.ts -A dna_xxx
+```
+
+```
+2024-02-13T13:40:21.053736Z  INFO acquiring persistence lock
+2024-02-13T13:40:21.053781Z  INFO lock acquired
+2024-02-13T13:40:21.067066Z  INFO status server listening on 0.0.0.0:43259
+2024-02-13T13:40:21.474451Z  INFO handle block batch block=200000 status=finalized
+2024-02-13T13:40:21.475397Z  INFO []
+2024-02-13T13:40:21.475460Z  INFO handle block batch block=200001 status=finalized
+2024-02-13T13:40:21.475715Z  INFO []
+```
+
+:::
