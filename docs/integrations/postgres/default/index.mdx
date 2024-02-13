@@ -1,0 +1,31 @@
+---
+title: Default mode
+description: "Sync onchain events to PostgreSQL with Apibara."
+diataxis: how-to
+updatedAt: 2024-02-13
+---
+
+# Default mode for PostgreSQL
+
+Use default mode to store a list of immutable entries into a PostgreSQL table.
+
+## Usage
+
+In default mode, the transform function must return a list of rows that will be
+inserted into the PostgreSQL table.
+
+In this mode, the [only required options](/docs/integrations/postgres/options)
+are `tableName` and `connectionString`.
+
+## Table schema
+
+Apibara requires the target table to have a `_cursor bigint` column. This column
+is used to track at which block a row is inserted to handle chain
+reorganizations.
+
+```sql
+create table yourtable(
+  -- your columns here
+  _cursor bigint
+)
+```

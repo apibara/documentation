@@ -1,6 +1,40 @@
 ---
 title: How to synchronize onchain data to Supabase
-description: ""
+description: "Learn how to use Apibara to synchronize onchain data to Supabase."
+diataxis: how-to
+updatedAt: 2024-02-13
 ---
 
-Supabase
+# How to synchronize onchain data to Supabase
+
+This guide will show you how to synchronize onchain data to your Supabase
+instance.
+
+## Create a table in Supabase
+
+The first step is to create a table in Supabase. In this case, we are using the
+SQL Editor but you can use any tool you like.
+
+![Create table in Supabase](create-table.png)
+
+## Grab the Supabase connection string
+
+In your project's settings, navigate to the "Database configuration" section and
+copy the connection string.
+
+**Note**: you need change the connection string to include the password you set
+when creating the database.
+
+![Get connection string](connection-string.png)
+
+## Connect the indexer
+
+Set the `POSTGRES_CONNECTION_STRING` environment variable to the value copied
+from Supabase.
+
+```bash [Terminal]
+export POSTGRES_CONNECTION_STRING="postgres://postgres.[YOUR-INSTANCE]:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
+```
+
+Run the indexer and after a few seconds you will see onchain data appear in your
+database.

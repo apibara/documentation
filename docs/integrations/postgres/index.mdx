@@ -1,6 +1,77 @@
 ---
-title: Getting started with PostgreSQL
-description: ""
+title: Getting started with the PostgreSQL sink
+description: "Learn how to stream onchain data to PostgreSQL."
+diataxis: explanation
+updatedAt: 2024-02-13
 ---
 
-Hello
+# Getting started with the PostgreSQL sink
+
+The PostgreSQL integration is used to mirror onchain data to a PostgreSQL
+database. Data is automatically inserted as it's produced by the chain, and it's
+invalidated in case of chain reorganizations.
+
+- This integration can be used to populate SQL tables with data from one or more networks and smart contracts.
+- Easily integrate with AI libraries such as Langchain.
+- Change how tables are joined or queried without re-indexing.
+
+## Installation
+
+```bash [Terminal]
+apibara plugins install sink-postgres
+```
+
+## Usage
+
+This integration provides two modes:
+
+- [**default mode**](/docs/integrations/postgres/default): insert immutable data
+  into the table. For example, a list of `Transfer` events.
+- [**entity mode**](/docs/integrations/postgres/entity): insert mutable data
+  into the table. Rows represent the state of entities at a specific block. For
+  example, account balances.
+
+Refer to each mode documentation to learn more about the required table schema
+and options.
+
+### Table schema
+
+Apibara doesn't manage the target table schema for you, you need to
+create it using your favorite tool. The two modes require different table schemas,
+so refer to their documentation to learn more.
+
+### Two (or more) indexers, one table
+
+You can have two or more indexers write data to the same table by leveraging the
+`invalidate` option. This option adds additional conditions to the invalidation
+query so that each indexer handles its rows only.
+
+The following example shows an indexer that manages `Transfer` events, but only
+for the `"ETH"` token. Notice how data returned by the transform function has an
+additional `"token_symbol"` column. Without this column, the indexer would
+"forget" about data it wrote.
+
+```ts [indexer.ts]
+export const config = {
+  // ...your config
+  sinkType: "postgres",
+  sinkOptions: {
+    tableName: "transfers",
+    invalidate: [{ column: "token_symbol", value: "ETH" }],
+  },
+};
+
+export default function transform(block) {
+  return [
+    {
+      ...myData,
+      token_symbol: "ETH",
+    },
+  ];
+}
+```
+
+### TLS
+
+Apibara supports different TLS modes to connect to your database. Refer to the
+[options page](/docs/integrations/postgres/options) to learn more.

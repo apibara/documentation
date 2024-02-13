@@ -1,6 +1,34 @@
 ---
 title: PostgreSQL sink options
-description: ""
+description: "Apibara PostgreSQL sink reference page."
+diataxis: reference
+updatedAt: 2024-02-13
 ---
 
-Options
+# PostgreSQL sink options
+
+This page contains a reference of all available options for the PostgreSQL sink.
+
+## General
+
+- `connectionString: string`: URL used to connect to your PostgreSQL database.
+  **Since the connection string usually contains the username/password you shouldn't
+  set this option from the script, but use the `POSTGRES_CONNECTION_STRING`
+  environment variable**.
+- `tableName: string`: table where data will be inserted. The table must exist and
+  it must have a schema compatible with the data returned by the transform
+  step.
+- `invalidate: { column: string, value: string }[]`: additional conditions
+  used when invalidating data. You should use this option when running multiple
+  indexers writing data to the same table.
+- `entityMode: boolean`: enable entity mode. [Refer to this page to learn more
+  about entity mode](/docs/integrations/postgres/entity).
+
+## TLS
+
+- `noTls: boolean`: disable TLS when connecting to the server.
+- `tlsCertificate: string`: path to the PEM-formatted X509 TLS certificate.
+- `tlsDisableSystemRoots: boolean`: disable system root certificates.
+- `tlsAcceptInvalidCertificates: boolean`: accept invalid TLS certificates.
+- `tlsAcceptInvalidHostnames: boolean`: disable hostname validation.
+- `tlsUseSni: boolean`: use Server Name Identification (SNI).

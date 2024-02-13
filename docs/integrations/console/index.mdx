@@ -1,6 +1,31 @@
 ---
-title: Getting started with PostgreSQL
-description: ""
+title: Getting started with the console sink
+description: "Learn how to use the console sink."
+diataxis: explanation
+updatedAt: 2024-02-13
 ---
 
-Hello
+# Getting started with the console sink
+
+The console sink prints the value returned by the transform function to the standard output.
+
+This sink is useful when developing an indexer since you can quickly check the
+value returned by the transformation without setting up any external service.
+
+## Installation
+
+```bash [Terminal]
+apibara plugins install sink-console
+```
+
+## Usage
+
+This sink doesn't have any configuration option.
+
+```ts [indexer.ts]
+export const config = {
+  // ...
+  sinkType: "console",
+  sinkOptions: {},
+};
+```

@@ -6,6 +6,16 @@
             "path": "/"
         },
         {
+            "name": "Default mode",
+            "type": "page",
+            "path": "/default"
+        },
+        {
+            "name": "Entity mode",
+            "type": "page",
+            "path": "/entity"
+        },
+        {
             "name": "Options",
             "type": "page",
             "path": "/options"

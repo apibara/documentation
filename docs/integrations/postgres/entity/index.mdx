@@ -1,0 +1,108 @@
+---
+title: Entity mode
+description: "Sync onchain events to PostgreSQL with Apibara."
+diataxis: how-to
+updatedAt: 2024-02-13
+---
+
+# Entity mode for PostgreSQL
+
+Entity mode is used to store entities in the table. Entities represent the state
+of an object at a specific point in time.
+
+## Usage
+
+To enable entity mode, set the `entityMode` option to `true`.
+
+In entity mode, the behavior of the transform function changes. The transform
+function must return a list of operations:
+
+- `{ insert: data }`: insert new data into the table.
+- `{ update: data, entity: key }`: update the entity uniquely identified by key
+  with the new data.
+
+## Table schema
+
+The table schema for entity mode is different from the default mode. The type of
+`_cursor` is `int8range` since the integration must track for which blocks an
+entity state is valid.
+
+```sql
+create table yourtable(
+  -- your columns
+  _cursor int8range
+);
+```
+
+The following diagram shows how `_cursor` works. Each row represents an account
+balance at the given block interval, with the most recent balance having
+infinite upper bound.
+
+```txt
+                                 10          17         23        blocks
+                            ─────┴───────────┴──────────┴────────────────▶
+╔═════════════════════════════╗  └─────┬─────┘
+║          Balances           ║        │     └────┬─────┘
+╟───────┬──────────┬──────────╢        │          │     └────┬───── ─ ─ ─
+║ key   │ value    │ _cursor  ║        │          │          │
+╠═══════╪══════════╪══════════╣        │          │          │
+║ 0xAB  │ 100      │ [10,17)  ║────────╯          │          │
+╟───────┼──────────┼──────────╢                   │          │
+║ 0xAB  │ 200      │ [17,23)  ║───────────────────╯          │
+╟───────┼──────────┼──────────╢                              │
+║ 0xAB  │ 150      │ [23,∞)   ║──────────────────────────────╯
+╚═══════╧══════════╧══════════╝
+```
+
+## Querying data
+
+To query the latest state for an entity, add the `upper_inf(_cursor)` condition
+to the `WHERE` clause.
+
+```sql
+SELECT * FROM balances WHERE upper_inf(_cursor);
+```
+
+You can query for the state at a specific block using the `<@` operator.
+
+```sql
+SELECT * FROM balances WHERE 9123456::bigint <@ _cursor
+```
+
+## Example
+
+Consider a smart contract for a game that emits a `GameStarted(game_id)` event
+when a player starts a new game, and `GameEnded(game_id, score)` when the game
+ends.
+
+```ts [indexer.js]
+export default function transform({ header, events }) {
+  const { timestamp } = header;
+  return events.flatMap(({ event }) => {
+    if (isGameStarted(event)) {
+      const { game_id } = decodeEvent(event);
+      return {
+        insert: {
+          game_id,
+          status: "STARTED",
+          created_at: timestamp,
+        },
+      };
+    } else if (isGameEnded(event)) {
+      const { game_id, score } = decodeEvent(event);
+      return {
+        entity: {
+          game_id,
+        },
+        update: {
+          score,
+          status: "ENDED",
+          updated_at: timestamp,
+        },
+      };
+    } else {
+      return [];
+    }
+  });
+}
+```

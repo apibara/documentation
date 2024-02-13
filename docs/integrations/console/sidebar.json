@@ -4,16 +4,6 @@
             "name": "Getting started",
             "type": "page",
             "path": "/"
-        },
-        {
-            "name": "Options",
-            "type": "page",
-            "path": "/options"
-        },
-        {
-            "name": "Use with Supabase",
-            "type": "page",
-            "path": "/how-to-supabase"
         }
     ]
 }
