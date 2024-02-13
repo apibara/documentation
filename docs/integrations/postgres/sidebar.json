@@ -24,6 +24,11 @@
             "name": "Use with Supabase",
             "type": "page",
             "path": "/how-to-supabase"
+        },
+        {
+            "name": "Use with Timescale",
+            "type": "page",
+            "path": "/how-to-timescale"
         }
     ]
 }

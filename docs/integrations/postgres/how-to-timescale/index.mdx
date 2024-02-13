@@ -1,0 +1,38 @@
+---
+title: How to synchronize onchain data to Timescale
+description: "Learn how to use Apibara to synchronize onchain data to Timescale."
+diataxis: how-to
+updatedAt: 2024-02-13
+---
+
+# How to synchronize onchain data to Timescale
+
+This guide will show you how to synchronize onchain data to your Timescale
+instance.
+
+## Grab the Timescale connection string
+
+The first step is to grab the connection string from your Timescale dashboard.
+If you have the addon, you should use the "connection pooler" connection string
+since the number of concurrent connections is limited.
+
+![Timescale connection string](connection-string.png)
+
+## Create the table
+
+Use the connection string from the previous point to create the table. In this
+tutorial, we are going to use `pgcli` but any tool is fine.
+
+![Create table](create-table.png)
+
+## Connect the indexer
+
+Set the `POSTGRES_CONNECTION_STRING` environment variable to the value copied
+from the dashboard.
+
+```bash [Terminal]
+export POSTGRES_CONNECTION_STRING="postgres://tsdbadmin:[YOUR-PASSWORD]@[YOUR-INSTANCE].tsdb.cloud.timescale.com:38660/tsdb?sslmode=require"
+```
+
+Run the indexer and after a few seconds you will see onchain data appear in your
+database.
