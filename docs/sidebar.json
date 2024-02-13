@@ -54,11 +54,6 @@
                     "name": "Testing",
                     "type": "group",
                     "path": "/testing"
-                },
-                {
-                    "name": "Reference",
-                    "type": "page",
-                    "path": "/reference"
                 }
             ]
         },

@@ -1,6 +1,77 @@
 ---
-title: Factory mode
+title: How to use factory mode
 description: "Learn how to update filters at runtime."
+diataxis: how-to
+updatedAt: 2024-02-13
 ---
 
-# Factory mode
+# How to use factory mode
+
+In some cases, developers don't know which smart contracts they need to index in
+advance. This is the case if the smart contracts are deployed by other smart
+contracts (the factory pattern). Apibara provides a mechanism to update the data
+filters at runtime, in response to onchain events.
+
+## Enabling factory mode
+
+Enable factory mode by exporting a `factory` function from your indexer.
+
+```ts [indexer.ts]
+export function factory(block) {
+  // factory handler here.
+}
+```
+
+Notice that this changes the indexer behavior the following way:
+
+- `config.filter` specifies what data is streamed into the `factory` function.
+- the `factory` function is responsible for updating the main data stream filter.
+- the default `transform` function is invoked with data from the main data stream.
+
+The following diagram show how data flows in an indexer that uses factory mode.
+It is important to know that the factory and main data streams are synced, that is
+the `factory` function will never be invoked with a block older than the most
+recently invoked transform function.
+
+```txt
+      config.filter
+
+            │
+            │   ┌────────────┐                ┌────────────┐
+            ◎──▶│  factory   │───────────────▶│  factory   │─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+start factory   └────────────┘                └────────────┘
+ data stream           │                             │
+                       │                             │
+                       │                             │
+                       │       ┌────────────┐        │         ┌────────────┐
+                       ◎──────▶│ transform  │────────◎────────▶│ transform  │─ ─
+             start main        └────────────┘    merge new     └────────────┘
+             data stream                        filter with
+                                               previous and
+                                                 reconnect
+```
+
+## Implementing the factory function
+
+The factory function is used to build the main stream data filter. The function
+is invoked with the data filtered by `config.filter` and should return a new
+(optional) filter and some (optional) data passed to the downstream integration.
+
+Filters returned by subsequent invocations of the factory are merged together.
+
+```ts [indexer.ts]
+export function factory(block) {
+  const filter = {
+    header: { weak: true },
+    // Build event filters based on the events in the current block.
+    events: filterDeployedContracts(block),
+  };
+  // Store deployed contracts in the integration.
+  const data = deployedContractsInfo(block);
+
+  return {
+    filter,
+    data,
+  };
+}
+```
