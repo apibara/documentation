@@ -1,6 +1,23 @@
 ---
-title: Getting started with PostgreSQL
-description: ""
+title: Getting started with the Parquet sink
+description: "Learn how to generate Parquet datasets with Apibara."
+diataxis: explanation
+updatedAt: 2024-02-13
 ---
 
-Hello
+# Getting started with the Parquet sink
+
+**Notice**: the Parquet integration is still in the early stage and subject to
+change.
+
+The Parquet integration generates datasets containing onchain data.
+Parquet is the standard file format used by analytics applications such as:
+
+- The Pandas and Polars data frame libraries for Python.
+- DuckDB, an in-process SQL Online Analytical Processing (OLAP) database.
+
+## Installation
+
+```bash [Terminal]
+apibara plugins install sink-parquet
+```
