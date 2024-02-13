@@ -1,6 +1,17 @@
 ---
-title: PostgreSQL sink options
-description: ""
+title: Webhook sink options
+description: "Apibara Webhook sink reference page."
+diataxis: reference
+updatedAt: 2024-02-13
 ---
 
-Options
+# Webhook sink options
+
+This page contains a reference of all available options for the Webhook sink.
+
+## General
+
+- `targetUrl: string`: URL where the stream data will be posted to.
+- `raw: boolean`: if set to `true`, the payload will be the data returned by
+  the transform function. Otherwise, wrap the data in JSON-object together
+  with its cursors.

@@ -9,11 +9,6 @@
             "name": "Options",
             "type": "page",
             "path": "/options"
-        },
-        {
-            "name": "Use with Supabase",
-            "type": "page",
-            "path": "/how-to-supabase"
         }
     ]
 }

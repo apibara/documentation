@@ -1,6 +1,70 @@
 ---
-title: Getting started with PostgreSQL
-description: ""
+title: Getting started with the Webhook sink
+description: "Learn how to send onchain data to webhooks with Apibara."
+diataxis: explanation
+updatedAt: 2024-02-13
 ---
 
-Hello
+# Getting started with the Webhook sink
+
+The webhook integration provides a way to call a predefined HTTP endpoint for
+each new batch of data produced by a DNA stream.
+
+This integration is well suited for the following tasks:
+
+- build an indexer using serverless technologies. You can invoke serverless
+  functions such as, but not limited to, AWS Lambda, Supabase Functions,
+  Cloudflare Functions, and Vercel Functions.
+- start a background job on Inngest or other job queues.
+- push messages into a message queue like Kafka or AWS SNS.
+- send notifications using the Discord or Telegram API.
+
+## Installation
+
+```bash [Terminal]
+apibara plugins install sink-webhook
+```
+
+## Standard mode
+
+In standard mode (default), the webhook is invoked with the following payload.
+The `cursor` property contains the block number and hash (cursor) of the first
+block in the batch, while `end_cursor` contains the cursor of the last block in
+the batch.
+
+```ts
+type Cursor = {
+  /** Block number. */
+  orderKey: string;
+  /** Block hash. */
+  uniqueKey: string;
+};
+
+type Payload = {
+  data: {
+    cursor: Cursor;
+    end_cursor: Cursor;
+    finality: string;
+    batch: object[];
+  };
+};
+```
+
+On chain reorganizations, the webhook is invoked with the following payload.
+
+```ts
+type Payload = {
+  invalidate: {
+    cursor: Cursor;
+  };
+};
+```
+
+## Raw mode
+
+In raw mode, the webhook is invoked with the data returned by the transform
+function. This mode is useful if you need to send data to an external service
+that expects the payload in a specific way. Users use raw mode to implement
+Telegram and Discord bots.
+
+Notice that chain reorganizations are ignored when using raw mode.
