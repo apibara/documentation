@@ -1,4 +1,24 @@
 ---
 title: MongoDB sink options
-description: ""
+description: "Apibara MongoDB sink reference page."
+diataxis: reference
+updatedAt: 2024-02-13
 ---
+
+# MongoDB sink options
+
+This page contains a reference of all available options for the MongoDB sink.
+
+## General
+
+- `connectionString: string`: the Mongo connection URL of your database. **Since
+  the connection string usually contains the username/password you shouldn't set
+  this option from the script, but use the MONGO_CONNECTION_STRING environment
+  variable.**
+- `database: string`: the target database name.
+- `collectionName: string`: the target collection name.
+- `collectionNames: [string]`: a list of target collection names. See [the
+  "Multiple Collections" page](/docs/integrations/mongo/multiple-collections) for
+  more information.
+- `entityMode: boolean`: enable entity mode. See [the "Entity storage"
+  page](/docs/integrations/mongo/entity) for more information.

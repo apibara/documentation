@@ -1,0 +1,72 @@
+---
+title: Entity storage
+description: "Sync onchain events to PostgreSQL with Apibara."
+diataxis: how-to
+updatedAt: 2024-02-13
+---
+
+# Entity storage for MongoDB
+
+Entity mode is used to store entities in the collection. Entities represent the state
+of an object at a specific point in time.
+
+## Usage
+
+You can index entities by setting the `entityMode` option to true. When you set
+this option, the indexer expects the transform function to return a list of
+update operations. An update operation is a JavaScript object with an `entity`
+property used to filter which entities should be updated, and an `update`
+property with either an [update
+document](https://www.mongodb.com/docs/manual/reference/method/db.collection.updateMany/#std-label-updateMany-behavior-update-expressions)
+or an [aggregation
+pipeline](https://www.mongodb.com/docs/manual/reference/method/db.collection.updateMany/#std-label-updateMany-behavior-aggregation-pipeline).
+
+## Example
+
+In this example, the indexer tracks token ownership for an ERC-721 smart
+contract together with the number of transactions for each token.
+
+We enable entity storage by setting the `entityMode` option to `true`.
+The transform function returns the entities that need update, together with the
+operation to update their state.
+
+```ts [indexer.ts]
+export const config = {
+  sinkType: "mongo",
+  sinkOptions: {
+    entityMode: true,
+    collectionName: "owners",
+  },
+};
+
+export default function transform(block: Block) {
+  // Example to show the shape of data returned by transform.
+  return [
+    {
+      entity: { contract, tokenId: "1" },
+      update: { $set: { owner: "0xA" }, $inc: { txCount: 1 } },
+    },
+    {
+      entity: { contract, tokenId: "2" },
+      update: { $set: { owner: "0xB" }, $inc: { txCount: 3 } },
+    },
+  ];
+}
+```
+
+The integration will iterate through the new entities and update the existing
+values (if any) using the following MongoDB pseudo-query:
+
+```ts
+for (const doc of returnValue) {
+  db.collection.updateMany({
+    filter: doc.entity,
+    update: doc.update,
+    options: {
+      upsert: true,
+    },
+  });
+}
+```
+
+Notice that in reality the query is more complex.

@@ -1,0 +1,51 @@
+---
+title: Multiple collections
+description: "Sync onchain events to PostgreSQL with Apibara."
+diataxis: how-to
+updatedAt: 2024-02-13
+---
+
+# Store data into multiple collections
+
+The MongoDB sink can write data to multiple collections.
+
+## Usage
+
+Change your configuration to use the `collectionNames` option. This mode is
+compatible both with the standard mode and with entity mode.
+
+The transform function now works differently:
+
+- For standard mode, put the returned data in a `data` key and add a
+  `collection` key, the returned value will look like `{ data: any, collection:
+string }`
+- For entity mode, just add a `collection` key to the returned object, it should
+  look like `{ entity: any, collection: string, update: any }`
+
+## Example
+
+The following example shows an indexer that streams `Transfer` events and writes
+them to three separate collections: `mints`, `burns`, and `transfers`.
+
+```ts [indexer.ts]
+export default function transform({ events }) {
+  return (events ?? []).map(({ event }) => {
+    if (isMint(event)) {
+      return {
+        collection: "mints",
+        data: extractMint(event),
+      };
+    } else if (isBurn(event)) {
+      return {
+        collection: "burns",
+        data: extractBurn(event),
+      };
+    } else {
+      return {
+        collection: "transfers",
+        data: extractTransfer(event),
+      };
+    }
+  });
+}
+```

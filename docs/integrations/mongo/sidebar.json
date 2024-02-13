@@ -6,6 +6,16 @@
             "path": "/"
         },
         {
+            "name": "Entity storage",
+            "type": "page",
+            "path": "/entity"
+        },
+        {
+            "name": "Multiple collections",
+            "type": "page",
+            "path": "/multiple-collections"
+        },
+        {
             "name": "Options",
             "type": "page",
             "path": "/options"
