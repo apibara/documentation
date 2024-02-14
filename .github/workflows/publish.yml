@@ -13,7 +13,7 @@ jobs:
 
       - uses: andreiio/rclone-action@v1
         with:
-          args: sync docs s3:apibara-docs/docs/
+          args: sync docs s3:apibara-docs/docs/ --stats-one-line -v
         env:
           RCLONE_CONFIG_S3_TYPE: s3
           RCLONE_CONFIG_S3_PROVIDER: Cloudflare
