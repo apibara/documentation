@@ -112,16 +112,6 @@
                     "name": "Pending data",
                     "type": "page",
                     "path": "/pending-data"
-                },
-                {
-                    "name": "Typescript SDK",
-                    "type": "group",
-                    "path": "/typescript-sdk"
-                },
-                {
-                    "name": "Python SDK",
-                    "type": "group",
-                    "path": "/python-sdk"
                 }
             ]
         }
