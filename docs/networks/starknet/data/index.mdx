@@ -1,0 +1,551 @@
+---
+title: Starknet data reference
+description: "Starknet: DNA data data reference guide."
+diataxis: reference
+updatedAt: 2024-02-14
+---
+
+# Starknet data reference
+
+This page contains reference about the available data in Starknet DNA streams.
+
+### Related pages
+
+- [Starknet data filter reference](/docs/networks/starknet/filter)
+
+## Typescript types
+
+```ts
+import type {
+  Block,
+  FieldElement,
+  Filter,
+} from "https://esm.sh/@apibara/indexer/starknet";
+```
+
+## Field elements
+
+Apibara represents Starknet field elements as hex-encode strings.
+
+```ts
+export type FieldElement = `0x${string}`;
+```
+
+## Nullable fields
+
+**Important**: some fields (like event and transaction indices) are null when
+their value is `0`. This issue will be fixed, but at the moment you must handle
+this case in your code.
+
+```ts
+export default function transform({ events }) {
+  // Nullable pitfall 1: events may be null.
+  return (events ?? []).flatMap(({ event }) => {
+    // Nullable pitfall 2: index is null when it should be 0.
+    const index = event.index ?? 0;
+  });
+}
+```
+
+## Data types
+
+### Block
+
+The object passed to the transform function is always a `Block`.
+
+```ts
+export type Block = {
+  /** Block header. */
+  header?: BlockHeader;
+  /** Transactions. */
+  transactions?: TransactionWithReceipt[];
+  /** Events. */
+  events?: EventWithTransaction[];
+  /** Messages from L2 to L1. */
+  l2ToL1Messages?: L2ToL1MessageWithTransaction[];
+  /** State update. */
+  stateUpdate?: StateUpdate;
+};
+```
+
+### Block header
+
+```ts
+export type BlockHeader = {
+  /** Block hash. */
+  blockHash: FieldElement;
+  /** Parent block hash. */
+  parentBlockHash: FieldElement;
+  /** Block number. */
+  blockNumber: string;
+  /** Sequencer address. */
+  sequencerAddress: FieldElement;
+  /** New state root. */
+  newRoot: FieldElement;
+  /** Block production timestamp. */
+  timestamp: string;
+  /** Price of L1 gas in the block. */
+  l1GasPrice?: ResourcePrice;
+};
+
+export type ResourcePrice = {
+  /** Price in fri (10^-18 strk). */
+  priceInFri: FieldElement;
+  /** Price in wei (10^-18 eth). */
+  priceInWei: FieldElement;
+};
+```
+
+### Transactions (with receipts)
+
+Transactions are grouped together with their receipts for easy access.
+
+```ts
+export type TransactionWithReceipt = {
+  /** Transaction. */
+  transaction: Transaction;
+  /** Transaction receipt. */
+  receipt: TransactionReceipt;
+};
+```
+
+### Events (with transactions and receipts)
+
+Events include the transaction (with receipt) that generated them. Notice that
+transactions are not delivered if `includeTransaction: false` and receipts are
+not delivered if `includeReceipt: false`.
+
+If you don't need the information in the transaction and/or receipt, you should
+opt out of receiving this data to speed up indexing significantly.
+
+```ts
+export type EventWithTransaction = {
+  /** Transaction. */
+  transaction: Transaction;
+  /** Transaction receipt. */
+  receipt: TransactionReceipt;
+  /** Event. */
+  event: Event;
+};
+```
+
+### L2 -> L1 messages (with transaction)
+
+Messages sent from Starknet to L1.
+
+```ts
+export type L2ToL1MessageWithTransaction = {
+  /** Transaction. */
+  transaction: Transaction;
+  /** Message from L2 to L1. */
+  message: L2ToL1Message;
+};
+```
+
+### Transaction
+
+Transactions on Starknet can be of different types, Apibara supports all of them.
+Common transaction metadata like its hash are accessible in the `meta` field.
+
+```ts
+export type Transaction = TransactionCommon &
+  (
+    | InvokeTransactionV0
+    | InvokeTransactionV1
+    | InvokeTransactionV3
+    | DeployTransaction
+    | DeclareTransaction
+    | DeclareTransactionV3
+    | DeployAccountTransaction
+    | DeployAccountTransactionV3
+    | L1HandlerTransaction
+  );
+
+export type TransactionCommon = {
+  meta: TransactionMeta;
+};
+
+export type TransactionMeta = {
+  /** Transaction hash. */
+  hash: FieldElement;
+  /** Maximum fee. */
+  maxFee: FieldElement;
+  /** Signature. */
+  signature: FieldElement[];
+  /** Nonce. */
+  nonce: FieldElement;
+  /** Transaction version. */
+  version: string;
+  /** Transaction resources. */
+  resourceBounds?: ResourceBoundsMapping;
+  /** Tip to the sequencer. */
+  tip?: number;
+  /** Data passed to the paymaster. */
+  paymasterData?: FieldElement[];
+  /** Account nonce's DA. */
+  nonceDataAvailabilityMode?: DataAvailabilityMode;
+  /** Transaction's DA. */
+  feeDataAvailabilityMode?: DataAvailabilityMode;
+  /** Transaction index in the block. */
+  transactionIndex?: number;
+};
+
+export type ResourceBoundsMapping = {
+  l1Gas: ResourceBounds;
+  l2Gas: ResourceBounds;
+};
+
+export type ResourceBounds = {
+  maxAmount: number;
+  maxPricePerUnit: { low: number; high: number };
+};
+
+export type DataAvailabilityMode =
+  | "DATA_AVAILABILITY_MODE_UNSPECIFIED"
+  | "DATA_AVAILABILITY_MODE_L2"
+  | "DATA_AVAILABILITY_MODE_L1";
+```
+
+### Invoke transaction
+
+Invoke transactions are transactions initiated by a wallet. There are multiple
+versions of this transaction type based on the Starknet version.
+
+```ts
+export type InvokeTransactionV0 = {
+  invokeV0?: {
+    /** Target contract address. */
+    contractAddress: FieldElement;
+    /** Selector of the function being invoked. */
+    entryPointSelector: FieldElement;
+    /** Calldata. */
+    calldata: FieldElement[];
+  };
+  invokeV1?: never;
+  invokeV3?: never;
+  deploy?: never;
+  declare?: never;
+  declareV3?: never;
+  l1Handler?: never;
+  deployAccount?: never;
+  deployAccountV3?: never;
+};
+
+export type InvokeTransactionV1 = {
+  invokeV1?: {
+    /** Address of the account sending the transaction. */
+    senderAddress: FieldElement;
+    /** Calldata. */
+    calldata: FieldElement[];
+  };
+  invokeV0?: never;
+  invokeV3?: never;
+  deploy?: never;
+  declare?: never;
+  declareV3?: never;
+  l1Handler?: never;
+  deployAccount?: never;
+  deployAccountV3?: never;
+};
+
+export type InvokeTransactionV3 = {
+  invokeV3?: {
+    /** Address of the account sending the transaction. */
+    senderAddress: FieldElement;
+    /** Calldata. */
+    calldata: FieldElement[];
+    /** Data passed to the account deployment. */
+    accountDeploymentData: FieldElement[];
+  };
+  invokeV1?: never;
+  invokeV0?: never;
+  deploy?: never;
+  declare?: never;
+  declareV3?: never;
+  l1Handler?: never;
+  deployAccount?: never;
+  deployAccountV3?: never;
+};
+```
+
+### Declare transaction
+
+Transaction to declare a new smart contract class.
+
+```ts
+export type DeclareTransaction = {
+  declare?: {
+    /** Class hash. */
+    classHash: FieldElement;
+    /** Address of the account sending the transaction. */
+    senderAddress: FieldElement;
+    /** Hash of the cairo assembly resulting from the sierra compilation. */
+    compiledClassHash: FieldElement;
+  };
+  declareV3?: never;
+  invokeV0?: never;
+  invokeV1?: never;
+  invokeV3?: never;
+  deploy?: never;
+  l1Handler?: never;
+  deployAccount?: never;
+  deployAccountV3?: never;
+};
+
+export type DeclareTransactionV3 = {
+  declareV3?: {
+    /** Class hash. */
+    classHash: FieldElement;
+    /** Address of the account sending the transaction. */
+    senderAddress: FieldElement;
+    /** Hash of the cairo assembly resulting from the sierra compilation. */
+    compiledClassHash: FieldElement;
+    /** Data passed to the account deployment. */
+    accountDeploymentData: FieldElement[];
+  };
+  declare?: never;
+  invokeV0?: never;
+  invokeV1?: never;
+  invokeV3?: never;
+  deploy?: never;
+  deployAccountV3?: never;
+  l1Handler?: never;
+  deployAccount?: never;
+};
+```
+
+### Deploy transaction
+
+Transaction to deploy a new smart contract.
+
+```ts
+export type DeployTransaction = {
+  deploy?: {
+    /** Constructor calldata. */
+    constructorCalldata: FieldElement[];
+    /** Salt used when computing the contract's address. */
+    contractAddressSalt: FieldElement;
+    /** Hash of the class being deployed. */
+    classHash: FieldElement;
+  };
+  invokeV0?: never;
+  invokeV1?: never;
+  invokeV3?: never;
+  declare?: never;
+  declareV3?: never;
+  l1Handler?: never;
+  deployAccount?: never;
+  deployAccountV3?: never;
+};
+```
+
+### Deploy account transaction
+
+Transaction to deploy a new account. Yes, there is no `DeployAccountTransactionV2`.
+
+```ts
+export type DeployAccountTransaction = {
+  deployAccount?: {
+    /** Constructor calldata. */
+    constructorCalldata: FieldElement[];
+    /** Salt used when computing the contract's address. */
+    contractAddressSalt: FieldElement;
+    /** Hash of the class being deployed. */
+    classHash: FieldElement;
+  };
+  deployAccountV3?: never;
+  invokeV0?: never;
+  invokeV1?: never;
+  invokeV3?: never;
+  deploy?: never;
+  declare?: never;
+  declareV3?: never;
+  l1Handler?: never;
+};
+
+export type DeployAccountTransactionV3 = {
+  deployAccountV3?: {
+    /** Constructor calldata. */
+    constructorCalldata: FieldElement[];
+    /** Salt used when computing the contract's address. */
+    contractAddressSalt: FieldElement;
+    /** Hash of the class being deployed. */
+    classHash: FieldElement;
+  };
+  deployAccount?: never;
+  invokeV0?: never;
+  invokeV1?: never;
+  invokeV3?: never;
+  deploy?: never;
+  declare?: never;
+  declareV3?: never;
+  l1Handler?: never;
+};
+```
+
+### L1 handler transaction
+
+Transaction that handles a message from L1.
+
+```ts
+export type L1HandlerTransaction = {
+  l1Handler?: {
+    /** Target contract address. */
+    contractAddress: FieldElement;
+    /** Selector of the function being invoked. */
+    entryPointSelector: FieldElement;
+    /** Calldata. */
+    calldata: FieldElement[];
+  };
+  invokeV0?: never;
+  invokeV1?: never;
+  invokeV3?: never;
+  deploy?: never;
+  declare?: never;
+  declareV3?: never;
+  deployAccount?: never;
+};
+```
+
+## Receipt
+
+Transaction receipt.
+
+```ts
+export type TransactionReceipt = {
+  /** Transaction status. */
+  executionStatus: ExecutionStatus;
+  /** Transaction hash. */
+  transactionHash: FieldElement;
+  /** Transaction index. */
+  transactionIndex: string;
+  /** Actual fee paid by the account. */
+  actualFee: FieldElement;
+  /** Address of the contract created by the transaction. */
+  contractAddress: FieldElement;
+  /** Messages from L2 to L1. */
+  l2ToL1Messages: L2ToL1Message[];
+  /** Events. */
+  events: Event[];
+  /** Revert reason. */
+  revertReason?: string;
+};
+
+export type ExecutionStatus =
+  | "EXECUTION_STATUS_UNSPECIFIED"
+  | "EXECUTION_STATUS_SUCCEEDED"
+  | "EXECUTION_STATUS_REVERTED";
+```
+
+## Event
+
+Event emitted while executing a transaction.
+
+```ts
+export type Event = {
+  /** Event index. */
+  index: number;
+  /** Contract address. */
+  fromAddress: FieldElement;
+  /** Event selector. */
+  keys: FieldElement[];
+  /** Event data. */
+  data: FieldElement[];
+};
+```
+
+## L2 -> L1 message
+
+Message from Starknet to L1.
+
+```ts
+export type L2ToL1Message = {
+  /** Message index. */
+  index: number;
+  /** L2 sender address. */
+  fromAddress: FieldElement;
+  /** L1 target address. */
+  toAddress: FieldElement;
+  /** Calldata. */
+  payload: FieldElement[];
+};
+```
+
+## State update
+
+Changes to the Starknet state after executing all transactions in the block.
+
+```ts
+export type StateUpdate = {
+  /** New state root. */
+  newRoot: FieldElement;
+  /** Old state root. */
+  oldRoot: FieldElement;
+  /** State diff. */
+  stateDiff: StateDiff;
+};
+
+export type StateDiff = {
+  /** Changes in storage. */
+  storageDiffs: StorageDiff[];
+  /** Declared contracts. */
+  declaredContracts: DeclaredContract[];
+  /** Deployed contracts. */
+  deployedContracts: DeployedContract[];
+  /** Nonce updates. */
+  nonces: NonceUpdate[];
+  /** Classes declared. */
+  declaredClasses: DeclaredClass[];
+  /** Classes replaced. */
+  replacedClasses: ReplacedClass[];
+};
+
+export type StorageDiff = {
+  /** Contract address. */
+  contractAddress: FieldElement;
+  /** Changes in storage. */
+  storageEntries: StorageEntry[];
+};
+
+export type StorageEntry = {
+  /** Storage key. */
+  key: FieldElement;
+  /** New storage value. */
+  value: FieldElement;
+};
+
+export type DeclaredContract = {
+  /** Class hash. */
+  classHash: FieldElement;
+};
+
+export type DeclaredClass = {
+  /** Class hash. */
+  classHash: FieldElement;
+  /** Compiled class hash. */
+  compiledClassHash: FieldElement;
+};
+
+export type ReplacedClass = {
+  /** Contract address. */
+  contractAddress: FieldElement;
+  /** Class hash. */
+  classHash: FieldElement;
+};
+
+export type DeployedContract = {
+  /** Contract address. */
+  contractAddress: FieldElement;
+  /** Class hash. */
+  classHash: FieldElement;
+};
+
+export type NonceUpdate = {
+  /** Contract address. */
+  contractAddress: FieldElement;
+  /** New nonce. */
+  nonce: FieldElement;
+};
+```
+
+End of docs.

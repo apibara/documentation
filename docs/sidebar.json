@@ -58,6 +58,17 @@
             ]
         },
         {
+            "name": "Networks",
+            "path": "/networks",
+            "items": [
+                {
+                    "name": "Starknet",
+                    "type": "group",
+                    "path": "/starknet"
+                }
+            ]
+        },
+        {
             "name": "Integrations",
             "path": "/integrations",
             "items": [
