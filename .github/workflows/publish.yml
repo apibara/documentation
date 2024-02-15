@@ -29,6 +29,12 @@ jobs:
           version: 8
           run_install: false
 
+      - name: Switch team
+        run: pnpm dlx vercel@latest switch apibara --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
       - name: Redeploy website
         run: pnpm dlx vercel@latest redeploy www.apibara.com --token=${{ secrets.VERCEL_TOKEN }}
         env:
