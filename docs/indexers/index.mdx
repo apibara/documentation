@@ -92,7 +92,7 @@ export default function transform(block) {
 
 The transform function can be `async` in case you need to perform async
 operations like network access ([read more about network access
-here](/docs/indexers/network-access)).
+here](/docs/indexers/permissions/network)).
 
 Notice that the value returned by the transform function **must be JSON-encodable**.
 For web3 applications, this means you need to convert `BigInt` to either a
