@@ -1,0 +1,113 @@
+---
+title: Use with Docker
+description: "Learn how to sync onchain data to a PostgreSQL instance running in Docker."
+diataxis: how-to
+updatedAt: 2024-02-17
+---
+
+# How to synchronize onchain data to PostgreSQL running in Docker
+
+This guide will show you how to synchronize onchain data to a PostgreSQL instance running in Docker.
+
+## Start Docker container
+
+Start the PostgreSQL Docker container using the Docker CLI.
+
+- We set the `POSTGRES_PASSWORD` environment variable explicitly to the
+  password we want to use, in this case `postgres` (same as username and
+  database).
+- We expose the default PostgreSQL port (5432) with the `-p 5432:5432` option.
+- We ask Docker to delete the container on exit using the `--rm` flag. At every
+  restart we will have a fresh instance.
+
+:::cli-command
+
+```bash Terminal
+docker run --rm -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:16
+```
+
+```
+The files belonging to this database system will be owned by user "postgres".
+This user must also own the server process.
+
+The database cluster will be initialized with locale "en_US.utf8".
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+Data page checksums are disabled.
+
+fixing permissions on existing directory /var/lib/postgresql/data ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... posix
+selecting default max_connections ... 100
+selecting default shared_buffers ... 128MB
+selecting default time zone ... Etc/UTC
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+
+Success. You can now start the database server using:
+
+    pg_ctl -D /var/lib/postgresql/data -l logfile start
+
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+waiting for server to start....2024-02-17 15:41:13.316 UTC [43] LOG:  starting PostgreSQL 16.2 (Debian 16.2-1.pgdg120+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2024-02-17 15:41:13.316 UTC [43] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2024-02-17 15:41:13.335 UTC [46] LOG:  database system was shut down at 2024-02-17 15:41:12 UTC
+2024-02-17 15:41:13.343 UTC [43] LOG:  database system is ready to accept connections
+ done
+server started
+
+...more logs...
+```
+
+:::
+
+## Verify connection
+
+Before we connect the Apibara sink to the PostgreSQL instance, we test
+everything is setup correctly using `psql`.
+
+We use the following options:
+
+- `-h localhost` to connect to the local instance.
+- `-U postgres` to connect as the `postgres` user.
+- `-W` to input the password.
+
+:::cli-command
+
+```bash Terminal
+psql -h localhost -U postgres -W
+```
+
+```
+Password:
+psql (15.5, server 16.2 (Debian 16.2-1.pgdg120+2))
+WARNING: psql major version 15, server major version 16.
+         Some psql features might not work.
+Type "help" for help.
+
+postgres=#
+```
+
+:::
+
+## Create tables
+
+While you are connected to the database you can create the tables needed by your indexer.
+
+## Connect the indexer
+
+Set the `POSTGRES_CONNECTION_STRING` environment variable to the following
+(refer to the [options](/docs/integrations/postgres/options#connection-string)
+page to learn more about connection strings):
+
+```bash [Terminal]
+export POSTGRES_CONNECTION_STRING="postgres://postgres:postgres@localhost:5432/postgres"
+```
+
+Run the indexer and after a few seconds you will see onchain data appear in your
+database.

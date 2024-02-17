@@ -21,6 +21,11 @@
             "path": "/options"
         },
         {
+            "name": "Use with Docker",
+            "type": "page",
+            "path": "/how-to-docker"
+        },
+        {
             "name": "Use with Supabase",
             "type": "page",
             "path": "/how-to-supabase"
