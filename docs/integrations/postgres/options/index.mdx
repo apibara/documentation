@@ -32,3 +32,48 @@ This page contains a reference of all available options for the PostgreSQL sink.
 - `tlsAcceptInvalidCertificates: boolean`: accept invalid TLS certificates.
 - `tlsAcceptInvalidHostnames: boolean`: disable hostname validation.
 - `tlsUseSni: boolean`: use Server Name Identification (SNI).
+
+## Connection string
+
+Apibara supports specifying the PostgreSQL connection string using [any format
+supported by
+libpq](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING).
+
+**Connection URIs**
+
+This is the most common connection string format.
+
+```txt
+postgresql://[userspec@][hostspec][/dbname][?paramspec]
+
+where userspec is:
+
+user[:password]
+
+and hostspec is:
+
+[host][:port][,...]
+
+and paramspec is:
+
+name=value[&...]
+```
+
+Examples:
+
+```txt
+postgres://postgres:postgres@localhost:5432/postgres
+postgres://aws-0-us-east-1.my-website:5432/myapp"
+```
+
+**Keyword/Value connection strings**
+
+This format is less common but it's also supported. Each parameter is in the
+format `key=value` with spaces between strings. You can use single quotes (`'`)
+to delimit a string that contains spaces.
+
+Example:
+
+```txt
+host=localhost port=5432 dbname=postgres user=postgres password=postgres
+```
