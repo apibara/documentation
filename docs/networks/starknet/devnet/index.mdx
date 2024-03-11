@@ -1,0 +1,186 @@
+---
+title: Usage with Starknet devnet
+description: "Learn how to use Starknet DNA together with devnet or katana for local development."
+diataxis: how-to
+updatedAt: 2024-03-11
+---
+
+# Usage with Starknet devnet
+
+Apibara works great for local development, simply connect the open-source
+Starknet DNA server to devnet. In this guide, we are going to show how to
+use DNA with [devnet-rs](https://github.com/0xSpaceShard/starknet-devnet-rs)
+and [katana](https://github.com/dojoengine/dojo/tree/main/crates/katana).
+
+You will need the following tools installed:
+
+- [Docker and Docker Compose](https://docs.docker.com/compose/) - required.
+- [Httpie](https://httpie.io/) - optional.
+- [grpcurl](https://github.com/fullstorydev/grpcurl) - optional.
+
+## With devnet
+
+The following `docker-compose.yml` file shows how to run devnet and the Starknet DNA
+server.
+
+Notice the following:
+
+- we persist the devnet state between restarts with the `--dump-path` option.
+- `apibara/starknet` requires the `XDG_DATA_HOME` directory to exist. In this case,
+  we map it to a Docker volume.
+- the `--rpc` flag connects `apibara/starknet` to `devnet`.
+- the DNA service will be exposed on port `7171`.
+
+```yaml [docker-compose.yml]
+version: "3"
+
+services:
+  devnet:
+    image: shardlabs/starknet-devnet-rs:0.0.2
+    command:
+      - --dump-on=transaction
+      - --dump-path=/data/dump
+    volumes:
+      - devnet:/data
+    ports:
+      - 5050:5050
+
+  dna:
+    image: quay.io/apibara/starknet:1.4.0
+    command:
+      - start
+      - --rpc=http://devnet:5050/rpc
+      - --name=devnet
+      - --head-refresh-interval-ms=1000
+      - --wait-for-rpc
+      - --address=0.0.0.0:7171
+    environment:
+      - XDG_DATA_HOME=/data
+    volumes:
+      - dna:/data
+    ports:
+      - 7171:7171
+    depends_on:
+      devnet:
+        condition: service_started
+
+volumes:
+  devnet:
+  dna:
+```
+
+After creating the `docker-compose.yml` file, you can start the services. The
+first time you run this command, you will see the DNA service printing an error
+at regular intervals. This is normal: DNA expects the network to have at least
+one block, but devnet doesn't have any block until the first transaction is
+submitted. We are going to see how to easily create transactions in the next section.
+
+:::cli-command
+
+```bash [Terminal]
+docker compose up
+```
+
+```
+[+] Building 0.0s (0/0)                            docker-container:default
+[+] Running 5/5
+ ✔ Network my-project_default     Created          0.0s
+ ✔ Volume "my-project_devnet"     Created          0.0s
+ ✔ Volume "my-project_dna"        Created          0.0s
+ ✔ Container my-project-devnet-1  Created          0.0s
+ ✔ Container my-project-dna-1     Created          0.0s
+Attaching to devnet-1, dna-1
+dna-1     | 2024-03-11T13:28:57.056892Z  INFO apibara_starknet::node: starting starknet node
+dna-1     | 2024-03-11T13:28:57.070684Z ERROR apibara_starknet::provider: error=Provider(Other(TransportError(Reqwest(reqwest::Error { kind: Request, url: Url { scheme: "http", cannot_be_a_base: false, username: "", password: None, host: Some(Domain("devnet")), port: Some(5050), path: "/rpc", query: None, fragment: None }, source: hyper::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }))))
+dna-1     | 2024-03-11T13:28:57.070770Z  INFO apibara_starknet::node: waiting for RPC server to be available
+devnet-1  | Predeployed FeeToken
+devnet-1  | ETH Address: 0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7
+devnet-1  | STRK Address: 0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
+devnet-1  | Class Hash: 0x3af5816946625d3d2c94ea451225715784762050eba736f0b0ad9186685bced
+devnet-1  |
+devnet-1  | # accounts omitted
+devnet-1  |
+devnet-1  | Predeployed accounts using class with hash: 0x4d07e40e93398ed3c76981e72dd1fd22557a78ce36c0515f679e27f0bb5bc5f
+devnet-1  | Initial balance of each account: 1000000000000000000000 WEI and FRI
+devnet-1  | Seed to replicate this account sequence: 1768451381
+devnet-1  | 2024-03-11T13:28:57.118970Z  INFO starknet_devnet: Starknet Devnet listening on 0.0.0.0:5050
+devnet-1  | 2024-03-11T13:28:58.074003Z  INFO rpc: received method in on_request starknet_blockHashAndNumber
+dna-1     | 2024-03-11T13:28:58.074450Z ERROR apibara_starknet::provider: error=BlockNotFound
+dna-1     | 2024-03-11T13:28:58.074469Z  INFO apibara_starknet::node: waiting for RPC server to be available
+devnet-1  | 2024-03-11T13:29:00.076617Z  INFO rpc: received method in on_request starknet_blockHashAndNumber
+dna-1     | 2024-03-11T13:29:00.076868Z ERROR apibara_starknet::provider: error=BlockNotFound
+dna-1     | 2024-03-11T13:29:00.076886Z  INFO apibara_starknet::node: waiting for RPC server to be available
+devnet-1  | 2024-03-11T13:29:04.077946Z  INFO rpc: received method in on_request starknet_blockHashAndNumber
+dna-1     | 2024-03-11T13:29:04.078203Z ERROR apibara_starknet::provider: error=BlockNotFound
+dna-1     | 2024-03-11T13:29:04.078222Z  INFO apibara_starknet::node: waiting for RPC server to be available
+```
+
+:::
+
+### Producing blocks
+
+The easiest way to produce blocks is by using [the `/mint`
+helper](https://github.com/0xSpaceShard/starknet-devnet-rs?tab=readme-ov-file#mint-token).
+After creating the first transaction, the devnet will start producing blocks and
+DNA will ingest them as they're produced.
+
+:::cli-command
+
+```bash [Terminal]
+http POST :5050/mint address=0x0 amount:=50000 unit="FRI"
+```
+
+```
+HTTP/1.1 200 OK
+access-control-allow-origin: *
+content-length: 110
+content-type: application/json
+date: Mon, 11 Mar 2024 13:33:29 GMT
+vary: origin
+vary: access-control-request-method
+vary: access-control-request-headers
+
+{
+    "new_balance": "0",
+    "tx_hash": "0x4c0798d3556edc90e8900d750300047e17e3489a9884b4d1c26f17d8546dceb",
+    "unit": "FRI"
+}
+```
+
+:::
+
+## With katana
+
+TODO
+
+## Connecting to the local DNA server
+
+You can now connect to the local DNA server available at the following address.
+
+```txt
+http://localhost:7171
+```
+
+Check the ingestion status with grpcurl. Notice that because of how gRPC works,
+you will need to produce a few blocks for all fields to become visible.
+
+:::cli-command
+
+```bash [Terminal]
+grpcurl -plaintext localhost:7171 apibara.node.v1alpha2.Stream.Status
+```
+
+```
+{
+  "currentHead": {
+    "orderKey": "1",
+    "uniqueKey": "B4w42Tvx/afQWKMp3TFt/wCR7YIHKKzxOZnhbYC4TV0="
+  },
+  "lastIngested": {
+    "orderKey": "1",
+    "uniqueKey": "B4w42Tvx/afQWKMp3TFt/wCR7YIHKKzxOZnhbYC4TV0="
+  }
+}
+```
+
+:::
