@@ -1,0 +1,53 @@
+---
+title: Persisting state
+description: "Learn how to persist the indexer state between restarts."
+diataxis: how-to
+updatedAt: 2024-03-11 15:00
+---
+
+# Persisting state
+
+Apibara indexers are stateless by default, when it's restarted it will start
+from the starting block again.
+
+State includes:
+
+- Cursor: the latest indexed block number and hash. Used on reconnect.
+- Filter: if the indexer is using [factory mode](/docs/indexers/factory-mode),
+  this is the filter used for the main data stream.
+
+When you enable persistence, you will need the following CLI option to name the indexer.
+
+- `--indexer-id`: the unique id for the indexer. Alternatively, set the `INDEXER_ID`
+  environment variable.
+
+## File system persistence
+
+Persist state to a JSON file on the file system. This option is mostly useful
+for development and should not be used in production.
+
+- `--persist-to-fs`: path to a folder where the state will be persisted.
+  Alternatively, use the `PERSIST_TO_FS` environment variable.
+
+## Redis
+
+Persist state to a Redis server. This is currently the recommended option for
+production usage.
+
+- `--persist-to-redis`: Redis connection string. State will be persisted under
+  the `apibara:indexers:<sink-id>` key. Alternatively, use the `PERSIST_TO_REDIS`
+  environment variable.
+
+## Etcd
+
+Persist state to an Etcd cluster.
+
+- `--persist-to-etcd`: Etcd connection string. Alternatively, use the
+  `PERSIST_TO_ETCD` environment variable.
+
+## Need more options?
+
+We are looking for contributors to add persistence to PostgreSQL and MongoDB.
+If you are interested in contributing this features, feel free to comment
+in the [MongoDB persistence](https://github.com/apibara/dna/issues/333) or
+[PostgreSQL persistence](https://github.com/apibara/dna/issues/334) issues.

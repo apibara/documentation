@@ -46,6 +46,11 @@
                     "path": "/editor-setup"
                 },
                 {
+                    "name": "State persistence",
+                    "type": "page",
+                    "path": "/persistence"
+                },
+                {
                     "name": "Permissions",
                     "type": "group",
                     "path": "/permissions"
