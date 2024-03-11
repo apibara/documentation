@@ -1,11 +1,11 @@
 ---
-title: Usage with Starknet devnet
+title: Usage with Starknet devnets
 description: "Learn how to use Starknet DNA together with devnet or katana for local development."
 diataxis: how-to
 updatedAt: 2024-03-11
 ---
 
-# Usage with Starknet devnet
+# Usage with Starknet devnets
 
 Apibara works great for local development, simply connect the open-source
 Starknet DNA server to devnet. In this guide, we are going to show how to
@@ -18,9 +18,16 @@ You will need the following tools installed:
 - [Httpie](https://httpie.io/) - optional.
 - [grpcurl](https://github.com/fullstorydev/grpcurl) - optional.
 
-## With devnet
+**JSON-RPC compatibility**
 
-The following `docker-compose.yml` file shows how to run devnet and the Starknet DNA
+Notice that the JSON-RPC version used by Starknet DNA for ingestion needs to
+match the devnet implementation.
+
+- `apibara/starknet:1.4`: v0.6
+
+## With devnet-rs
+
+The following `docker-compose.yml` file shows how to run devnet-rs and the Starknet DNA
 server.
 
 Notice the following:
