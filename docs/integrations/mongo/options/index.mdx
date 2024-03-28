@@ -22,3 +22,12 @@ This page contains a reference of all available options for the MongoDB sink.
   more information.
 - `entityMode: boolean`: enable entity mode. See [the "Entity storage"
   page](/docs/integrations/mongo/entity) for more information.
+
+## Advanced
+
+- `replaceDataInsideTransaction: bool`: if set to `true`, the sink will use
+  [MongoDB transactions](https://www.mongodb.com/docs/manual/core/transactions/)
+  to replace data between subsequent pending blocks. Notice that
+  [replication](https://www.mongodb.com/docs/manual/replication/) is required for
+  this feature to work correctly. If you are using [MongoDB
+  Atlas](/docs/integrations/mongo/how-to-atlas) it will work out of the box.
