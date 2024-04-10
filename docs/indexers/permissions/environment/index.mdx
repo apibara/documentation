@@ -24,7 +24,7 @@ variables to change the indexer's starting block.
 
 ```ts [indexer.ts]
 export const config = {
-  streamUrl: "https://goerli.starknet.a5a.ch",
+  streamUrl: "https://sepolia.starknet.a5a.ch",
   startingBlock: Number(Deno.env.get("STARTING_BLOCK") || 0),
   network: "starknet",
   filter: {

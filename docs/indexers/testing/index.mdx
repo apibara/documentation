@@ -34,8 +34,8 @@ import { formatUnits } from "https://esm.run/viem@1.4";
 const DECIMALS = 18;
 
 export const config = {
-  streamUrl: "https://goerli.starknet.a5a.ch",
-  startingBlock: 800_000,
+  streamUrl: "https://sepolia.starknet.a5a.ch",
+  startingBlock: 10_000,
   network: "starknet",
   filter: {
     header: { weak: true },
@@ -65,7 +65,7 @@ export default function transform({ header, events }) {
 
     // Convert to snake_case because it works better with postgres.
     return {
-      network: "starknet-goerli",
+      network: "starknet-sepolia",
       symbol: "ETH",
       block_hash: blockHash,
       block_number: +blockNumber,

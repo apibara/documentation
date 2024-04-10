@@ -86,6 +86,10 @@ export type BlockHeader = {
   timestamp: string;
   /** Price of L1 gas in the block. */
   l1GasPrice?: ResourcePrice;
+  /** Price of L1 data gas in the block. */
+  l1DataGasPrice?: ResourcePrice;
+  /** L1 data availability mode. */
+  l1DataAvailabilityMode?: L1DataAvailabilityMode;
 };
 
 export type ResourcePrice = {
@@ -94,6 +98,11 @@ export type ResourcePrice = {
   /** Price in wei (10^-18 eth). */
   priceInWei: FieldElement;
 };
+
+export type L1DataAvailabilityMode =
+  | "L1_DATA_AVAILABILITY_MODE_UNSPECIFIED"
+  | "L1_DATA_AVAILABILITY_MODE_BLOB"
+  | "L1_DATA_AVAILABILITY_MODE_CALLDATA";
 ```
 
 ### Transactions (with receipts)
@@ -412,7 +421,7 @@ export type L1HandlerTransaction = {
 Transaction receipt.
 
 ```ts
-export type TransactionReceipt = {
+export type TransactionReceipt = Partial<{
   /** Transaction status. */
   executionStatus: ExecutionStatus;
   /** Transaction hash. */
@@ -428,13 +437,66 @@ export type TransactionReceipt = {
   /** Events. */
   events: Event[];
   /** Revert reason. */
-  revertReason?: string;
-};
+  revertReason: string;
+  /** Fee paid. */
+  actualFeePaid: FeePayment;
+  /** Resources consumed by the transaction. */
+  executionResources: ExecutionResources;
+}>;
 
 export type ExecutionStatus =
   | "EXECUTION_STATUS_UNSPECIFIED"
   | "EXECUTION_STATUS_SUCCEEDED"
   | "EXECUTION_STATUS_REVERTED";
+
+export type FeePayment = Partial<{
+  /** Amount paid. */
+  amount: FieldElement;
+  /** Unit of the amount. */
+  unit: PriceUnit;
+}>;
+
+export type ExecutionResources = Partial<{
+  /** Computation resources. */
+  computation: ComputationResources;
+  /** Data availability resources. */
+  dataAvailability: DataAvailabilityResources;
+}>;
+
+export type ComputationResources = Partial<{
+  /** The gas consumed by this transaction's data, 0 if it uses data gas for DA. */
+  l1Gas: number;
+  /** The data gas consumed by this transaction's data, 0 if it uses gas for DA. */
+  l1DataGas: number;
+}>;
+
+export type DataAvailabilityResources = Partial<{
+  /** The number of Cairo steps used. */
+  steps: number;
+  /** The number of unused memory cells. */
+  memoryHoles: number;
+  /** The number of RANGE_CHECK builtin instances. */
+  rangeCheckBuiltinApplications: number;
+  /** The number of Pedersen builtin instances. */
+  pedersenBuiltinApplications: number;
+  /** The number of Poseidon builtin instances. */
+  poseidonBuiltinApplications: number;
+  /** The number of EC_OP builtin instances. */
+  ecOpBuiltinApplications: number;
+  /** The number of ECDSA builtin instances. */
+  ecdsaBuiltinApplications: number;
+  /** The number of BITWISE builtin instances. */
+  bitwiseBuiltinApplications: number;
+  /** The number of KECCAK builtin instances. */
+  keccakBuiltinApplications: number;
+  /** The number of accesses to the segment arena. */
+  segmentArenaBuiltin: number;
+}>;
+
+export type PriceUnit =
+  | "PRICE_UNIT_UNSPECIFIED"
+  | "PRICE_UNIT_FRI"
+  | "PRICE_UNIT_WEI";
 ```
 
 ## Event
@@ -442,7 +504,7 @@ export type ExecutionStatus =
 Event emitted while executing a transaction.
 
 ```ts
-export type Event = {
+export type Event = Partial<{
   /** Event index. */
   index: number;
   /** Contract address. */
@@ -451,7 +513,7 @@ export type Event = {
   keys: FieldElement[];
   /** Event data. */
   data: FieldElement[];
-};
+}>;
 ```
 
 ## L2 -> L1 message
@@ -459,7 +521,7 @@ export type Event = {
 Message from Starknet to L1.
 
 ```ts
-export type L2ToL1Message = {
+export type L2ToL1Message = Partial<{
   /** Message index. */
   index: number;
   /** L2 sender address. */
@@ -468,7 +530,7 @@ export type L2ToL1Message = {
   toAddress: FieldElement;
   /** Calldata. */
   payload: FieldElement[];
-};
+}>;
 ```
 
 ## State update
@@ -476,16 +538,16 @@ export type L2ToL1Message = {
 Changes to the Starknet state after executing all transactions in the block.
 
 ```ts
-export type StateUpdate = {
+export type StateUpdate = Partial<{
   /** New state root. */
   newRoot: FieldElement;
   /** Old state root. */
   oldRoot: FieldElement;
   /** State diff. */
   stateDiff: StateDiff;
-};
+}>;
 
-export type StateDiff = {
+export type StateDiff = Partial<{
   /** Changes in storage. */
   storageDiffs: StorageDiff[];
   /** Declared contracts. */
@@ -498,54 +560,54 @@ export type StateDiff = {
   declaredClasses: DeclaredClass[];
   /** Classes replaced. */
   replacedClasses: ReplacedClass[];
-};
+}>;
 
-export type StorageDiff = {
+export type StorageDiff = Partial<{
   /** Contract address. */
   contractAddress: FieldElement;
   /** Changes in storage. */
   storageEntries: StorageEntry[];
-};
+}>;
 
-export type StorageEntry = {
+export type StorageEntry = Partial<{
   /** Storage key. */
   key: FieldElement;
   /** New storage value. */
   value: FieldElement;
-};
+}>;
 
-export type DeclaredContract = {
+export type DeclaredContract = Partial<{
   /** Class hash. */
   classHash: FieldElement;
-};
+}>;
 
-export type DeclaredClass = {
+export type DeclaredClass = Partial<{
   /** Class hash. */
   classHash: FieldElement;
   /** Compiled class hash. */
   compiledClassHash: FieldElement;
-};
+}>;
 
-export type ReplacedClass = {
+export type ReplacedClass = Partial<{
   /** Contract address. */
   contractAddress: FieldElement;
   /** Class hash. */
   classHash: FieldElement;
-};
+}>;
 
-export type DeployedContract = {
+export type DeployedContract = Partial<{
   /** Contract address. */
   contractAddress: FieldElement;
   /** Class hash. */
   classHash: FieldElement;
-};
+}>;
 
-export type NonceUpdate = {
+export type NonceUpdate = Partial<{
   /** Contract address. */
   contractAddress: FieldElement;
   /** New nonce. */
   nonce: FieldElement;
-};
+}>;
 ```
 
 End of docs.

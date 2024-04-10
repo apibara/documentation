@@ -21,8 +21,8 @@ const addresses = await Deno.readTextFile("/path/to/file.txt");
 console.log(addresses);
 
 export const config = {
-  streamUrl: "https://goerli.starknet.a5a.ch",
-  startingBlock: 900_000,
+  streamUrl: "https://sepolia.starknet.a5a.ch",
+  startingBlock: 10_000,
   network: "starknet",
   filter: {
     header: { weak: false },
