@@ -1,0 +1,185 @@
+---
+title: DNA architecture - V2 preview
+description: ""
+diataxis: explanation
+updatedAt: 2024-04-26
+---
+
+# DNA architecture - V2 preview
+
+This page describes in detail the architecture of the DNA v2 service.
+
+At a high-level, the goals for DNA v2 are:
+
+- serve onchain data through a protocol that's optimized for building indexers.
+- provide a scalable and cost-efficient way to access onchain data.
+- decouple compute from storage.
+
+This is achieved by building a _cloud native_ service that ingests onchain data
+from an archive node and stores it into Object Storage (e.g. Amazon S3,
+Cloudflare R2). Data is served by stateless workers that read and filter data
+from Object Storage before sending it to the indexers. The diagram below shows
+all the high-level components that make a production deployment of DNA v2.
+
+```
+                               ╔══ DNA Service ══════════════════════════════════════╗
+                               ║ ┌──────────────────┐                                ║▒
+                               ║ │                  │                                ║▒
+                               ║ │    Stream Svc    │◀─────┐                         ║▒
+                               ║ │                  │      │                         ║▒
+                               ║ └──────────────────┘      │                         ║▒
+┌──────────────────┐           ║ ┌──────────────────┐      │    ┌──────────────────┐ ║▒             ┌──────────────────┐
+│                  │▒          ║ │                  │      │    │                  │ ║▒             │                  │▒
+│     Indexer      │◀───gRPC───╬─│    Stream Svc    │◀─────┼────│  Ingestion Svc   │◀╬───JSON-RPC───│   Archive Node   │▒
+│                  │▒          ║ │                  │      │    │                  │ ║▒             │                  │▒
+└──────────────────┘▒          ║ └──────────────────┘      │    └──────────────────┘ ║▒             └──────────────────┘▒
+ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒          ║ ┌──────────────────┐      │              │          ║▒              ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+                               ║ │                  │      │              │          ║▒
+                               ║ │    Stream Svc    │◀─────┘              │          ║▒
+                               ║ │                  │                     │          ║▒
+                               ║ └──────────────────┘                     │          ║▒
+                               ║           ▲                              │          ║▒
+                               ║           │                              ▼          ║▒
+                               ║ ┌─────────────────────────────────────────────────┐ ║▒
+                               ║ │             Object Storage (S3, R2)             │ ║▒
+                               ║ └─────────────────────────────────────────────────┘ ║▒
+                               ╚═════════════════════════════════════════════════════╝▒
+                                ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+```
+
+## DNA service
+
+The DNA service is comprised of two components:
+
+- ingestion service: listens for new blocks on the network and stores them into
+  Object Storage.
+- stream service: receives streaming requests from clients (indexers) and serves
+  onchain data by filtering objects stored on S3.
+
+### Ingestion service
+
+The ingestion service is responsible for ingesting onchain data into a format
+that's optimized for streaming.
+In practice this means:
+
+- splitting blocks into smaller pieces (headers, transactions, etc.).
+- grouping data from contiguous blocks together into _segments_.
+- building indices for quickly scanning through data.
+
+The _"Storage layout"_ section goes into more details on how data is stored in
+Object Storage.
+
+Notice that the ingestion service only uploads finalized (immutable) data to
+Object Storage, this presents a challenge since we want to serve data up to the
+chain's head to clients.
+For this reason, the ingestion service exposes an internal gRPC service that
+stream services can use to receive blocks that have been ingested but are not
+finalized yet. This service is also responsible for other bookkeeping operations,
+such us updates to the ingestion state and notifying about chain reorganizations.
+
+A final note about the ingestion service: a production deployment only needs
+a single instance of this service. Because state is stored in Object Storage
+and in the archive node, this service can be made stateless.
+
+### Stream service
+
+The stream service serves onchain data to clients. The raw onchain data stored
+in Object Storage is filtered by the stream service before being sent over the
+network, this results in lower egress fees compared to solutions that filter
+data on the client.
+
+In practice, when the streaming service needs to process a block segment it
+looks for the data in a local cache before fetching it from Object Storage.
+Operators can tweak the size of the cache to balance performance and cost.
+The service design follows a _"cloud native"_ approach, where expensive and slow
+network volumes are replaced by cheap and fast temporary volumes. In this case,
+temporary volumes work because the cache doesn't need to be persisted between
+restarts or deployments.
+
+```
+╔═════ Read latency ════════════════════════════════════════════════════════════════════════════╗
+║                                                                                               ║▒
+║ ┌─────────────────────┐            ┌─────────────────────┐            ┌─────────────────────┐ ║▒
+║ │                     │            │                     │            │                     │ ║▒
+║ │   Stream service    │───~50 µs──▶│   NVMe/SSD cache    │───~20 ms──▶│   Object Storage    │ ║▒
+║ │                     │            │                     │            │                     │ ║▒
+║ └─────────────────────┘            └─────────────────────┘            └─────────────────────┘ ║▒
+║                                                                                               ║▒
+╚═══════════════════════════════════════════════════════════════════════════════════════════════╝▒
+ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+```
+
+The following table, inspired [by the table in this article by
+Vantage](https://www.vantage.sh/blog/ebs-vs-nvme-pricing-performance), shows the
+difference in performance and price between an AWS EC2 instance using
+(temporary) NVMe disks and two using EBS (one with a general purpose `gp3`
+volume, and one with higher performance `io1` volume). All prices as of April
+2024, US East, 1 year reserved with no upfront payment.
+
+| Metric                | EBS (gp3)   | EBS (io1)   | NVMe              |
+| --------------------- | ----------- | ----------- | ----------------- |
+| Instance Type         | r6i.8xlarge | r6i.8xlarge | i4i.8xlarge       |
+| vCPU                  | 32          | 32          | 32                |
+| Memory (GiB)          | 256         | 256         | 245               |
+| Network (Gibps)       | 12.50       | 12.50       | 18.75             |
+| Storage (GiB)         | 7500        | 7500        | 2x3750            |
+| IOPS (read/write)     | 16,000      | 40,000      | 800,000 / 440,000 |
+| Cost - Compute ($/mo) | 973         | 973         | 1,300             |
+| Cost - Storage ($/mo) | 665         | 3,537       | 0                 |
+| Cost - Total ($/mo)   | 1,638       | 4,510       | 1,300             |
+
+Notice how the NVMe instance has 30-50x the IOPS per dollar. This price
+difference means that Apibara users benefit from lower costs and/or higher
+performance.
+
+## Storage layout
+
+This section describes how the DNA service stores data on S3. All data is stored
+compressed using zstandard since it strikes a good balance between performance
+and compression.
+
+First, blocks are decomposed in smaller pieces (header, transactions, logs, and receipts).
+Since the indexing speed is a function of the amount of data that needs to be
+scanned, by splitting blocks into their smaller components we can improve
+performance for clients that only need selected pieces of data (e.g. only logs).
+
+After enough blocks have been processed, they are grouped together into
+_"segments"_. Since there are four piece of data for each block, there will be
+four files per segment. The size of the segment is configurable, the optimal
+size in dependent on the network being ingested. All segments are stored under
+the `segment/` prefix. Notice that segments only contain data about finalized
+blocks.
+
+Finally, the ingestion service creates indices to quickly lookup data into
+segments without scanning the segments themselves. Indices are created at
+regular block intervals (also configurable) and are stored under the `group/`
+prefix. Once the stream server reaches a segment/block that doesn't belong to a
+group, its content is sequentially scanned.
+
+```
+╔═ s3://{network_name} ══════════════════════════════╗
+║                                                    ║▒
+║ ┌──────────────┐                                   ║▒
+║ │ snapshot.zst │                                   ║▒
+║ └──────────────┘                                   ║▒
+║ ┌─ segment/{block_range}/ ───────────────────────┐ ║▒
+║ │                                                │ ║▒
+║ │ ┌─ header.zst ────────┐┌─ transaction.zst ───┐ │ ║▒
+║ │ │▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋││▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋│ │ ║▒
+║ │ └─────────────────────┘└─────────────────────┘ │ ║▒
+║ │ ┌─ receipt.zst ───────┐┌─ log.zst ───────────┐ │ ║▒
+║ │ │▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋││▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋│ │ ║▒
+║ │ └─────────────────────┘└─────────────────────┘ │ ║▒
+║ └────────────────────────────────────────────────┘ ║▒
+║ ┌─ group/ ───────────────────────────────────────┐ ║▒
+║ │                                                │ ║▒
+║ │ ┌─ {block_range}.zst ────────────┐             │ ║▒
+║ │ │▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋│             │ ║▒
+║ │ └────────────────────────────────┘             │ ║▒
+║ └────────────────────────────────────────────────┘ ║▒
+╚════════════════════════════════════════════════════╝▒
+ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+```
+
+Information about the ingestion state is stored in the `snapshot.zst` file at
+the root of the bucket.
