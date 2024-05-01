@@ -12,3 +12,248 @@ This page contains reference about the available data in EVM DNA streams.
 ### Related pages
 
 - [EVM data filter reference](/docs/networks/evm/filter)
+
+## Typescript types
+
+Some values are always hex-encoded:
+
+```ts
+/** A smart contract or EOA address. */
+export type Address = `0x${string}`;
+/** Fixed byte array: 32 bytes. */
+export type B256 = `0x${string}`;
+/** Unsigned integer: 32 bytes. */
+export type U256 = `0x${string}`;
+/** Unsigned integer: 16 bytes. */
+export type U128 = `0x${string}`;
+/** Logs bloom. */
+export type Bloom = `0x${string}`;
+```
+
+## Nullable fields
+
+**Important**: some fields (like log and transaction indices) are null when
+their value is `0`. This issue will be fixed, but at the moment you must handle
+this case in your code.
+
+```ts
+export default function transform({ logs }) {
+  // Nullable pitfall 1: events may be null.
+  return (logs ?? []).flatMap((log) => {
+    // Nullable pitfall 2: index is null when it should be 0.
+    const index = log.transactionIndex ?? 0;
+  });
+}
+```
+
+## Data types
+
+### Block
+
+The root data type passed to the transform function is always a `Block`.
+
+```ts
+export type Block = Partial<{
+  /** Block header. */
+  header: BlockHeader;
+  /** Logs, sorted by log index. */
+  logs: Log[];
+  /** Transactions, sorted by transaction index. */
+  transactions: Transaction[];
+  /** Transaction receipts, sorted by transaction index. */
+  receipts: TransactionReceipt[];
+  /** Withdrawals, sorted by index. */
+  withdrawals: Withdrawal[];
+}>;
+```
+
+### Block header
+
+```ts
+export type BlockHeader = Partial<{
+  /** Block number. */
+  number: number;
+  /** Hash of the block. */
+  hash: B256;
+  /** Hash of the parent block. */
+  parentHash: B256;
+  /** Hash of the uncles. */
+  unclesHash: B256;
+  /** Author of the block. */
+  miner: Address;
+  /** State root hash. */
+  stateRoot: B256;
+  /** Transactions root hash. */
+  transactionsRoot: B256;
+  /** Receipts root hash. */
+  receiptsRoot: B256;
+  /** Logs bloom. */
+  logsBloom: Bloom;
+  /** Difficulty. */
+  difficulty: U256;
+  /** Gas limit. */
+  gasLimit: U256;
+  /** Gas used. */
+  gasUsed: U256;
+  /** Timestamp. */
+  timestamp: string;
+  /** Extra data. */
+  extraData: `0x${string}`;
+  /** Mix hash. */
+  mixHash: B256;
+  /** Nonce. */
+  nonce: number;
+  /** Base fee per unit of gas. */
+  baseFeePerGas: U256;
+  /** Withdrawals root hash. */
+  withdrawalsRoot: B256;
+
+  // Additional fields.
+
+  /** Total difficulty. */
+  totalDifficulty: U256;
+  /** Uncles' hashes. */
+  uncles: B256[];
+  /** The size of this block in bytes. */
+  size: U256;
+
+  /** Blob gas used. */
+  blobGasUsed: number;
+  /** Excess blob gas. */
+  excessBlobGas: number;
+  /** Parent beacon block root. */
+  parentBeaconBlockRoot: B256;
+}>;
+```
+
+### Log
+
+```ts
+export type Log = Partial<{
+  /** Address of the contract that emitted the log. */
+  address: Address;
+  /** Log topics. */
+  topics: B256[];
+  /** Additional data. */
+  data: `0x${string}`;
+  /** Index of the log in the block. */
+  logIndex: number;
+  /** Index of the transaction that emitted the log. */
+  transactionIndex: number;
+  /** Hash of the transaction that emitted the log. */
+  transactionHash: B256;
+}>;
+```
+
+### Transaction
+
+```ts
+export type Transaction = Partial<{
+  /** Transaction hash. */
+  hash: B256;
+  /** Nonce. */
+  nonce: number;
+  /** Transaction index in the block. */
+  transactionIndex: number;
+  /** Sender. */
+  from: Address;
+  /** Recipient. */
+  to: Address;
+  /** Amount of wei transferred. */
+  value: U256;
+  /** Gas price. */
+  gasPrice: U128;
+  /** Gas amount. */
+  gas: U256;
+  /** Max base fee per gas the sender is willing to pay. */
+  maxFeePerGas: U128;
+  /** Miner's tip. */
+  maxPriorityFeePerGas: U128;
+  /** Data. */
+  input: `0x${string}`;
+  /** The signature's r,s,v,yParity values. */
+  signature: Signature;
+  /** Chain ID. */
+  chainId: number;
+  /** EIP-2930 access list. */
+  accessList: AccessListItem[];
+  /** EIP-2718 transaction type. */
+  transactionType: number;
+  /** EIP-4844 max gas fee per blob. */
+  maxFeePerBlobGas: U128;
+  /** EIP-4844 blob hashes. */
+  blobVersionedHashes: B256[];
+}>;
+
+export type Signature = Partial<{
+  /** The signature's r value. */
+  r: U256;
+  /** The signature's s value. */
+  s: U256;
+  /** The signature's v value. */
+  v: U256;
+  /** The signature's parity byte. */
+  yParity: boolean;
+}>;
+
+export type AccessListItem = Partial<{
+  /** Account address to be loaded at the start of the transaction. */
+  address: Address;
+  /** Storage keys to be loaded at the start of the transaction. */
+  storageKeys: B256[];
+}>;
+```
+
+### Transaction Receipt
+
+```ts
+export type TransactionReceipt = Partial<{
+  /** Transaction hash. */
+  transactionHash: B256;
+  /** Index of the transaction in the block. */
+  transactionIndex: number;
+  /** Block hash. */
+  blockHash: B256;
+  /** Index of the block. */
+  blockNumber: number;
+  /** Cumulative gas used in the block after this transaction has been executed. */
+  cumulativeGasUsed: U256;
+  /** Gas used by this transaction. */
+  gasUsed: U256;
+  /** The price paid by the transaction. */
+  effectiveGasPrice: U128;
+  /** Sender. */
+  from: Address;
+  /** Recipient, if any. */
+  to: Address;
+  /** Contract address created, if any. */
+  contractAddress: Address;
+  /** Logs bloom. */
+  logsBloom: Bloom;
+  /** Either 1 (success) or 0 (failure). */
+  statusCode: number;
+  /** EIP-2718 transaction type. */
+  transactionType: number;
+  /** EIP-4844 blob gas used. */
+  blobGasUsed: U128;
+  /** EIP-4844 blob gas paid by the transaction. */
+  blobGasPrice: U128;
+}>;
+```
+
+### Withdrawal
+
+```ts
+export type Withdrawal = Partial<{
+  /** Increasing index of the withdrawal. */
+  index: number;
+  /** Index of the validator. */
+  validatorIndex: number;
+  /** Withdrawal index in the block. */
+  withdrawalIndex: number;
+  /** Target address of the withdrawal. */
+  address: Address;
+  /** Value of the withdrawal, in gwei. */
+  amount: U256;
+}>;
+```
