@@ -2,7 +2,7 @@
 title: Ethereum and EVM networks
 description: "Stream onchain from Ethereum and other EVM-compatible networks."
 diataxis: reference
-updatedAt: 2024-04-26
+updatedAt: 2024-04-30
 ---
 
 # Ethereum and EVM networks
@@ -41,4 +41,27 @@ updatedAt: 2024-04-26
 
 Apibara provides **preview** streams for Ethereum. Streaming Ethereum data is
 still in preview and is subject to breaking changes as we finalize the DNA v2
-protocol based on early users feedback.
+protocol based on early users feedback. No authentication is required.
+
+**Ethereum Sepolia testnet** (partial)
+
+```txt
+sepolia.ethereum.a5a.ch
+```
+
+## Testing DNA v2
+
+At the moment, we don't provide precompiled binaries for DNA v2. If you'd like
+to test DNA v2 and its EVM integration, you must compile binaries from the source.
+
+1. Clone [the repository](https://github.com/apibara/dna/tree/dna-v2) and switch
+   to the `dna-v2` branch.
+2. Install a Rust toolchain, either using nix (`nix develop`) or with rustup.
+3. Compile the binary you want to use. For example to test the MongoDB
+   integration: `cargo build --release -p apibara-sink-mongo`.
+
+## Getting started with EVM data
+
+- Learn [how to filter EVM data](/docs/networks/evm/filter).
+- Learn [what data is streamed from the server to the indexer](/docs/networks/evm/data).
+- Use any integration to sync onchain data to the rest of your application.

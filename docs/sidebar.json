@@ -72,7 +72,7 @@
                     "path": "/starknet"
                 },
                 {
-                    "name": "EVM (v2 α)",
+                    "name": "EVM (v2 alpha)",
                     "type": "group",
                     "path": "/evm"
                 }

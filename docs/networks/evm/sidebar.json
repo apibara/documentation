@@ -4,6 +4,16 @@
             "name": "Overview",
             "type": "page",
             "path": "/"
+        },
+        {
+            "name": "Filter",
+            "type": "page",
+            "path": "/filter"
+        },
+        {
+            "name": "Block data",
+            "type": "page",
+            "path": "/data"
         }
     ]
 }
