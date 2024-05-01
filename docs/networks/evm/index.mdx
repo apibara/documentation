@@ -65,3 +65,69 @@ to test DNA v2 and its EVM integration, you must compile binaries from the sourc
 - Learn [how to filter EVM data](/docs/networks/evm/filter).
 - Learn [what data is streamed from the server to the indexer](/docs/networks/evm/data).
 - Use any integration to sync onchain data to the rest of your application.
+
+## Example indexer
+
+The following indexer listens for all ERC-20 `Transfer` events on Sepolia and
+prints them to stdout.
+
+Change the `sinkType` to:
+
+- [sync data to PostgreSQL](/docs/integrations/postgres).
+- [sync data to MongoDB](/docs/integrations/mongo).
+- [create Parquet datasets](/docs/integrations/parquet).
+- [send data to a webhook](/docs/integrations/webhook), for example to ingest
+  data into [Tinybird](https://www.tinybird.co/).
+
+```js [indexer.js]
+import {
+  decodeEventLog,
+  encodeEventTopics,
+  parseAbi,
+} from "https://esm.sh/viem";
+
+const abi = parseAbi([
+  "event Transfer(address indexed from, address indexed to, uint256 value)",
+]);
+
+export const config = {
+  streamUrl: "https://sepolia.ethereum.a5a.ch",
+  startingBlock: 5_000_000,
+  network: "evm",
+  filter: {
+    header: {},
+    logs: [
+      {
+        strict: true,
+        topics: encodeEventTopics({
+          abi,
+          eventName: "Transfer",
+          args: [null, null],
+        }),
+      },
+    ],
+  },
+  sinkType: "console",
+  sinkOptions: {},
+};
+
+export default function transform({ header, logs }) {
+  return (logs ?? []).flatMap(({ address, topics, data, transactionHash }) => {
+    const decoded = decodeEventLog({ abi, topics, data });
+    return {
+      tokenAddress: address,
+      eventName: decoded.eventName,
+      from: decoded.args.from,
+      to: decoded.args.to,
+      value: decoded.args.value.toString(10),
+
+      transactionHash,
+      blockNumber: header.number.toString(10),
+      blockHash: header.hash,
+      blockTimestamp: header.timestamp,
+    };
+  });
+}
+```
+
+Run with `apibara-sink-console run indexer.js`.
