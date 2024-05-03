@@ -7,6 +7,97 @@ updatedAt: 2024-05-03 10:00
 
 # Deploying to Railway
 
-<p align="center">
-  <img width="300px" src="logotype-light.png" alt="Railway logo" />
-</p>
+![Railway logo](logotype-light.png)
+
+## Create a project Dockerfile
+
+The first step is to create a `Dockerfile` for your project. If you're using a
+[monorepo](/docs/indexers/editor-setup#monorepo-with-node-bun-and-deno), place
+the `Dockerfile` in `apps/indexers`.
+
+```dockerfile
+FROM quay.io/apibara/sink-postgres:0.7.0-x86_64
+
+WORKDIR /app
+COPY ./src/* /app
+
+ENTRYPOINT ["/nix/store/rh1g8pb7wfnyr527jfmkkc5lm3sa1f0l-apibara-sink-postgres-0.7.0/bin/apibara-sink-postgres"]
+```
+
+Notice that the base image is build from scratch (not an OS like Ubuntu), so the
+binary is in a location that depends on the build. For this reason we stick to
+a specific version and architecture.
+
+When updating the image you also need to update the Docker `ENTRYPOINT`.
+
+First pull the new version of the image.
+
+:::cli-command
+
+```bash [Terminal]
+docker image pull quay.io/apibara/sink-postgres:0.7.0-x86_64
+```
+
+```
+2352c28bb4a7: Download complete
+979824b603fa: Download complete
+quay.io/apibara/sink-postgres:0.7.0-x86_64
+```
+
+:::
+
+Then get the entrypoint path by inspecting the image.
+
+:::cli-command
+
+```bash [Terminal]
+docker image inspect quay.io/apibara/sink-postgres:0.7.0-x86_64 | jq '.[].Config.Entrypoint'
+```
+
+```
+[
+  "/nix/store/rh1g8pb7wfnyr527jfmkkc5lm3sa1f0l-apibara-sink-postgres-0.7.0/bin/apibara-sink-postgres"
+]
+```
+
+:::
+
+Save and push to GitHub.
+
+## Create a new Railway service
+
+From the Railway dashboard, create a new service deployment and connect your
+GitHub repository.
+
+- Change "root directory" to the folder containing your `Dockerfile`, e.g. `/apps/indexers`.
+- Builder should automatically switch to "Dockerfile". If not, just wait a few seconds until it does.
+- Change the "custom start command". Since this option changes the Docker's _entrypoint_, you will need to pass the full path to the `apibara-sink-*` executable. For example: `/nix/store/rh1g8pb7wfnyr527jfmkkc5lm3sa1f0l-apibara-sink-postgres-0.7.0/bin/apibara-sink-postgres run /app/my-indexer.ts`
+- Change "restart policy" to "Always".
+- Set the `AUTH_TOKEN` environment variable to your DNA token.
+- Set any other relevant environment variable needed by your indexer.
+- Once deployed, you should see the indexer starting and running.
+
+## Connect to a Railway Postgres database
+
+If you're connecting your indexer to a PostgreSQL database managed by Railway,
+you will need to add the following flag to your start command (between `run` and
+the indexer's path).
+
+```txt
+--tls-accept-invalid-certificates=true
+```
+
+This is needed because the certificate issued by Railway does not play nicely with `rustls`.
+
+## Persisting state between restarts
+
+The easiest way to [persist state between restarts](/docs/indexers/persistence)
+on Railway is by using the managed Redis.
+
+- Deploy a new Redis instance on Railway, and wait for it to become ready.
+- Update the following indexer's environment variables:
+  - Set `PERSIST_TO_REDIS` to a reference to Redis' url: `${{Redis.REDIS_URL}}`.
+  - Set `SINK_ID` to an unique id for this indexer, e.g. `my-indexer`.
+
+After redeploying, you will notice that the indexer will store its state (like
+latest indexed block) in the provided Redis instance.
