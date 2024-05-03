@@ -1,0 +1,14 @@
+{
+    "items": [
+        {
+            "name": "Overview",
+            "type": "page",
+            "path": "/"
+        },
+        {
+            "name": "Railway",
+            "type": "page",
+            "path": "/railway"
+        }
+    ]
+}

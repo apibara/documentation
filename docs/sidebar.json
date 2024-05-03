@@ -59,6 +59,11 @@
                     "name": "Testing",
                     "type": "group",
                     "path": "/testing"
+                },
+                {
+                    "name": "Deploying",
+                    "type": "group",
+                    "path": "/deploying"
                 }
             ]
         },
