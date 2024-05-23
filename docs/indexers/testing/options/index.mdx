@@ -5,11 +5,13 @@ diataxis: reference
 updatedAt: 2024-02-13
 ---
 
-# Apibara test CLI options
+# Apibara test options
+
+## CLI options
 
 **Notice**: for an always up-to-date list of CLI options, you can run `apibara test --help`.
 
-## Options
+### Options
 
 **`--name, -n`**
 
@@ -30,3 +32,14 @@ Override the indexer's starting block.
 **`--stream-url`**
 
 Override the indexer's stream url.
+
+## Snapshot options
+
+You can specify test-specific options by updating the `testOptions` property
+inside a snapshot.
+
+### Options
+
+**`floatingPointDecimals`**
+
+The number of decimal places used when comparing two numbers in the snapshot.
