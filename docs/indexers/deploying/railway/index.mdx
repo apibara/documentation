@@ -72,39 +72,26 @@ GitHub repository.
 - Change "root directory" to the folder containing your `Dockerfile`, e.g. `/apps/indexers`.
 - Builder should automatically switch to "Dockerfile". If not, just wait a few seconds until it does.
 - Change the "custom start command". Since this option changes the Docker's _entrypoint_, you will need to pass the full path to the `apibara-sink-*` executable. For example: `/nix/store/rh1g8pb7wfnyr527jfmkkc5lm3sa1f0l-apibara-sink-postgres-0.7.0/bin/apibara-sink-postgres run /app/my-indexer.ts`
-  - If you're using a Railway managed Postgres, read the section below for additional options.
 - Change "restart policy" to "Always".
 - Set the `AUTH_TOKEN` environment variable to your DNA token.
 - Set any other relevant environment variable needed by your indexer.
-  - For Postgres: `POSTGRES_CONNECTION_STRING`
-  - For Mongo: `MONGO_CONNECTION_STRING`
+  - For Postgres: `POSTGRES_CONNECTION_STRING=${{Postgres.DATABASE_URL}}`
+  - For Mongo: `MONGO_CONNECTION_STRING=${{MongoDB.MONGO_URL}}`
 - Remember to whitelist environment variables used in your indexer with the
   `--allow-env-from-env` option or the `ALLOW_ENV_FROM_ENV` environment variable.
   See [the environment variables](/docs/indexers/permissions/environment) page
   for more information.
 - Once deployed, you should see the indexer starting and running.
 
-## Connect to a Railway Postgres database
-
-If you're connecting your indexer to a PostgreSQL database managed by Railway,
-you will need to add the following flag to your start command (between `run` and
-the indexer's path).
-
-```txt
---tls-accept-invalid-certificates=true
-```
-
-This is needed because the certificate issued by Railway does not play nicely with `rustls`.
-
 ## Persisting state between restarts
 
 The easiest way to [persist state between restarts](/docs/indexers/persistence)
-on Railway is by using the managed Redis.
+on Railway is by using Redis.
 
 - Deploy a new Redis instance on Railway, and wait for it to become ready.
 - Update the following indexer's environment variables:
   - Set `PERSIST_TO_REDIS` to a reference to Redis' url: `${{Redis.REDIS_URL}}`.
-  - Set `SINK_ID` to an unique id for this indexer, e.g. `my-indexer`.
+  - Set `SINK_ID` to a unique id for this indexer, e.g. `my-indexer`.
 
 After redeploying, you will notice that the indexer will store its state (like
 latest indexed block) in the provided Redis instance.
