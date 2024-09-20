@@ -1,0 +1,31 @@
+{
+    "sections": [
+        {
+            "name": "Getting Started",
+            "path": "/",
+            "items": [
+                {
+                    "name": "Overview",
+                    "type": "page",
+                    "path": "/"
+                }
+            ]
+        },
+        {
+            "name": "DNA Protocol",
+            "path": "/dna",
+            "items": [
+                {
+                    "name": "Overview",
+                    "type": "page",
+                    "path": "/"
+                },
+                {
+                    "name": "Architecture",
+                    "type": "page",
+                    "path": "/architecture"
+                }
+            ]
+        }
+    ]
+}
