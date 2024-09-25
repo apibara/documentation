@@ -1,0 +1,65 @@
+---
+title: Adding a new chain
+description: "Learn how to bring DNA to your chain, giving developers access to the best indexing platform on the market."
+diataxis: how-to
+updatedAt: 2024-09-22
+---
+
+# Adding a new chain
+
+This page explains how to add support for a new chain to the DNA protocol. It is recommended that you're familiar with the high-level [DNA architecture](/docs/v2/dna/architecture) and the [DNA streaming protocol](/docs/v2/dna/streaming-protocol) before reading this page.
+
+## Overview
+
+Adding a new chain is relatively straightforward. Most of the code you need to write is describing the type of data stored on your chain.
+The guide is split in the following sections:
+
+ - **gRPC Protocol**: describes how to augment the gRPC protocol with filters and data types specific to the new chain.
+ - **Storage**: describes how data is stored on disk and S3. 
+ - **Data filtering**: describes how to filter data based on the client's request.
+
+## gRPC Protocol
+
+The first step is to define the root `Filter` and `Block` protobuf messages.
+
+There are a few hard requirements on the messages:
+
+ - The `header` field of the block must have tag `1`.
+ - All other fields can have any tag.
+ - Add one message type for each chain's resource (transactions, receipts, logs, etc.).
+ - Each resource must have a `filter_ids` field with tag `1`.
+ - Add a `Filter.id: uint32` property. Indexers use this to know which filters matched a specific piece of data and is used to populate the `filter_ids` field.
+
+The following items are optional:
+
+ - Add an option to the `Filter` to request all block headers. Users use this to debug their indexer.
+ - Think how users are going to use the data. For example, developers often access the transaction's hash of a log, for this reason we include the transaction hash in the `Log` message.
+ - Avoid excessive nesting of messages.
+
+## Storage
+
+The goal of the ingestion service is to fetch data from the chain (using the chain's RPC protocol), preprocess and index it, and then store it into the object storage.
+
+DNA stores block data as pre-serialized protobuf messages. This is done to send data to clients by 
+copying bytes directly, without expensive serialization and deserialization.
+
+Since DNA doesn't know about the chain, it needs a way to filter data without scanning the entire block.
+This is done with _indices_.
+
+The chain-specific ingestion service is responsible for creating these indices. The next section goes into
+detail how indices work, the important part is that:
+
+ - Indices are grouped by the type of data they index (e.g. transactions, logs, and traces).
+ - For each type of data, there can be multiple indices.
+ - Indices point to one or more pre-serialized protobuf messages.
+
+## Data filtering
+
+As mentioned in the previous section, the DNA server uses indices to lookup data without scanning the entire block.
+This is done by compiling the protobuf filter sent by the client into a special representation.
+This `Filter` specifies:
+
+ - What resource to filter (e.g. transactions, logs, and traces).
+ - The list of conditions to match.
+
+A _condition_ is a tuple with the filter id and the lookup key.

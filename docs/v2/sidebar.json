@@ -24,6 +24,16 @@
                     "name": "Architecture",
                     "type": "page",
                     "path": "/architecture"
+                },
+                {
+                    "name": "Protocol",
+                    "type": "page",
+                    "path": "/protocol"
+                },
+                {
+                    "name": "Add new chain",
+                    "type": "page",
+                    "path": "/add-new-chain"
                 }
             ]
         }
