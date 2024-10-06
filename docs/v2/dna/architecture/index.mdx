@@ -1,13 +1,13 @@
 ---
-title: DNA architecture - V2 preview
-description: ""
+title: DNA v2 architecture
+description: "Discover how DNA achieves best-in-class performance for indexing onchain data."
 diataxis: explanation
 updatedAt: 2024-09-20
 ---
 
-# DNA architecture - V2 preview
+# DNA v2 architecture
 
-This page describes in detail the architecture of the DNA v2 service.
+This page describes in detail the architecture of DNA v2.
 
 At a high-level, the goals for DNA v2 are:
 
@@ -20,94 +20,278 @@ from an archive node and stores it into Object Storage (e.g. Amazon S3,
 Cloudflare R2). Data is served by stateless workers that read and filter data
 from Object Storage before sending it to the indexers. The diagram below shows
 all the high-level components that make a production deployment of DNA v2.
+Communication between components is done through etcd.
 
 ```txt
- ╔══ DNA Service ══════════════════════════════════════╗
- ║ ┌──────────────────┐                                ║▒
- ║ │                  │                                ║▒
- ║ │    Stream Svc    │◀─────┐                         ║▒
- ║ │                  │      │                         ║▒
- ║ └──────────────────┘      │                         ║▒
- ║ ┌──────────────────┐      │    ┌──────────────────┐ ║▒          ┌──────────────────┐
- ║ │                  │      │    │                  │ ║▒          │                  │▒
- ║ │    Stream Svc    │◀─────┼────│  Ingestion Svc   │◀╬──JSON-RPC─│   Archive Node   │▒
- ║ │                  │      │    │                  │ ║▒          │                  │▒
- ║ └──────────────────┘      │    └──────────────────┘ ║▒          └──────────────────┘▒
- ║ ┌──────────────────┐      │              │          ║▒           ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
- ║ │                  │      │              │          ║▒
- ║ │    Stream Svc    │◀─────┘              │          ║▒
- ║ │                  │                     │          ║▒
- ║ └──────────────────┘                     │          ║▒
- ║           ▲                              │          ║▒
- ║           │                              ▼          ║▒
- ║ ┌─────────────────────────────────────────────────┐ ║▒
- ║ │             Object Storage (S3, R2)             │ ║▒
- ║ └─────────────────────────────────────────────────┘ ║▒
- ╚═════════════════════════════════════════════════════╝▒
-  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+                 ┌─────────────────────────────────────────────┐                 
+                 │                Archive Node                 │░                
+                 └─────────────────────────────────────────────┘░                
+                  ░░░░░░░░░░░░░░░░░░░░░░│░░░░░░░░░░░░░░░░░░░░░░░░                
+                                        │                                        
+                                        │                                        
+  ╔═ DNA Cluster ═══════════════════════╬══════════════════════════════════════╗ 
+  ║                                     │                                      ║░
+  ║ ┌──────┐                            ▼                            ┌──────┐  ║░
+  ║ │      │     ┌─────────────────────────────────────────────┐     │      │  ║░
+  ║ │      │     │                                             │     │      │  ║░
+  ║ │      │◀────│              Ingestion Service              │────▶│      │  ║░
+  ║ │      │     │                                             │     │      │  ║░
+  ║ │      │     └─────────────────────────────────────────────┘     │      │  ║░
+  ║ │      │     ┌─────────────────────────────────────────────┐     │      │  ║░
+  ║ │      │     │                                             │     │      │  ║░
+  ║ │      │◀────│             Compaction Service              │────▶│      │  ║░
+  ║ │      │     │                                             │     │      │  ║░
+  ║ │      │     └─────────────────────────────────────────────┘     │      │  ║░
+  ║ │  S3  │     ┌─────────────────────────────────────────────┐     │ etcd │  ║░
+  ║ │      │     │                                             │     │      │  ║░
+  ║ │      │◀────│               Pruning Service               │────▶│      │  ║░
+  ║ │      │     │                                             │     │      │  ║░
+  ║ │      │     └─────────────────────────────────────────────┘     │      │  ║░
+  ║ │      │     ┌───────────────────────────────────────────┐       │      │  ║░
+  ║ │      │     │┌──────────────────────────────────────────┴┐      │      │  ║░
+  ║ │      │     ││┌──────────────────────────────────────────┴┐     │      │  ║░
+  ║ │      │     │││                                           │     │      │  ║░
+  ║ │      │     │││                  Stream                   │     │      │  ║░
+  ║ │      │◀────┤││                                           ├────▶│      │  ║░
+  ║ │      │     │││                  Service                  │     │      │  ║░
+  ║ └──────┘     └┤│                                           │     └──────┘  ║░
+  ║               └┤                                           │               ║░
+  ║                └───────────────────────────────────────────┘               ║░
+  ║                                                                            ║░
+  ╚════════════════════════════════════════════════════════════════════════════╝░
+   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
 ## DNA service
 
-The DNA service is comprised of two components:
+The DNA service is comprised of several components:
 
 - ingestion service: listens for new blocks on the network and stores them into
   Object Storage.
+- compaction service: combines multiple blocks together into _segments_.
+  Segments are grouped by data type (e.g. logs, transactions, and receipts).
+- pruner service: removes blocks that have been compacted to reduce storage cost.
 - stream service: receives streaming requests from clients (indexers) and serves
   onchain data by filtering objects stored on S3.
 
 ### Ingestion service
 
-The ingestion service is responsible for ingesting onchain data into a format
-that's optimized for streaming.
-In practice this means:
+The ingestion service fetches blocks from the network and stores them into
+Object Storage. This service is the only chain-specific service in DNA, all
+other components work on generic data-structures.
 
-- splitting blocks into smaller pieces (headers, transactions, etc.).
-- grouping data from contiguous blocks together into _segments_.
-- building indices for quickly scanning through data.
+Serving onchain data requires serving a high-volume of data filtered by a
+relatively small number of columns. When designing DNA, we took a few decisions
+to make this process as efficient as possible:
 
-The _"Storage layout"_ section goes into more details on how data is stored in
-Object Storage.
+- data is stored as pre-serialized protobuf messages to avoid wasting CPU
+  cycles serializing the same data over and over again.
+- filtering is entirely done using indices to reduce reads.
+- joins (e.g. include logs' transactions) are also achieved with indices.
 
-Notice that the ingestion service only uploads finalized (immutable) data to
-Object Storage, this presents a challenge since we want to serve data up to the
-chain's head to clients.
-For this reason, the ingestion service exposes an internal gRPC service that
-stream services can use to receive blocks that have been ingested but are not
-finalized yet. This service is also responsible for other bookkeeping operations,
-such us updates to the ingestion state and notifying about chain reorganizations.
+The ingestion service is responsible for creating this data and indices.
+Data is grouped into _blocks_. Blocks are comprised of _fragments_, that
+is groups of related data. All fragments have an unique numerical id used
+to identify them. There are four different types of fragments:
 
-A final note about the ingestion service: a production deployment only needs
-a single instance of this service. Because state is stored in Object Storage
-and in the archive node, this service can be made stateless.
+- index: a collection of indices, the fragment id is `0`.
+  Indices are grouped by the fragment they index.
+- join: a collection of join indices, the fragment id is `254`.
+  Join indices are also grouped by the source fragment index.
+- header: the block header, the fragment id is `1`. Header are stored as
+  pre-serialized protobuf messages.
+- body: the chain-specific block data, grouped by fragment id.
+
+Note that we call block number + hash a _cursor_ since it uniquely identifies a
+block in the chain.
+
+```txt
+ ╔═ Block ══════════════════════════════════════════════════════════════╗ 
+ ║ ┌─ Index ──────────────────────────────────────────────────────────┐ ║░
+ ║ │ ┌─ Fragment 0 ─────────────────────────────────────────────────┐ │ ║░
+ ║ │ │┌────────────────────────────────────────────────────────────┐│ │ ║░
+ ║ │ ││                          Index 0                           ││ │ ║░
+ ║ │ │├────────────────────────────────────────────────────────────┤│ │ ║░
+ ║ │ ││                          Index 1                           ││ │ ║░
+ ║ │ │├────────────────────────────────────────────────────────────┤│ │ ║░
+ ║ │ │                                                              │ │ ║░
+ ║ │ │├────────────────────────────────────────────────────────────┤│ │ ║░
+ ║ │ ││                          Index N                           ││ │ ║░
+ ║ │ │└────────────────────────────────────────────────────────────┘│ │ ║░
+ ║ │ └──────────────────────────────────────────────────────────────┘ │ ║░
+ ║ └──────────────────────────────────────────────────────────────────┘ ║░
+ ║ ┌─ Join ───────────────────────────────────────────────────────────┐ ║░
+ ║ │ ┌─ Fragment 0 ─────────────────────────────────────────────────┐ │ ║░
+ ║ │ │┌────────────────────────────────────────────────────────────┐│ │ ║░
+ ║ │ ││                         Fragment 1                         ││ │ ║░
+ ║ │ │├────────────────────────────────────────────────────────────┤│ │ ║░
+ ║ │ ││                         Fragment 2                         ││ │ ║░
+ ║ │ │└────────────────────────────────────────────────────────────┘│ │ ║░
+ ║ │ └──────────────────────────────────────────────────────────────┘ │ ║░
+ ║ └──────────────────────────────────────────────────────────────────┘ ║░
+ ║ ┌─ Body ───────────────────────────────────────────────────────────┐ ║░
+ ║ │ ┌──────────────────────────────────────────────────────────────┐ │ ║░
+ ║ │ │                                                              │ │ ║░
+ ║ │ │                           Fragment 0                         │ │ ║░
+ ║ │ │                                                              │ │ ║░
+ ║ │ └──────────────────────────────────────────────────────────────┘ │ ║░
+ ║ │ ┌──────────────────────────────────────────────────────────────┐ │ ║░
+ ║ │ │                                                              │ │ ║░
+ ║ │ │                           Fragment 1                         │ │ ║░
+ ║ │ │                                                              │ │ ║░
+ ║ │ └──────────────────────────────────────────────────────────────┘ │ ║░
+ ║ └──────────────────────────────────────────────────────────────────┘ ║░
+ ╚══════════════════════════════════════════════════════════════════════╝░
+ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+```
+
+On supported networks, the ingestion service is also responsible for
+periodically refreshing the mempool (pending) block data and uploading it into
+Object Storage. This works exactly as for all other blocks.
+
+The ingestion service tracks the canonical chain and uploads it to Object Storage.
+This data is used by the stream service to track online and offline chain
+reorganizations.
+
+The ingestion service stores its data on etcd. Stream services subscribe to
+etcd updates to receive notifications about new blocks ingested and other
+changes to the chain (for example changes to the finalized block).
+
+Finally, the ingestion service is _fault tolerant_. When the ingestion service
+starts, it acquires a distributed lock from etcd to ensure only one instance is
+running at the same time. If running multiple deployments of DNA, all other
+instances will wait for the lock to be released (following a service restart or
+crash) and will try to take over the ingestion.
+
+### Compaction service
+
+The compaction service groups together data from several blocks (usually 100 or
+1000) into _segments_. Segments only contain data for one fragment type (headers,
+indices, transactions, and so on).
+In other words, the compaction service groups `N` blocks into `M` segments.
+
+Only data that has been finalized is compacted into segments.
+
+The compaction service also creates block-level indices called _groups_. Groups
+combine indices from multiple blocks/segments to quickly look up which blocks
+contain specific data. This type of index is very useful to increase performance
+on sparse datasets.
+
+```txt
+ ╔═ Index Segment ═══════════════════════╗         ╔═ Transaction Segment ═════════════════╗ 
+ ║ ┌─ Block ───────────────────────────┐ ║░        ║ ┌─ Block ───────────────────────────┐ ║░
+ ║ │ ┌─ Fragment 0 ──────────────────┐ │ ║░        ║ │ ┌───────────────────────────────┐ │ ║░
+ ║ │ │┌─────────────────────────────┐│ │ ║░        ║ │ │                               │ │ ║░
+ ║ │ ││           Index 0           ││ │ ║░        ║ │ │                               │ │ ║░
+ ║ │ │├─────────────────────────────┤│ │ ║░        ║ │ │           Fragment 2          │ │ ║░
+ ║ │ ││           Index 1           ││ │ ║░        ║ │ │                               │ │ ║░
+ ║ │ │├─────────────────────────────┤│ │ ║░        ║ │ │                               │ │ ║░
+ ║ │ │                               │ │ ║░        ║ │ └───────────────────────────────┘ │ ║░
+ ║ │ │├─────────────────────────────┤│ │ ║░        ║ └───────────────────────────────────┘ ║░
+ ║ │ ││           Index N           ││ │ ║░        ║ ┌─ Block ───────────────────────────┐ ║░
+ ║ │ │└─────────────────────────────┘│ │ ║░        ║ │ ┌───────────────────────────────┐ │ ║░
+ ║ │ └───────────────────────────────┘ │ ║░        ║ │ │                               │ │ ║░
+ ║ └───────────────────────────────────┘ ║░        ║ │ │                               │ │ ║░
+ ║ ┌─ Block ───────────────────────────┐ ║░        ║ │ │           Fragment 2          │ │ ║░
+ ║ │ ┌─ Fragment 0 ──────────────────┐ │ ║░        ║ │ │                               │ │ ║░
+ ║ │ │┌─────────────────────────────┐│ │ ║░        ║ │ │                               │ │ ║░
+ ║ │ ││           Index 0           ││ │ ║░        ║ │ └───────────────────────────────┘ │ ║░
+ ║ │ │├─────────────────────────────┤│ │ ║░        ║ └───────────────────────────────────┘ ║░
+ ║ │ ││           Index 1           ││ │ ║░        ║ ┌─ Block ───────────────────────────┐ ║░
+ ║ │ │├─────────────────────────────┤│ │ ║░        ║ │ ┌───────────────────────────────┐ │ ║░
+ ║ │ │                               │ │ ║░        ║ │ │                               │ │ ║░
+ ║ │ │├─────────────────────────────┤│ │ ║░        ║ │ │           Fragment 2          │ │ ║░
+ ║ │ ││           Index N           ││ │ ║░        ║ │ │                               │ │ ║░
+ ║ │ │└─────────────────────────────┘│ │ ║░        ║ │ │                               │ │ ║░
+ ║ │ └───────────────────────────────┘ │ ║░        ║ │ └───────────────────────────────┘ │ ║░
+ ║ └───────────────────────────────────┘ ║░        ║ └───────────────────────────────────┘ ║░
+ ╚═══════════════════════════════════════╝░        ╚═══════════════════════════════════════╝░
+  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░         ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+```
+
+### Pruner service
+
+The pruner service cleans up block data that has been included in segments.
+This is done to reduce the storage used by DNA.
+
+### Object hierarchy
+
+We now have all elements to understand the objects uploaded to Object Storage by the
+ingestion service.
+If you run DNA pointing it to your bucket, you can eventually see a folder structure
+that looks like the following.
+
+```txt
+my-chain
+├── blocks
+│   ├── 000020908017
+│   │   └── 0xc137607affd53bd9e857af372429762f77eaff0fe32f0e49224e9fc0e439118d
+│   │   ├── pending-0
+│   │   ├── pending-1
+│   │   └── pending-2
+│   ├── 000020908018
+│   │   └── ... same as above
+│   └── 000020908019
+│       └── ... same as above
+├── chain
+│   ├── recent
+│   ├── z-000020906000
+│   ├── z-000020907000
+│   └── z-000020908000
+├── groups
+│   └── 000020905000
+│       └── index
+└── segments
+    ├── 000020906000
+    │   ├── header
+    │   ├── index
+    │   ├── join
+    │   ├── log
+    │   ├── receipt
+    │   └── transaction
+    ├── 000020907000
+    │   └── ... same as above
+    └── 000020908000
+        └── ... same as above
+```
 
 ### Stream service
 
-The stream service serves onchain data to clients. The raw onchain data stored
-in Object Storage is filtered by the stream service before being sent over the
-network, this results in lower egress fees compared to solutions that filter
-data on the client.
+The stream service is responsible for serving data to clients.  The raw onchain
+data stored in Object Storage is filtered by the stream service before being
+sent over the network, this results in lower egress fees compared to solutions
+that filter data on the client.
 
-In practice, when the streaming service needs to process a block segment it
-looks for the data in a local cache before fetching it from Object Storage.
-Operators can tweak the size of the cache to balance performance and cost.
-The service design follows a _"cloud native"_ approach, where expensive and slow
-network volumes are replaced by cheap and fast temporary volumes. In this case,
-temporary volumes work because the cache doesn't need to be persisted between
-restarts or deployments.
+Upon receiving a stream request, the service validates and compiles the request
+into a _query_. A query is simply a list of index lookup requests that are
+applied to each block.
 
-```txt
-╔═════ Read latency ════════════════════════════════════════════════════════════════════════════╗
-║                                                                                               ║▒
-║ ┌─────────────────────┐            ┌─────────────────────┐            ┌─────────────────────┐ ║▒
-║ │                     │            │                     │            │                     │ ║▒
-║ │   Stream service    │───~50 µs──▶│   NVMe/SSD cache    │───~20 ms──▶│   Object Storage    │ ║▒
-║ │                     │            │                     │            │                     │ ║▒
-║ └─────────────────────┘            └─────────────────────┘            └─────────────────────┘ ║▒
-║                                                                                               ║▒
-╚═══════════════════════════════════════════════════════════════════════════════════════════════╝▒
- ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
-```
+The stream service loops then keeps repeating the following steps:
+
+- check if it should send a new block of data or inform the client of a chain
+  reorganization.
+- load the indices from the segment or the block and use them to compute what
+  data to send the client.
+- load the pre-serialized protobuf messages and copy them to the output stream.
+
+One critical aspect of the stream service is how it loads blocks and segments.
+Reading from Object Storage has virtually unlimited throughput, but also high
+latency. The service is also very likely to access data closer to the chain's
+tip more frequently, and we should cache Object Storage requests to avoid
+unnecessarily increase our cloud spending.
+
+We achieve all of this (and more!) by using an hybrid cache that stores
+frequently accessed data in memory and _on disk_. This may come as a surprise
+since isn't the point of DNA to avoid expensive disks and rely on cheap Object
+Storage? The reasons this design still makes sense are multiple:
+
+- we can use cheaper and higher performance temporary NVMe disks attached
+  directly to our server.
+- we can quickly scale horizontally the stream service without re-indexing all
+  data.
+- we can use disks that are much smaller than the full chain's data. The cache
+  dynamically stores the most frequently accessed data. Unused or rarely used
+  data lives on Object Storage.
 
 The following table, inspired [by the table in this article by
 Vantage](https://www.vantage.sh/blog/ebs-vs-nvme-pricing-performance), shows the
@@ -132,54 +316,3 @@ Notice how the NVMe instance has 30-50x the IOPS per dollar. This price
 difference means that Apibara users benefit from lower costs and/or higher
 performance.
 
-## Storage layout
-
-This section describes how the DNA service stores data on S3. All data is stored
-compressed using zstandard since it strikes a good balance between performance
-and compression.
-
-First, blocks are decomposed in smaller pieces (header, transactions, logs, and receipts).
-Since the indexing speed is a function of the amount of data that needs to be
-scanned, by splitting blocks into their smaller components we can improve
-performance for clients that only need selected pieces of data (e.g. only logs).
-
-After enough blocks have been processed, they are grouped together into
-_"segments"_. Since there are four piece of data for each block, there will be
-four files per segment. The size of the segment is configurable, the optimal
-size in dependent on the network being ingested. All segments are stored under
-the `segment/` prefix. Notice that segments only contain data about finalized
-blocks.
-
-Finally, the ingestion service creates indices to quickly lookup data into
-segments without scanning the segments themselves. Indices are created at
-regular block intervals (also configurable) and are stored under the `group/`
-prefix. Once the stream server reaches a segment/block that doesn't belong to a
-group, its content is sequentially scanned.
-
-```txt
-╔═ s3://{network_name} ══════════════════════════════╗
-║                                                    ║▒
-║ ┌──────────────┐                                   ║▒
-║ │ snapshot.zst │                                   ║▒
-║ └──────────────┘                                   ║▒
-║ ┌─ segment/{block_range}/ ───────────────────────┐ ║▒
-║ │                                                │ ║▒
-║ │ ┌─ header.zst ────────┐┌─ transaction.zst ───┐ │ ║▒
-║ │ │▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋││▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋│ │ ║▒
-║ │ └─────────────────────┘└─────────────────────┘ │ ║▒
-║ │ ┌─ receipt.zst ───────┐┌─ log.zst ───────────┐ │ ║▒
-║ │ │▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋││▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋│ │ ║▒
-║ │ └─────────────────────┘└─────────────────────┘ │ ║▒
-║ └────────────────────────────────────────────────┘ ║▒
-║ ┌─ group/ ───────────────────────────────────────┐ ║▒
-║ │                                                │ ║▒
-║ │ ┌─ {block_range}.zst ────────────┐             │ ║▒
-║ │ │▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋▋│             │ ║▒
-║ │ └────────────────────────────────┘             │ ║▒
-║ └────────────────────────────────────────────────┘ ║▒
-╚════════════════════════════════════════════════════╝▒
- ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
-```
-
-Information about the ingestion state is stored in the `snapshot.zst` file at
-the root of the bucket.
