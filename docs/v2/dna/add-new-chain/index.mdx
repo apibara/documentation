@@ -7,7 +7,7 @@ updatedAt: 2024-09-22
 
 # Adding a new chain
 
-This page explains how to add support for a new chain to the DNA protocol. It is recommended that you're familiar with the high-level [DNA architecture](/docs/v2/dna/architecture) and the [DNA streaming protocol](/docs/v2/dna/streaming-protocol) before reading this page.
+This page explains how to add support for a new chain to the DNA protocol. It's recommended that you're familiar with the high-level [DNA architecture](/docs/v2/dna/architecture) and the [DNA streaming protocol](/docs/v2/dna/streaming-protocol) before reading this page.
 
 ## Overview
 
@@ -49,7 +49,7 @@ This is done with _indices_.
 The chain-specific ingestion service is responsible for creating these indices. The next section goes into
 detail how indices work, the important part is that:
 
- - Indices are grouped by the type of data they index (e.g. transactions, logs, and traces).
+ - Indices are grouped by the type of data they index (for example transactions, logs, and traces).
  - For each type of data, there can be multiple indices.
  - Indices point to one or more pre-serialized protobuf messages.
 
@@ -59,7 +59,7 @@ As mentioned in the previous section, the DNA server uses indices to lookup data
 This is done by compiling the protobuf filter sent by the client into a special representation.
 This `Filter` specifies:
 
- - What resource to filter (e.g. transactions, logs, and traces).
+ - What resource to filter (for example transactions, logs, and traces).
  - The list of conditions to match.
 
 A _condition_ is a tuple with the filter id and the lookup key.

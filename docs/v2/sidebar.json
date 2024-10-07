@@ -1,41 +1,41 @@
 {
-    "sections": [
+  "sections": [
+    {
+      "name": "Getting Started",
+      "path": "/",
+      "items": [
         {
-            "name": "Getting Started",
-            "path": "/",
-            "items": [
-                {
-                    "name": "Overview",
-                    "type": "page",
-                    "path": "/"
-                }
-            ]
+          "name": "Overview",
+          "type": "page",
+          "path": "/"
+        }
+      ]
+    },
+    {
+      "name": "DNA Protocol",
+      "path": "/dna",
+      "items": [
+        {
+          "name": "Overview",
+          "type": "page",
+          "path": "/"
         },
         {
-            "name": "DNA Protocol",
-            "path": "/dna",
-            "items": [
-                {
-                    "name": "Overview",
-                    "type": "page",
-                    "path": "/"
-                },
-                {
-                    "name": "Architecture",
-                    "type": "page",
-                    "path": "/architecture"
-                },
-                {
-                    "name": "Protocol",
-                    "type": "page",
-                    "path": "/protocol"
-                },
-                {
-                    "name": "Add new chain",
-                    "type": "page",
-                    "path": "/add-new-chain"
-                }
-            ]
+          "name": "Architecture",
+          "type": "page",
+          "path": "/architecture"
+        },
+        {
+          "name": "Protocol",
+          "type": "page",
+          "path": "/protocol"
+        },
+        {
+          "name": "Add new chain",
+          "type": "page",
+          "path": "/add-new-chain"
         }
-    ]
+      ]
+    }
+  ]
 }

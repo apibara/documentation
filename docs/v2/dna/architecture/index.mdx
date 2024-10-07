@@ -16,7 +16,7 @@ At a high-level, the goals for DNA v2 are:
 - decouple compute from storage.
 
 This is achieved by building a _cloud native_ service that ingests onchain data
-from an archive node and stores it into Object Storage (e.g. Amazon S3,
+from an archive node and stores it into Object Storage (for example Amazon S3,
 Cloudflare R2). Data is served by stateless workers that read and filter data
 from Object Storage before sending it to the indexers. The diagram below shows
 all the high-level components that make a production deployment of DNA v2.
@@ -69,7 +69,7 @@ The DNA service is comprised of several components:
 - ingestion service: listens for new blocks on the network and stores them into
   Object Storage.
 - compaction service: combines multiple blocks together into _segments_.
-  Segments are grouped by data type (e.g. logs, transactions, and receipts).
+  Segments are grouped by data type (like logs, transactions, and receipts).
 - pruner service: removes blocks that have been compacted to reduce storage cost.
 - stream service: receives streaming requests from clients (indexers) and serves
   onchain data by filtering objects stored on S3.
@@ -87,7 +87,7 @@ to make this process as efficient as possible:
 - data is stored as pre-serialized protobuf messages to avoid wasting CPU
   cycles serializing the same data over and over again.
 - filtering is entirely done using indices to reduce reads.
-- joins (e.g. include logs' transactions) are also achieved with indices.
+- joins (for example include logs' transactions) are also achieved with indices.
 
 The ingestion service is responsible for creating this data and indices.
 Data is grouped into _blocks_. Blocks are comprised of _fragments_, that
@@ -166,8 +166,8 @@ crash) and will try to take over the ingestion.
 ### Compaction service
 
 The compaction service groups together data from several blocks (usually 100 or
-1000) into _segments_. Segments only contain data for one fragment type (headers,
-indices, transactions, and so on).
+1000) into _segments_. Segments only contain data for one fragment type (for example 
+headers, indices, and transactions).
 In other words, the compaction service groups `N` blocks into `M` segments.
 
 Only data that has been finalized is compacted into segments.
@@ -257,7 +257,7 @@ my-chain
 
 ### Stream service
 
-The stream service is responsible for serving data to clients.  The raw onchain
+The stream service is responsible for serving data to clients. The raw onchain
 data stored in Object Storage is filtered by the stream service before being
 sent over the network, this results in lower egress fees compared to solutions
 that filter data on the client.
