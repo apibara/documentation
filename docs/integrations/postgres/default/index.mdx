@@ -29,3 +29,12 @@ create table yourtable(
   _cursor bigint
 )
 ```
+
+## Indices
+
+For better performance, you should add an index on the `_cursor` column.
+This index is used by the indexer when updating data between pending blocks.
+
+```sql
+CREATE INDEX ON yourtable (_cursor);
+```
