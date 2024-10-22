@@ -12,3 +12,209 @@ This page contains reference about the available data in EVM DNA streams.
 ### Related pages
 
 - [EVM data filter reference](/docs/v2/networks/evm/filter)
+
+## Filter ID
+
+All filters have an associated ID. To help clients correlate filters with data,
+the filter ID is included in the `filter_ids` field of all data objects.
+This field contains the list of _all filter IDs_ that matched a piece of data.
+
+## Nullable fields
+
+**Important**: most fields are nullable to allow evolving the protocol. You should
+always assert the presence of a field for critical indexers.
+
+## Scalar types
+
+The `@apibara/evm` package defines the following scalar types:
+
+ - `Address`: a 20-byte Ethereum address, represented as a `0x${string}` type.
+ - `B256`: a 32-byte Ethereum value, represented as a `0x${string}` type.
+ - `Bytes`: arbitrary length bytes, represented as a `0x${string}` type.
+
+## Usage with viem
+
+Most types are compatible with [viem](https://viem.sh/).
+For example, you can decode logs with the following code:
+
+```ts
+import type { B256 } from "@apibara/evm";
+import { decodeEventLog, parseAbi } from "viem";
+
+const abi = parseAbi([
+  "event Transfer(address indexed from, address indexed to, uint256 value)",
+]);
+
+// Somewhere in your indexer...
+for (const log of logs) {
+  const { args, eventName } = decodeEventLog({
+    abi,
+    topics: log.topics as [B256, ...B256[]],
+    data: log.data,
+   });
+}
+```
+
+## Data type
+
+### Block
+
+The root object is the `Block`.
+
+```ts
+export type Block = {
+  header?: BlockHeader;
+  logs: Log[];
+  transactions: Transaction[];
+  receipts: TransactionReceipt[];
+  withdrawals: Withdrawal[];
+};
+```
+
+### Header
+
+This is the block header, which contains information about the block.
+
+```ts
+export type Bloom = Bytes;
+
+export type BlockHeader = {
+  blockNumber?: bigint;
+  blockHash?: B256,
+  parentBlockHash?: B256;
+  unclesHash?: B256;
+  miner?: Address;
+  stateRoot?: B256;
+  transactionsRoot?: B256;
+  receiptsRoot?: B256;
+  logsBloom?: Bloom;
+  difficulty?: bigint;
+  gasLimit?: bigint;
+  gasUsed?: bigint;
+  timestamp?: Date;
+  extraData?: Bytes;
+  mixHash?: B256;
+  nonce?: bigint;
+  baseFeePerGas?: bigint;
+  withdrawalsRoot?: B256;
+  totalDifficulty?: bigint;
+  blobGasUsed?: bigint;
+  excessBlobGas?: bigint;
+  parentBeaconBlockRoot?: B256;
+};
+```
+
+### Log
+
+An EVM log. It comes together with the essential information about the transaction
+that emitted the log.
+
+```ts
+export type Log = {
+  filterIds: number[];
+  address?: Address;
+  topics: B256[];
+  data: Bytes;
+  logIndex: number;
+  transactionIndex: number;
+  transactionHash: B256;
+  transactionStatus: "succeeded" | "reverted";
+};
+```
+
+**Relevant filters**
+
+ - `filter.logs`
+ - `filter.logs[].includeSiblings`
+ - `filter.transactions[].includeLogs`
+
+### Transaction
+
+An EVM transaction.
+
+```ts
+export type Transaction = {
+  filterIds: number[];
+  transactionIndex?: number;
+  transactionHash?: B256;
+  nonce?: bigint;
+  from?: Address;
+  to?: Address;
+  value?: bigint;
+  gasPrice?: bigint;
+  gas?: bigint;
+  maxFeePerGas?: bigint;
+  maxPriorityFeePerGas?: bigint;
+  input: Bytes;
+  signature?: Signature;
+  chainId?: bigint;
+  accessList: AccessListItem[],
+  transactionType?: bigint;
+  maxFeePerBlobGas?: bigint;
+  blobVersionedHashes?: B256[];
+  transactionStatus: "succeeded" | "reverted";
+};
+
+export type Signature = {
+  r?: bigint;
+  s?: bigint;
+  v?: bigint;
+  yParity: boolean;
+};
+
+export type AccessListItem = {
+  address?: Address;
+  storageKeys: B256[];
+};
+```
+
+**Relevant filters**
+
+- `filter.transactions`
+- `filter.logs[].includeTransaction`
+
+### Transaction Receipt
+
+Information about the transaction's execution.
+
+```ts
+export type TransactionReceipt = {
+  filterIds: number[];
+  transactionIndex?: number;
+  transactionHash?: B256;
+  cumulativeGasUsed?: bigint;
+  gasUsed?: bigint;
+  effectiveGasPrice?: bigint;
+  from?: Address;
+  to?: Address;
+  contractAddress?: Address;
+  logsBloom?: Bloom;
+  transactionType?: bigint;
+  blobGasUsed?: bigint;
+  blobGasPrice?: bigint;
+  transactionStatus: "succeeded" | "reverted";
+};
+```
+
+**Relevant filters**
+
+- `filter.transactions[].includeReceipt`
+- `filter.logs[].includeReceipt`
+
+### Withdrawal
+
+A withdrawal from the Ethereum network.
+
+```ts
+export type Withdrawal = {
+  filterIds: number[];
+  withdrawalIndex?: number;
+  index?: bigint;
+  validatorIndex?: number;
+  address?: Address;
+  amount?: bigint;
+};
+
+**Relevant filters**
+
+ - `filter.withdrawals`
