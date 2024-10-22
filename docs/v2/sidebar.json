@@ -12,6 +12,22 @@
       ]
     },
     {
+      "name": "Networks",
+      "path": "/networks",
+      "items": [
+        {
+          "name": "EVM",
+          "type": "group",
+          "path": "/evm"
+        },
+        {
+          "name": "Starknet",
+          "type": "group",
+          "path": "/starknet"
+        }
+      ]
+    },
+    {
       "name": "DNA Protocol",
       "path": "/dna",
       "items": [

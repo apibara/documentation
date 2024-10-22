@@ -1,0 +1,366 @@
+---
+title: Starknet filter reference
+description: "Starknet: DNA data filter reference guide."
+diataxis: reference
+updatedAt: 2024-02-14
+---
+
+# Starknet filter reference
+
+This page contains reference about the available data filters for Starknet DNA
+streams.
+
+### Related pages
+
+- [DNA data filter guide](/docs/indexers/filter)
+- [Starknet block data reference](/docs/networks/starknet/data)
+
+## Typescript types
+
+```ts
+import type {
+  Block,
+  FieldElement,
+  Filter,
+} from "https://esm.sh/@apibara/indexer/starknet";
+```
+
+## Field elements
+
+Apibara represents Starknet field elements as hex-encode strings.
+
+```ts
+export type FieldElement = `0x${string}`;
+```
+
+## Filter types
+
+### Root
+
+```ts
+export type Filter = {
+  /** Header information. */
+  header?: HeaderFilter;
+  /** Include transactions. */
+  transactions?: TransactionFilter[];
+  /** Include events. */
+  events?: EventFilter[];
+  /** Include messages from L2 to L1. */
+  messages?: L2ToL1MessageFilter[];
+  /** Include state updates. */
+  stateUpdate?: StateUpdateFilter;
+};
+```
+
+### Header
+
+Block headers contain information about the block being processed. The `weak`
+flag is used to receive headers only if any other filter matches, this way your
+indexer won't have to process empty blocks.
+
+```ts
+export type HeaderFilter = {
+  /* If true, only include headers if any other filter matches. */
+  weak?: boolean;
+};
+```
+
+### Events
+
+Events are the most common filter used by Apibara users. You can filter by smart contract or event selector.
+
+- Compute the selector by computing the hash of the event name. That will be the first element of your `keys`.
+- If you need multiple event types (e.g. `Approve` and `Transfer`), simply add more event filters to `filter.events`.
+- Set `includeReceipt: false` to speed up indexing significantly.
+
+**Common patterns**
+
+- All events from a specific smart contract.
+
+```ts
+const filter = {
+  events: [{ fromAddress: MY_CONTRACT, includeReceipt: false }],
+};
+```
+
+- Multiple events from the same smart contract.
+
+```ts
+const filter = {
+  events: [
+    {
+      fromAddress: MY_CONTRACT,
+      keys: [APPROVE_SELECTOR],
+      includeReceipt: false,
+    },
+    {
+      fromAddress: MY_CONTRACT,
+      keys: [TRANSFER_SELECTOR],
+      includeReceipt: false,
+    },
+  ],
+};
+```
+
+- Multiple events from different smart contracts.
+
+```ts
+const filter = {
+  events: [
+    {
+      fromAddress: CONTRACT_A,
+      keys: [TRANSFER_SELECTOR],
+      includeReceipt: false,
+    },
+    {
+      fromAddress: CONTRACT_B,
+      keys: [TRANSFER_SELECTOR],
+      includeReceipt: false,
+    },
+    {
+      fromAddress: CONTRACT_C,
+      keys: [TRANSFER_SELECTOR],
+      includeReceipt: false,
+    },
+  ],
+};
+```
+
+The full `EventFilter` type is the following.
+
+```ts
+export type EventFilter = {
+  /** Filter by contract address. */
+  fromAddress?: FieldElement;
+  /** Filter by event keys (selector). */
+  keys?: FieldElement[];
+  /** Filter by event data. */
+  data?: FieldElement[];
+  /** Include events from reverted transactions. */
+  includeReverted?: boolean;
+  /** Include the transaction that emitted the event. Defaults to true. */
+  includeTransaction?: boolean;
+  /** Include the receipt of the transaction that emitted the event. Defaults to true. */
+  includeReceipt?: boolean;
+};
+```
+
+### Transactions
+
+Transactions on Starknet can be of different type (invoke, declare contract, deploy contract or account, handle L1 message).
+
+**Common patterns**
+
+- Request all transactions in a block. Notice the empty transaction filter object, this filter will match _any_ transaction.
+
+```ts
+const filter = { transactions: [{}] };
+```
+
+- Request all transactions of a specific type, e.g. deploy account. In this case we specify the `deployAccount` variant.
+
+```ts
+const filter = { transactions: [{ deployAccount: {} }] };
+```
+
+The type definitions for `TransactionFilter` are:
+
+```ts
+export type TransactionFilterCommon = {
+  /** Include reverted transactions. */
+  includeReverted?: boolean;
+};
+
+export type InvokeTransactionV0Filter = {
+  invokeV0?: {
+    /** Filter by contract address. */
+    contractAddress?: FieldElement;
+    /** Filter by function selector. */
+    entryPointSelector?: FieldElement;
+    /** Filter by function arguments. */
+    calldata?: FieldElement[];
+  };
+  invokeV1?: never;
+  deploy?: never;
+  declare?: never;
+  l1Handler?: never;
+  deployAccount?: never;
+};
+
+export type InvokeTransactionV1Filter = {
+  invokeV1?: {
+    /** Filter by sender address. */
+    senderAddress?: FieldElement;
+    /** Filter by function arguments. */
+    calldata?: FieldElement[];
+  };
+  invokeV0?: never;
+  deploy?: never;
+  declare?: never;
+  l1Handler?: never;
+  deployAccount?: never;
+};
+
+export type DeployTransactionFilter = {
+  deploy?: {
+    /** Filter by contract address salt. */
+    contractAddressSalt?: FieldElement;
+    /** Filter by class hash. */
+    classHash?: FieldElement;
+    /** Filter by constructor arguments. */
+    constructorCalldata?: FieldElement[];
+  };
+  invokeV0?: never;
+  invokeV1?: never;
+  declare?: never;
+  l1Handler?: never;
+  deployAccount?: never;
+};
+
+export type DeclareTransactionFilter = {
+  declare?: {
+    /** Filter by class hash. */
+    classHash?: FieldElement;
+    /** Filter by sender address. */
+    senderAddress?: FieldElement;
+  };
+  invokeV0?: never;
+  invokeV1?: never;
+  deploy?: never;
+  l1Handler?: never;
+  deployAccount?: never;
+};
+
+export type L1HandlerTransactionFilter = {
+  l1Handler?: {
+    /** Filter by contract address. */
+    contractAddress?: FieldElement;
+    /** Filter by function selector. */
+    entryPointSelector?: FieldElement;
+    /** Filter by function arguments. */
+    calldata?: FieldElement[];
+  };
+  invokeV0?: never;
+  invokeV1?: never;
+  deploy?: never;
+  declare?: never;
+  deployAccount?: never;
+};
+
+export type DeployAccountTransactionFilter = {
+  deployAccount?: {
+    /** Filter by contract address salt. */
+    contractAddressSalt?: FieldElement;
+    /** Filter by class hash. */
+    classHash?: FieldElement;
+    /** Filter by constructor arguments. */
+    constructorCalldata?: FieldElement[];
+  };
+  invokeV0?: never;
+  invokeV1?: never;
+  deploy?: never;
+  declare?: never;
+  l1Handler?: never;
+};
+
+export type TransactionFilter = TransactionFilterCommon &
+  (
+    | InvokeTransactionV0Filter
+    | InvokeTransactionV1Filter
+    | DeployTransactionFilter
+    | DeclareTransactionFilter
+    | L1HandlerTransactionFilter
+    | DeployAccountTransactionFilter
+  );
+
+export type EventFilter = {
+  /** Filter by contract address. */
+  fromAddress?: FieldElement;
+  /** Filter by event keys (selector). */
+  keys?: FieldElement[];
+  /** Filter by event data. */
+  data?: FieldElement[];
+  /** Include events from reverted transactions. */
+  includeReverted?: boolean;
+  /** Include the transaction that emitted the event. Defaults to true. */
+  includeTransaction?: boolean;
+  /** Include the receipt of the transaction that emitted the event. Defaults to true. */
+  includeReceipt?: boolean;
+};
+```
+
+### Messages
+
+Filter messages from L1 to Starknet.
+
+```ts
+export type L2ToL1MessageFilter = {
+  /** Filter by destination address. */
+  toAddress?: FieldElement;
+  /** Filter by payload. */
+  payload?: FieldElement[];
+  /** Include messages from reverted transactions. */
+  includeReverted?: boolean;
+};
+```
+
+### State update
+
+This filter returns data about updates to Starknet state. Developers usually use this filter to track changes to the storage variables (`storageDiffs`) or declared/deployed contracts.
+
+```ts
+export type StateUpdateFilter = {
+  /** Filter storage diffs. */
+  storageDiffs?: StorageDiffFilter[];
+  /** Filter declared contracts. */
+  declaredContracts?: DeclaredContractFilter[];
+  /** Filter deployed contracts. */
+  deployedContracts?: DeployedContractFilter[];
+  /** Filter nonce updates. */
+  nonces?: NonceUpdateFilter[];
+  /** Filter declared classes. */
+  declaredClasses?: DeclaredClassFilter[];
+  /** Filter replaced classes. */
+  replacedClasses?: ReplacedClassFilter[];
+};
+
+export type StorageDiffFilter = {
+  /** Filter by contract address. */
+  contractAddress?: FieldElement;
+};
+
+export type DeclaredContractFilter = {
+  /** Filter by class hash. */
+  classHash?: FieldElement;
+};
+
+export type DeployedContractFilter = {
+  /** Filter by contract address. */
+  contractAddress?: FieldElement;
+  /** Filter by class hash. */
+  classHash?: FieldElement;
+};
+
+export type NonceUpdateFilter = {
+  /** Filter by contract address. */
+  contractAddress?: FieldElement;
+  /** Filter by nonce value. */
+  nonce?: FieldElement;
+};
+
+export type DeclaredClassFilter = {
+  /** Filter by class hash. */
+  classHash?: FieldElement;
+  /** Filter by compiled class hash. */
+  compiledClassHash?: FieldElement;
+};
+
+export type ReplacedClassFilter = {
+  /** Filter by contract address. */
+  contractAddress?: FieldElement;
+  /** Filter by class hash. */
+  classHash?: FieldElement;
+};
+```
+
+End of docs.

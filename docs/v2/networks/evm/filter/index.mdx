@@ -1,0 +1,275 @@
+---
+title: EVM filter reference
+description: "EVM: DNA data filter reference guide."
+diataxis: reference
+updatedAt: 2024-10-22
+---
+
+# EVM filter reference
+
+This page contains reference about the available data filters for EVM DNA
+streams.
+
+### Related pages
+
+- [EVM block data reference](/docs/v2/networks/evm/data)
+
+## Filter ID
+
+All filters have an associated ID. When the server filters a block, it will
+return a list of all filters that matched a piece of data with the data.
+You can use this ID to build powerful abstractions in your indexers.
+
+## Usage with viem
+
+Most types are compatible with [viem](https://viem.sh/).
+For example, you can generate log filters with the following code:
+
+```ts
+import { encodeEventTopics, parseAbi } from "viem";
+
+const abi = parseAbi([
+  "event Transfer(address indexed from, address indexed to, uint256 value)",
+]);
+
+const filter = {
+  logs: [{
+    topics: encodeEventTopics({
+      abi,
+      eventName: "Transfer",
+      args: { from: null, to: null },
+    }),
+    strict: true,
+  }]
+}
+```
+
+## Filter types
+
+### Root
+
+The root filter object contains a collection of filters.
+Notice that providing an empty filter object is an error.
+
+```ts
+export type Filter = {
+  header?: HeaderFilter;
+  logs?: LogFilter[];
+  transactions?: TransactionFilter[];
+  withdrawals?: WithdrawalFilter[];
+};
+```
+
+### Header
+
+The `HeaderFilter` object controls when the block header is returned to the client.
+
+```ts
+export type HeaderFilter = "always" | "on_data" | "on_data_or_on_new_block";
+```
+
+The values have the following meaning:
+
+- `always`: Always return the header, even if no other filter matches.
+- `on_data`: Return the header only if any other filter matches. This is the default value.
+- `on_data_or_on_new_block`: Return the header only if any other filter matches. If no other filter matches, return the header only if the block is a new block.
+
+## Logs
+
+Logs are the most common type of DNA filters. Use this filter to get the logs and
+their associated data like transactions, receipts, and sibling logs.
+
+```ts
+export type LogFilter = {
+  id?: number;
+  address?: `0x${string}`;
+  topics?: (`0x${string} | null`)[];
+  strict?: boolean;
+  transactionStatus?: "succeeded" | "reverted" | "all";
+  includeTransaction?: boolean;
+  includeReceipt?: boolean;
+  includeSiblings?: boolean;
+};
+```
+
+**Properties**
+
+ - `address`: filter by contract address. If empty, matches any contract
+    address.
+ - `topics`: filter by topic. Use `null` to match _any_ value.
+ - `strict`: return logs whose topics length matches the filter. By default, the
+    filter does a prefix match on the topics.
+ - `transactionStatus`: return logs emitted by transactions with the provided
+    status. Defaults to `succeeded`.
+ - `includeTransaction`: also return the transaction that emitted the log.
+ - `includeReceipt`: also return the receipt of the transaction that emitted the
+    log.
+ - `includeSiblings`: also return all other logs emitted by the same transaction
+   that emitted the matched log.
+
+**Examples**
+
+ - All logs in a block emitted by successful transactions.
+
+```ts
+const filter = {
+  logs: [{}],
+};
+```
+
+ - All `Transfer` events emitted by successful transactions. Notice that this will
+   match logs from ERC-20, ERC-721, and other contracts that emit `Transfer`.
+
+```ts
+const filter = {
+  logs: [{
+    topics: ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"],
+  }],
+};
+```
+
+ - All `Transfer` events that follow the ERC-721 standard. Notice that this will
+   not match logs from ERC-20 since the number of indexed parameters is different.
+
+```ts
+const filter = {
+  logs: [{
+    topics: [
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+        null, // from
+        null, // to
+        null, // tokenId
+    ],
+    strict: true,
+  }],
+};
+```
+
+ - All logs emitted by `CONTRACT_A` OR `CONTRACT_B`.
+ 
+```ts
+const filter = {
+  logs: [{
+    address: CONTRACT_A,
+  }, {
+    address: CONTRACT_B,
+  }],
+};
+```
+
+## Transactions
+
+Request Ethereum transactions.
+
+```ts
+export type TransactionFilter = {
+  id?: number;
+  from?: `0x${string}`;
+  to?: `0x${string}`;
+  create?: true,
+  transactionStatus?: "succeeded" | "reverted" | "all";
+  includeReceipt?: boolean;
+  includeLogs?: boolean;
+};
+```
+
+**Properties**
+
+ - `from`: filter by sender address. If empty, matches any sender address.
+ - `to`: filter by receiver address. If empty, matches any receiver address.
+ - `create`: filter by whether the transaction is a create transaction.
+ - `transactionStatus`: return transactions with the provided status. Defaults to
+    `succeeded`.
+ - `includeReceipt`: also return the receipt of the transaction.
+ - `includeLogs`: also return the logs emitted by the transaction.
+
+**Examples**
+
+ - All transactions in a block.
+ 
+```ts
+const filter = {
+  transactions: [{}],
+};
+```
+
+ - All transactions from `0xAB...`.
+
+```ts
+const filter = {
+  transactions: [{
+    from: "0xAB...",
+  }],
+};
+```
+
+ - All create transactions.
+
+```ts
+const filter = {
+  transactions: [{
+    create: true,
+  }],
+};
+```
+
+## Withdrawals
+
+Request Ethereum withdrawals.
+
+```ts
+export type WithdrawalFilter = {
+  id?: number;
+  validatorIndex?: number;
+  address?: string;
+};
+```
+
+**Properties**
+
+ - `validatorIndex`: filter by validator's index. If empty, matches any
+    validator's index.
+ - `address`: filter by withdrawal address. If empty, matches any withdrawal
+    address.
+
+**Examples**
+
+ - All withdrawals
+
+```ts
+const filter = {
+  withdrawals: [{}],
+};
+```
+
+ - All withdrawals from validator with index `1234`.
+
+```ts
+const filter = {
+  withdrawals: [{
+    validatorIndex: 1234,
+  }],
+};
+```
+
+ - All withdrawals from validators with index `1234` OR `7890`.
+
+```ts
+const filter = {
+  withdrawals: [{
+    validatorIndex: 1234,
+  }, {
+    validatorIndex: 7890,
+  }],
+};
+```
+
+ - All withdrawals to address `0xAB...`.
+
+```ts
+const filter = {
+  withdrawals: [{
+    address: "0xAB...",
+  }],
+};
+```
