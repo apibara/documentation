@@ -16,7 +16,7 @@ This page contains reference about the available data in EVM DNA streams.
 ## Filter ID
 
 All filters have an associated ID. To help clients correlate filters with data,
-the filter ID is included in the `filter_ids` field of all data objects.
+the filter ID is included in the `filterIds` field of all data objects.
 This field contains the list of _all filter IDs_ that matched a piece of data.
 
 ## Nullable fields
@@ -104,6 +104,31 @@ export type BlockHeader = {
 };
 ```
 
+**Properties**
+
+ - `blockNumber`: the block number.
+ - `blockHash`: the block hash.
+ - `parentBlockHash`: the block hash of the parent block.
+ - `unclesHash`: the block hash of the uncles.
+ - `miner`: the address of the miner.
+ - `stateRoot`: the state root.
+ - `transactionsRoot`: the transactions root.
+ - `receiptsRoot`: the receipts root.
+ - `logsBloom`: the logs bloom.
+ - `difficulty`: the block difficulty.
+ - `gasLimit`: the block gas limit.
+ - `gasUsed`: the gas used by transactions in the block.
+ - `timestamp`: the block timestamp.
+ - `extraData`: extra bytes data picked by the miner.
+ - `mixHash`: the mix hash.
+ - `nonce`: the nonce.
+ - `baseFeePerGas`: the base fee per gas.
+ - `withdrawalsRoot`: the withdrawals root.
+ - `totalDifficulty`: the total difficulty.
+ - `blobGasUsed`: the gas used by transactions posting blob data in the block.
+ - `excessBlobGas`: the excess blob gas.
+ - `parentBeaconBlockRoot`: the parent beacon block root.
+
 ### Log
 
 An EVM log. It comes together with the essential information about the transaction
@@ -121,6 +146,16 @@ export type Log = {
   transactionStatus: "succeeded" | "reverted";
 };
 ```
+
+**Properties**
+
+ - `address`: the address of the contract that emitted the log.
+ - `topics`: the topics of the log.
+ - `data`: the data of the log.
+ - `logIndex`: the index of the log in the block.
+ - `transactionIndex`: the index of the transaction that emitted the log.
+ - `transactionHash`: the hash of the transaction that emitted the log.
+ - `transactionStatus`: the status of the transaction that emitted the log.
 
 **Relevant filters**
 
@@ -168,6 +203,27 @@ export type AccessListItem = {
 };
 ```
 
+**Properties**
+
+- `transactionIndex`: the index of the transaction in the block.
+- `transactionHash`: the hash of the transaction.
+- `nonce`: the nonce of the transaction.
+- `from`: the sender of the transaction.
+- `to`: the recipient of the transaction. Empty if it's a create transaction.
+- `value`: the value of the transaction, in wei.
+- `gasPrice`: the gas price of the transaction.
+- `gas`: the gas limit of the transaction.
+- `maxFeePerGas`: the max fee per gas of the transaction.
+- `maxPriorityFeePerGas`: the max priority fee per gas of the transaction.
+- `input`: the input data of the transaction.
+- `signature`: the signature of the transaction.
+- `chainId`: the chain ID of the transaction.
+- `accessList`: the access list of the transaction.
+- `transactionType`: the transaction type.
+- `maxFeePerBlobGas`: the max fee per blob gas of the transaction.
+- `blobVersionedHashes`: the hashes of blobs posted by the transaction.
+- `transactionStatus`: the status of the transaction.
+
 **Relevant filters**
 
 - `filter.transactions`
@@ -196,6 +252,22 @@ export type TransactionReceipt = {
 };
 ```
 
+**Properties**
+
+- `transactionIndex`: the transaction index in the block.
+- `transactionHash`: the hash of the transaction.
+- `cumulativeGasUsed`: the cumulative gas used by the transactions.
+- `gasUsed`: the gas used by the transaction.
+- `effectiveGasPrice`: the effective gas price of the transaction.
+- `from`: the sender of the transaction.
+- `to`: the recipient of the transaction. Empty if it's a create transaction.
+- `contractAddress`: the address of the contract created by the transaction.
+- `logsBloom`: the logs bloom of the transaction.
+- `transactionType`: the transaction type.
+- `blobGasUsed`: the gas used by the transaction posting blob data.
+- `blobGasPrice`: the gas price of the transaction posting blob data.
+- `transactionStatus`: the status of the transaction.
+
 **Relevant filters**
 
 - `filter.transactions[].includeReceipt`
@@ -214,6 +286,15 @@ export type Withdrawal = {
   address?: Address;
   amount?: bigint;
 };
+```
+
+**Properties**
+
+ - `withdrawalIndex`: the index of the withdrawal in the block.
+ - `index`: the global index of the withdrawal.
+ - `validatorIndex`: the index of the validator that created the withdrawal.
+ - `address`: the destination address of the withdrawal.
+ - `amount`: the amount of the withdrawal, in wei.
 
 **Relevant filters**
 
