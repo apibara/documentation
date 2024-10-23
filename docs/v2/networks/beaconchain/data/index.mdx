@@ -1,0 +1,243 @@
+---
+title: Beacon Chain data reference
+description: "Beacon Chain: DNA data data reference guide."
+diataxis: reference
+updatedAt: 2024-10-22
+---
+
+# Beacon Chain data reference
+
+This page contains reference about the available data in Beacon Chain DNA streams.
+
+### Related pages
+
+- [Beacon Chain data filter reference](/docs/v2/networks/beaconchain/filter)
+
+## Filter ID
+
+All filters have an associated ID. To help clients correlate filters with data,
+the filter ID is included in the `filterIds` field of all data objects.
+This field contains the list of _all filter IDs_ that matched a piece of data.
+
+## Nullable fields
+
+**Important**: most fields are nullable to allow evolving the protocol. You should
+always assert the presence of a field for critical indexers.
+
+## Scalar types
+
+The `@apibara/beaconchain` package defines the following scalar types:
+
+ - `Address`: a 20-byte Ethereum address, represented as a `0x${string}` type.
+ - `B256`: a 32-byte Ethereum value, represented as a `0x${string}` type.
+ - `B384`: a 48-byte Ethereum value, represented as a `0x${string}` type.
+ - `Bytes`: arbitrary length bytes, represented as a `0x${string}` type.
+
+## Data type
+
+### Block
+
+The root object is the `Block`.
+
+```ts
+export type Block = {
+  header?: BlockHeader;
+  transactions: Transaction[];
+  blobs: Blob[];
+  validators: Validator[];
+};
+```
+
+### Header
+
+This is the block header, which contains information about the block.
+
+```ts
+export type BlockHeader = {
+  slot?: bigint;
+  proposerIndex?: number;
+  parentRoot?: B256;
+  stateRoot?: B256;
+  randaoReveal?: Bytes;
+  depositCount?: bigint;
+  depositRoot?: B256;
+  blockHash?: B256;
+  graffiti?: B256;
+  executionPayload?: ExecutionPayload;
+  blobKzgCommitments: B384[];
+};
+
+export type ExecutionPayload = {
+  parentHash?: B256;
+  feeRecipient?: Address;
+  stateRoot?: B256;
+  receiptsRoot?: B256;
+  logsBloom?: Bytes;
+  prevRandao?: B256;
+  blockNumber?: bigint;
+  timestamp?: Date;
+};
+```
+
+**Properties**
+
+ - `slot`: the slot number.
+ - `proposerIndex`: the index of the validator that proposed the block.
+ - `parentRoot`: the parent root.
+- `stateRoot`: the state root.
+- `randaoReveal`: the randao reveal.
+- `depositCount`: the number of deposits.
+- `depositRoot`: the deposit root.
+- `blockHash`: the block hash.
+- `graffiti`: the graffiti.
+- `executionPayload`: the execution payload.
+- `blobKzgCommitments`: the blob kzg commitments.
+
+### Transaction
+
+An EVM transaction.
+
+```ts
+export type Transaction = {
+  filterIds: number[];
+  transactionIndex?: number;
+  transactionHash?: B256;
+  nonce?: bigint;
+  from?: Address;
+  to?: Address;
+  value?: bigint;
+  gasPrice?: bigint;
+  gas?: bigint;
+  maxFeePerGas?: bigint;
+  maxPriorityFeePerGas?: bigint;
+  input: Bytes;
+  signature?: Signature;
+  chainId?: bigint;
+  accessList: AccessListItem[],
+  transactionType?: bigint;
+  maxFeePerBlobGas?: bigint;
+  blobVersionedHashes?: B256[];
+};
+
+export type Signature = {
+  r?: bigint;
+  s?: bigint;
+  v?: bigint;
+  yParity: boolean;
+};
+
+export type AccessListItem = {
+  address?: Address;
+  storageKeys: B256[];
+};
+```
+
+**Properties**
+
+- `transactionIndex`: the index of the transaction in the block.
+- `transactionHash`: the hash of the transaction.
+- `nonce`: the nonce of the transaction.
+- `from`: the sender of the transaction.
+- `to`: the recipient of the transaction. Empty if it's a create transaction.
+- `value`: the value of the transaction, in wei.
+- `gasPrice`: the gas price of the transaction.
+- `gas`: the gas limit of the transaction.
+- `maxFeePerGas`: the max fee per gas of the transaction.
+- `maxPriorityFeePerGas`: the max priority fee per gas of the transaction.
+- `input`: the input data of the transaction.
+- `signature`: the signature of the transaction.
+- `chainId`: the chain ID of the transaction.
+- `accessList`: the access list of the transaction.
+- `transactionType`: the transaction type.
+- `maxFeePerBlobGas`: the max fee per blob gas of the transaction.
+- `blobVersionedHashes`: the hashes of blobs posted by the transaction.
+- `transactionStatus`: the status of the transaction.
+
+**Relevant filters**
+
+- `filter.transactions`
+- `filter.blobs[].includeTransaction`
+
+### Blob
+
+A blob and its content.
+
+```ts
+export type Blob = {
+  filterIds: number[];
+  blobIndex?: number;
+  blob?: Uint8Array;
+  kzgCommitment?: B384;
+  kzgProof?: B384;
+  kzgCommitmentInclusionProof: B256[];
+  blobHash?: B256;
+  transactionIndex?: number;
+  transactionHash?: B256;
+};
+```
+
+**Properties**
+
+ - `blobIndex`: the index of the blob in the block.
+ - `blob`: the blob content.
+ - `kzgCommitment`: the blob kzg commitment.
+ - `kzgProof`: the blob kzg proof.
+ - `kzgCommitmentInclusionProof`: the blob kzg commitment inclusion proof.
+ - `blobHash`: the hash of the blob content.
+ - `transactionIndex`: the index of the transaction that included the blob.
+ - `transactionHash`: the hash of the transaction that included the blob.
+
+**Relevant filters**
+
+ - `filter.blobs`
+ - `filter.transactions[].includeBlob`
+
+### Validator
+
+Data about validators.
+
+```ts
+export type ValidatorStatus =
+    | "pending_initialized"
+    | "pending_queued"
+    | "active_ongoing"
+    | "active_exiting"
+    | "active_slashed"
+    | "exited_unslashed"
+    | "exited_slashed"
+    | "withdrawal_possible"
+    | "withdrawal_done";
+
+export type Validator = {
+  filterIds: number[];
+  validatorIndex?: number;
+  balance?: bigint;
+  status?: ValidatorStatus;
+  pubkey?: B384;
+  withdrawalCredentials?: B256;
+  effectiveBalance?: bigint;
+  slashed?: boolean;
+  activationEligibilityEpoch?: bigint;
+  activationEpoch?: bigint;
+  exitEpoch?: bigint;
+  withdrawableEpoch?: bigint;
+};
+```
+
+**Properties**
+
+ - `validatorIndex`: the index of the validator.
+ - `balance`: the balance of the validator.
+ - `status`: the status of the validator.
+ - `pubkey`: the validator's public key.
+ - `withdrawalCredentials`: the withdrawal credentials.
+ - `effectiveBalance`: the effective balance of the validator.
+ - `slashed`: whether the validator is slashed.
+ - `activationEligibilityEpoch`: the epoch at which the validator can be activated.
+ - `activationEpoch`: the epoch at which the validator was activated.
+ - `exitEpoch`: the epoch at which the validator exited.
+ - `withdrawableEpoch`: the epoch at which the validator can withdraw.
+
+**Relevant filters**
+
+- `filter.validators`

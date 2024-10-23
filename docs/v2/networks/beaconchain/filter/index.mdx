@@ -1,0 +1,115 @@
+---
+title: Beacon Chain filter reference
+description: "Beacon Chain: DNA data filter reference guide."
+diataxis: reference
+updatedAt: 2024-10-22
+---
+
+# Beacon Chain filter reference
+
+This page contains reference about the available data filters for Beacon Chain
+DNA streams.
+
+### Related pages
+
+- [Beacon Chain block data reference](/docs/v2/networks/beaconchain/data)
+
+## Filter ID
+
+All filters have an associated ID. When the server filters a block, it will
+return a list of all filters that matched a piece of data with the data.
+You can use this ID to build powerful abstractions in your indexers.
+
+## Filter types
+
+### Root
+
+The root filter object contains a collection of filters.
+Notice that providing an empty filter object is an error.
+
+```ts
+export type Filter = {
+  header?: HeaderFilter;
+  transactions: TransactionFilter[];
+  blobs: BlobFilter[];
+  validators: ValidatorFilter[];
+};
+```
+
+### Header
+
+The `HeaderFilter` object controls when the block header is returned to the client.
+
+```ts
+export type HeaderFilter = "always" | "on_data" | "on_data_or_on_new_block";
+```
+
+The values have the following meaning:
+
+- `always`: Always return the header, even if no other filter matches.
+- `on_data`: Return the header only if any other filter matches. This is the default value.
+- `on_data_or_on_new_block`: Return the header only if any other filter matches. If no other filter matches, return the header only if the block is a new block.
+
+### Transactions
+
+DNA includes decoded transactions submitted to the network.
+
+```ts
+export type TransactionFilter = {
+  id?: number;
+  from?: `0x${string}`;
+  to?: `0x${string}`;
+  create?: boolean;
+  includeBlob?: boolean;
+};
+```
+
+**Properties**
+
+ - `from`: filter by sender address. If empty, matches any sender address.
+ - `to`: filter by receiver address. If empty, matches any receiver address.
+ - `create`: filter by whether the transaction is a create transaction.
+ - `includeBlob`: also return all blobs included in the transaction.
+
+### Blobs
+
+A blob and its content.
+
+```ts
+export type BlobFilter = {
+  id?: number;
+  includeTransaction?: boolean;
+};
+```
+
+**Properties**
+
+ - `includeTransaction`: also return the transaction that included the blob.
+
+### Validators
+
+Validators and their historical balances.
+
+```ts
+export type ValidatorStatus =
+    | "pending_initialized"
+    | "pending_queued"
+    | "active_ongoing"
+    | "active_exiting"
+    | "active_slashed"
+    | "exited_unslashed"
+    | "exited_slashed"
+    | "withdrawal_possible"
+    | "withdrawal_done";
+
+export type ValidatorFilter = {
+  id?: number;
+  validatorIndex?: number;
+  status?: ValidatorStatus;
+};
+```
+
+**Properties**
+
+ - `validatorIndex`: filter by the validator index.
+ - `status`: filter by validator status.

@@ -16,6 +16,11 @@
       "path": "/networks",
       "items": [
         {
+          "name": "Beacon Chain",
+          "type": "group",
+          "path": "/beaconchain"
+        },
+        {
           "name": "EVM",
           "type": "group",
           "path": "/evm"
