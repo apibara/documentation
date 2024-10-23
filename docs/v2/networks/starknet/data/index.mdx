@@ -11,17 +11,18 @@ This page contains reference about the available data in Starknet DNA streams.
 
 ### Related pages
 
-- [Starknet data filter reference](/docs/networks/starknet/filter)
+- [Starknet data filter reference](/docs/v2/networks/starknet/filter)
 
-## Typescript types
+## Filter ID
 
-```ts
-import type {
-  Block,
-  FieldElement,
-  Filter,
-} from "https://esm.sh/@apibara/indexer/starknet";
-```
+All filters have an associated ID. To help clients correlate filters with data,
+the filter ID is included in the `filterIds` field of all data objects.
+This field contains the list of _all filter IDs_ that matched a piece of data.
+
+## Nullable fields
+
+**Important**: most fields are nullable to allow evolving the protocol. You should
+always assert the presence of a field for critical indexers.
 
 ## Field elements
 
@@ -31,583 +32,586 @@ Apibara represents Starknet field elements as hex-encode strings.
 export type FieldElement = `0x${string}`;
 ```
 
-## Nullable fields
-
-**Important**: some fields (like event and transaction indices) are null when
-their value is `0`. This issue will be fixed, but at the moment you must handle
-this case in your code.
-
-```ts
-export default function transform({ events }) {
-  // Nullable pitfall 1: events may be null.
-  return (events ?? []).flatMap(({ event }) => {
-    // Nullable pitfall 2: index is null when it should be 0.
-    const index = event.index ?? 0;
-  });
-}
-```
-
 ## Data types
 
 ### Block
 
-The object passed to the transform function is always a `Block`.
+The root object is the `Block`.
 
 ```ts
 export type Block = {
-  /** Block header. */
   header?: BlockHeader;
-  /** Transactions. */
-  transactions?: TransactionWithReceipt[];
-  /** Events. */
-  events?: EventWithTransaction[];
-  /** Messages from L2 to L1. */
-  l2ToL1Messages?: L2ToL1MessageWithTransaction[];
-  /** State update. */
-  stateUpdate?: StateUpdate;
+  transactions: Transaction[];
+  receipts: TransactionReceipt[];
+  events: Event[];
+  messages: MessageToL1[];
+  storageDiffs: StorageDiff[];
+  contractChanges: ContractChange[];
+  nonceUpdates: NonceUpdate[];
 };
 ```
 
 ### Block header
 
+This is the block header, which contains information about the block.
+
 ```ts
 export type BlockHeader = {
-  /** Block hash. */
-  blockHash: FieldElement;
-  /** Parent block hash. */
-  parentBlockHash: FieldElement;
-  /** Block number. */
-  blockNumber: string;
-  /** Sequencer address. */
-  sequencerAddress: FieldElement;
-  /** New state root. */
-  newRoot: FieldElement;
-  /** Block production timestamp. */
-  timestamp: string;
-  /** Price of L1 gas in the block. */
+  blockHash?: FieldElement;
+  parentBlockHash?: FieldElement;
+  blockNumber?: bigint;
+  sequencerAddress?: FieldElement;
+  newRoot?: FieldElement;
+  timestamp?: Date;
+  starknetVersion?: string;
   l1GasPrice?: ResourcePrice;
-  /** Price of L1 data gas in the block. */
   l1DataGasPrice?: ResourcePrice;
-  /** L1 data availability mode. */
-  l1DataAvailabilityMode?: L1DataAvailabilityMode;
+  l1DataAvailabilityMode?: "blob" | "calldata";
 };
 
 export type ResourcePrice = {
-  /** Price in fri (10^-18 strk). */
-  priceInFri: FieldElement;
-  /** Price in wei (10^-18 eth). */
-  priceInWei: FieldElement;
+  priceInFri?: FieldElement;
+  priceInWei?: FieldElement;
 };
-
-export type L1DataAvailabilityMode =
-  | "L1_DATA_AVAILABILITY_MODE_UNSPECIFIED"
-  | "L1_DATA_AVAILABILITY_MODE_BLOB"
-  | "L1_DATA_AVAILABILITY_MODE_CALLDATA";
 ```
 
-### Transactions (with receipts)
+**Properties**
 
-Transactions are grouped together with their receipts for easy access.
+ - `blockHash`: the block hash.
+ - `parentBlockHash`: the block hash of the parent block.
+ - `blockNumber`: the block number.
+ - `sequencerAddress`: the sequencer address.
+ - `newRoot`: the new state root.
+ - `timestamp`: the block timestamp.
+ - `starknetVersion`: the Starknet version.
+ - `l1GasPrice`: the L1 gas price.
+ - `l1DataGasPrice`: the L1 data gas price.
+ - `l1DataAvailabilityMode`: the L1 data availability mode.
+
+ - `priceInFri`: the price of L1 gas in the block, in units of fri (10^-18 $STRK).
+ - `priceInWei`: the price of L1 gas in the block, in units of wei (10^-18 $ETH).
+
+### Event
+
+An event is emitted by a transaction.
 
 ```ts
-export type TransactionWithReceipt = {
-  /** Transaction. */
-  transaction: Transaction;
-  /** Transaction receipt. */
-  receipt: TransactionReceipt;
+export type Event = {
+  filterIds: number[];
+  address?: FieldElement;
+  keys: FieldElement[];
+  data: FieldElement[];
+  eventIndex?: number;
+  transactionIndex?: number;
+  transactionHash?: FieldElement;
+  transactionStatus?: "succeeded" | "reverted";
 };
 ```
 
-### Events (with transactions and receipts)
+**Properties**
 
-Events include the transaction (with receipt) that generated them. Notice that
-transactions are not delivered if `includeTransaction: false` and receipts are
-not delivered if `includeReceipt: false`.
-
-If you don't need the information in the transaction and/or receipt, you should
-opt out of receiving this data to speed up indexing significantly.
-
-```ts
-export type EventWithTransaction = {
-  /** Transaction. */
-  transaction: Transaction;
-  /** Transaction receipt. */
-  receipt: TransactionReceipt;
-  /** Event. */
-  event: Event;
-};
-```
-
-### L2 -> L1 messages (with transaction)
-
-Messages sent from Starknet to L1.
-
-```ts
-export type L2ToL1MessageWithTransaction = {
-  /** Transaction. */
-  transaction: Transaction;
-  /** Message from L2 to L1. */
-  message: L2ToL1Message;
-};
-```
+ - `address`: the address of the contract that emitted the event.
+ - `keys`: the keys of the event.
+ - `data`: the data of the event.
+ - `eventIndex`: the index of the event in the block.
+ - `transactionIndex`: the index of the transaction that emitted the event.
+ - `transactionHash`: the hash of the transaction that emitted the event.
+ - `transactionStatus`: the status of the transaction that emitted the event.
 
 ### Transaction
 
-Transactions on Starknet can be of different types, Apibara supports all of them.
-Common transaction metadata like its hash are accessible in the `meta` field.
+Starknet has different types of transactions, all of them are grouped together
+in the `Transaction` type. Common transaction information is accessible in the
+`meta` field.
 
 ```ts
-export type Transaction = TransactionCommon &
-  (
-    | InvokeTransactionV0
-    | InvokeTransactionV1
-    | InvokeTransactionV3
-    | DeployTransaction
-    | DeclareTransaction
-    | DeclareTransactionV3
-    | DeployAccountTransaction
-    | DeployAccountTransactionV3
-    | L1HandlerTransaction
-  );
-
-export type TransactionCommon = {
-  meta: TransactionMeta;
-};
-
 export type TransactionMeta = {
-  /** Transaction hash. */
-  hash: FieldElement;
-  /** Maximum fee. */
-  maxFee: FieldElement;
-  /** Signature. */
-  signature: FieldElement[];
-  /** Nonce. */
-  nonce: FieldElement;
-  /** Transaction version. */
-  version: string;
-  /** Transaction resources. */
-  resourceBounds?: ResourceBoundsMapping;
-  /** Tip to the sequencer. */
-  tip?: number;
-  /** Data passed to the paymaster. */
-  paymasterData?: FieldElement[];
-  /** Account nonce's DA. */
-  nonceDataAvailabilityMode?: DataAvailabilityMode;
-  /** Transaction's DA. */
-  feeDataAvailabilityMode?: DataAvailabilityMode;
-  /** Transaction index in the block. */
   transactionIndex?: number;
+  transactionHash?: FieldElement;
+  transactionStatus?: "succeeded" | "reverted";
 };
 
-export type ResourceBoundsMapping = {
-  l1Gas: ResourceBounds;
-  l2Gas: ResourceBounds;
+export type Transaction = {
+  filterIds: number[];
+  meta?: TransactionMeta;
+  transaction?: 
+      | InvokeTransactionV0
+      | InvokeTransactionV1
+      | InvokeTransactionV3
+      | L1HandlerTransaction
+      | DeployTransaction
+      | DeclareTransactionV0
+      | DeclareTransactionV1
+      | DeclareTransactionV2
+      | DeclareTransactionV3
+      | DeployAccountTransactionV1
+      | DeployAccountTransactionV3;
 };
-
-export type ResourceBounds = {
-  maxAmount: number;
-  maxPricePerUnit: { low: number; high: number };
-};
-
-export type DataAvailabilityMode =
-  | "DATA_AVAILABILITY_MODE_UNSPECIFIED"
-  | "DATA_AVAILABILITY_MODE_L2"
-  | "DATA_AVAILABILITY_MODE_L1";
 ```
 
-### Invoke transaction
+**Properties**
 
-Invoke transactions are transactions initiated by a wallet. There are multiple
-versions of this transaction type based on the Starknet version.
+ - `meta`: transaction metadata.
+ - `transaction`: the transaction type.
+
+ - `meta.transactionIndex`: the index of the transaction in the block.
+ - `meta.transactionHash`: the hash of the transaction.
+ - `meta.transactionStatus`: the status of the transaction.
 
 ```ts
 export type InvokeTransactionV0 = {
-  invokeV0?: {
-    /** Target contract address. */
-    contractAddress: FieldElement;
-    /** Selector of the function being invoked. */
-    entryPointSelector: FieldElement;
-    /** Calldata. */
+  _tag: "invokeV0";
+  invokeV0: {
+    maxFee?: FieldElement;
+    signature: FieldElement[];
+    contractAddress?: FieldElement;
+    entryPointSelector?: FieldElement;
     calldata: FieldElement[];
   };
-  invokeV1?: never;
-  invokeV3?: never;
-  deploy?: never;
-  declare?: never;
-  declareV3?: never;
-  l1Handler?: never;
-  deployAccount?: never;
-  deployAccountV3?: never;
-};
+}
+```
 
+**Properties**
+
+ - `maxFee`: the maximum fee for the transaction.
+ - `signature`: the signature of the transaction.
+ - `contractAddress`: the address of the contract that will receive the call.
+ - `entryPointSelector`: the selector of the function that will be called.
+ - `calldata`: the calldata of the transaction.
+
+```ts
 export type InvokeTransactionV1 = {
-  invokeV1?: {
-    /** Address of the account sending the transaction. */
-    senderAddress: FieldElement;
-    /** Calldata. */
+  _tag: "invokeV1";
+  invokeV1: {
+    senderAddress?: FieldElement;
     calldata: FieldElement[];
+    maxFee?: FieldElement;
+    signature: FieldElement[];
+    nonce?: FieldElement;
   };
-  invokeV0?: never;
-  invokeV3?: never;
-  deploy?: never;
-  declare?: never;
-  declareV3?: never;
-  l1Handler?: never;
-  deployAccount?: never;
-  deployAccountV3?: never;
+};
+```
+
+**Properties**
+
+ - `senderAddress`: the address of the account that will send the transaction.
+ - `calldata`: the calldata of the transaction.
+ - `maxFee`: the maximum fee for the transaction.
+ - `signature`: the signature of the transaction.
+ - `nonce`: the nonce of the transaction.
+
+```ts
+export type ResourceBounds = {
+  maxAmount?: bigint;
+  maxPricePerUnit?: bigint;
+}
+
+export type ResourceBoundsMapping = {
+  l1Gas?: ResourceBounds;
+  l2Gas?: ResourceBounds;
 };
 
 export type InvokeTransactionV3 = {
-  invokeV3?: {
-    /** Address of the account sending the transaction. */
-    senderAddress: FieldElement;
-    /** Calldata. */
+  _tag: "invokeV3";
+  invokeV3: {
+    senderAddress?: FieldElement;
     calldata: FieldElement[];
-    /** Data passed to the account deployment. */
+    signature: FieldElement[];
+    nonce?: FieldElement;
+    resourceBounds?: ResourceBoundsMapping;
+    tip?: bigint;
+    paymasterData: FieldElement[];
     accountDeploymentData: FieldElement[];
+    nonceDataAvailabilityMode?: "l1" | "l2";
+    feeDataAvailabilityMode?: "l1" | "l2";
   };
-  invokeV1?: never;
-  invokeV0?: never;
-  deploy?: never;
-  declare?: never;
-  declareV3?: never;
-  l1Handler?: never;
-  deployAccount?: never;
-  deployAccountV3?: never;
 };
 ```
 
-### Declare transaction
+**Properties**
 
-Transaction to declare a new smart contract class.
-
-```ts
-export type DeclareTransaction = {
-  declare?: {
-    /** Class hash. */
-    classHash: FieldElement;
-    /** Address of the account sending the transaction. */
-    senderAddress: FieldElement;
-    /** Hash of the cairo assembly resulting from the sierra compilation. */
-    compiledClassHash: FieldElement;
-  };
-  declareV3?: never;
-  invokeV0?: never;
-  invokeV1?: never;
-  invokeV3?: never;
-  deploy?: never;
-  l1Handler?: never;
-  deployAccount?: never;
-  deployAccountV3?: never;
-};
-
-export type DeclareTransactionV3 = {
-  declareV3?: {
-    /** Class hash. */
-    classHash: FieldElement;
-    /** Address of the account sending the transaction. */
-    senderAddress: FieldElement;
-    /** Hash of the cairo assembly resulting from the sierra compilation. */
-    compiledClassHash: FieldElement;
-    /** Data passed to the account deployment. */
-    accountDeploymentData: FieldElement[];
-  };
-  declare?: never;
-  invokeV0?: never;
-  invokeV1?: never;
-  invokeV3?: never;
-  deploy?: never;
-  deployAccountV3?: never;
-  l1Handler?: never;
-  deployAccount?: never;
-};
-```
-
-### Deploy transaction
-
-Transaction to deploy a new smart contract.
-
-```ts
-export type DeployTransaction = {
-  deploy?: {
-    /** Constructor calldata. */
-    constructorCalldata: FieldElement[];
-    /** Salt used when computing the contract's address. */
-    contractAddressSalt: FieldElement;
-    /** Hash of the class being deployed. */
-    classHash: FieldElement;
-  };
-  invokeV0?: never;
-  invokeV1?: never;
-  invokeV3?: never;
-  declare?: never;
-  declareV3?: never;
-  l1Handler?: never;
-  deployAccount?: never;
-  deployAccountV3?: never;
-};
-```
-
-### Deploy account transaction
-
-Transaction to deploy a new account. Yes, there is no `DeployAccountTransactionV2`.
-
-```ts
-export type DeployAccountTransaction = {
-  deployAccount?: {
-    /** Constructor calldata. */
-    constructorCalldata: FieldElement[];
-    /** Salt used when computing the contract's address. */
-    contractAddressSalt: FieldElement;
-    /** Hash of the class being deployed. */
-    classHash: FieldElement;
-  };
-  deployAccountV3?: never;
-  invokeV0?: never;
-  invokeV1?: never;
-  invokeV3?: never;
-  deploy?: never;
-  declare?: never;
-  declareV3?: never;
-  l1Handler?: never;
-};
-
-export type DeployAccountTransactionV3 = {
-  deployAccountV3?: {
-    /** Constructor calldata. */
-    constructorCalldata: FieldElement[];
-    /** Salt used when computing the contract's address. */
-    contractAddressSalt: FieldElement;
-    /** Hash of the class being deployed. */
-    classHash: FieldElement;
-  };
-  deployAccount?: never;
-  invokeV0?: never;
-  invokeV1?: never;
-  invokeV3?: never;
-  deploy?: never;
-  declare?: never;
-  declareV3?: never;
-  l1Handler?: never;
-};
-```
-
-### L1 handler transaction
-
-Transaction that handles a message from L1.
+ - `senderAddress`: the address of the account that will send the transaction.
+ - `calldata`: the calldata of the transaction.
+ - `signature`: the signature of the transaction.
+ - `nonce`: the nonce of the transaction.
+ - `resourceBounds`: the resource bounds of the transaction.
+ - `tip`: the tip of the transaction.
+ - `paymasterData`: the paymaster data of the transaction.
+ - `accountDeploymentData`: the account deployment data of the transaction.
+ - `nonceDataAvailabilityMode`: the nonce data availability mode of the transaction.
+ - `feeDataAvailabilityMode`: the fee data availability mode of the transaction.
 
 ```ts
 export type L1HandlerTransaction = {
-  l1Handler?: {
-    /** Target contract address. */
-    contractAddress: FieldElement;
-    /** Selector of the function being invoked. */
-    entryPointSelector: FieldElement;
-    /** Calldata. */
+  _tag: "l1Handler";
+  l1Handler: {
+    contractAddress?: FieldElement;
+    entryPointSelector?: FieldElement;
     calldata: FieldElement[];
+    nonce?: bigint;
   };
-  invokeV0?: never;
-  invokeV1?: never;
-  invokeV3?: never;
-  deploy?: never;
-  declare?: never;
-  declareV3?: never;
-  deployAccount?: never;
+}
+```
+
+**Properties**
+
+ - `contractAddress`: the address of the contract that will receive the call.
+ - `entryPointSelector`: the selector of the function that will be called.
+ - `calldata`: the calldata of the transaction.
+ - `nonce`: the nonce of the transaction.
+
+```ts
+export type DeployTransaction = {
+  _tag: "deploy";
+  deploy: {
+    contractAddressSalt?: FieldElement;
+    constructorCalldata: FieldElement[];
+    classHash?: FieldElement;
+  };
+}
+```
+
+**Properties**
+
+ - `contractAddressSalt`: the salt used to compute the contract address.
+ - `constructorCalldata`: the calldata used to initialize the contract.
+ - `classHash`: the class hash of the contract.
+
+```ts
+export type DeclareTransactionV0 = {
+  _tag: "declareV0";
+  declareV0: {
+    senderAddress?: FieldElement;
+    maxFee?: FieldElement;
+    signature: FieldElement[];
+    classHash?: FieldElement;
+  };
+}
+```
+
+**Properties**
+
+ - `senderAddress`: the address of the account that will send the transaction.
+ - `maxFee`: the maximum fee for the transaction.
+ - `signature`: the signature of the transaction.
+ - `classHash`: the class hash of the contract.
+
+```ts
+export type DeclareTransactionV1 = {
+  _tag: "declareV1";
+  declareV1: {
+    senderAddress?: FieldElement;
+    maxFee?: FieldElement;
+    signature: FieldElement[];
+    classHash?: FieldElement;
+    nonce?: FieldElement;
+  };
+}
+```
+
+**Properties**
+
+ - `senderAddress`: the address of the account that will send the transaction.
+ - `maxFee`: the maximum fee for the transaction.
+ - `signature`: the signature of the transaction.
+ - `classHash`: the class hash of the contract.
+ - `nonce`: the nonce of the transaction.
+
+```ts
+export type DeclareTransactionV2 = {
+  _tag: "declareV2";
+  declareV2: {
+    senderAddress?: FieldElement;
+    maxFee?: FieldElement;
+    signature: FieldElement[];
+    classHash?: FieldElement;
+    nonce?: FieldElement;
+    compiledClassHash?: FieldElement;
+  };
+}
+```
+
+**Properties**
+
+ - `senderAddress`: the address of the account that will send the transaction.
+ - `maxFee`: the maximum fee for the transaction.
+ - `signature`: the signature of the transaction.
+ - `classHash`: the class hash of the contract.
+ - `nonce`: the nonce of the transaction.
+ - `compiledClassHash`: the compiled class hash of the contract.
+
+```ts
+export type ResourceBounds = {
+  maxAmount?: bigint;
+  maxPricePerUnit?: bigint;
+}
+
+export type ResourceBoundsMapping = {
+  l1Gas?: ResourceBounds;
+  l2Gas?: ResourceBounds;
+};
+
+export type DeclareTransactionV3 = {
+  _tag: "declareV3";
+  declareV3: {
+    senderAddress?: FieldElement;
+    maxFee?: FieldElement;
+    signature: FieldElement[];
+    classHash?: FieldElement;
+    nonce?: FieldElement;
+    compiledClassHash?: FieldElement;
+    resourceBounds?: ResourceBoundsMapping;
+    tip?: bigint;
+    paymasterData: FieldElement[];
+    accountDeploymentData: FieldElement[];
+    nonceDataAvailabilityMode?: "l1" | "l2";
+    feeDataAvailabilityMode?: "l1" | "l2";
+  };
+}
+```
+
+**Properties**
+
+ - `senderAddress`: the address of the account that will send the transaction.
+ - `maxFee`: the maximum fee for the transaction.
+ - `signature`: the signature of the transaction.
+ - `classHash`: the class hash of the contract.
+ - `nonce`: the nonce of the transaction.
+ - `compiledClassHash`: the compiled class hash of the contract.
+ - `resourceBounds`: the resource bounds of the transaction.
+ - `tip`: the tip of the transaction.
+ - `paymasterData`: the paymaster data of the transaction.
+ - `accountDeploymentData`: the account deployment data of the transaction.
+ - `nonceDataAvailabilityMode`: the nonce data availability mode of the transaction.
+ - `feeDataAvailabilityMode`: the fee data availability mode of the transaction.
+
+```ts
+export type DeployAccountTransactionV1 = {
+  _tag: "deployAccountV1";
+  deployAccountV1: {
+    maxFee?: FieldElement;
+    signature: FieldElement[];
+    nonce?: FieldElement;
+    contractAddressSalt?: FieldElement;
+    constructorCalldata: FieldElement[];
+    classHash?: FieldElement;
+  };
+}
+```
+
+**Properties**
+
+ - `maxFee`: the maximum fee for the transaction.
+ - `signature`: the signature of the transaction.
+ - `nonce`: the nonce of the transaction.
+ - `contractAddressSalt`: the salt used to compute the contract address.
+ - `constructorCalldata`: the calldata used to initialize the contract.
+ - `classHash`: the class hash of the contract.
+
+```ts
+export type DeployAccountTransactionV3 = {
+  _tag: "deployAccountV3";
+  deployAccountV3: {
+    signature: FieldElement[];
+    nonce?: FieldElement;
+    contractAddressSalt?: FieldElement;
+    constructorCalldata: FieldElement[];n
+    classHash?: FieldElement;
+    resourceBounds?: ResourceBoundsMapping;
+    tip?: bigint;
+    paymasterData: FieldElement[];
+    nonceDataAvailabilityMode?: "l1" | "l2";
+    feeDataAvailabilityMode?: "l1" | "l2";
+  };
 };
 ```
 
-## Receipt
+**Properties**
 
-Transaction receipt.
+ - `signature`: the signature of the transaction.
+ - `nonce`: the nonce of the transaction.
+ - `contractAddressSalt`: the salt used to compute the contract address.
+ - `constructorCalldata`: the calldata used to initialize the contract.
+ - `classHash`: the class hash of the contract
+ - `resourceBounds`: the resource bounds of the transaction.
+ - `tip`: the tip of the transaction.
+ - `paymasterData`: the paymaster data of the transaction.
+ - `nonceDataAvailabilityMode`: the nonce data availability mode of the transaction.
+ - `feeDataAvailabilityMode`: the fee data availability mode of the transaction.
+
+### Transaction receipt
+
+The receipt of a transaction contains information about the execution of the transaction.
 
 ```ts
-export type TransactionReceipt = Partial<{
-  /** Transaction status. */
-  executionStatus: ExecutionStatus;
-  /** Transaction hash. */
-  transactionHash: FieldElement;
-  /** Transaction index. */
-  transactionIndex: string;
-  /** Actual fee paid by the account. */
-  actualFee: FieldElement;
-  /** Address of the contract created by the transaction. */
-  contractAddress: FieldElement;
-  /** Messages from L2 to L1. */
-  l2ToL1Messages: L2ToL1Message[];
-  /** Events. */
-  events: Event[];
-  /** Revert reason. */
-  revertReason: string;
-  /** Fee paid. */
-  actualFeePaid: FeePayment;
-  /** Resources consumed by the transaction. */
-  executionResources: ExecutionResources;
-}>;
+export type TransactionReceipt = {
+  filterIds: number[];
+  meta?: TransactionReceiptMeta;
+  receipt?:
+    | InvokeTransactionReceipt
+    | L1HandlerTransactionReceipt
+    | DeclareTransactionReceipt
+    | DeployTransactionReceipt
+    | DeployAccountTransactionReceipt;
+};
 
-export type ExecutionStatus =
-  | "EXECUTION_STATUS_UNSPECIFIED"
-  | "EXECUTION_STATUS_SUCCEEDED"
-  | "EXECUTION_STATUS_REVERTED";
+export type TransactionReceiptMeta = {
+  transactionIndex?: number;
+  transactionHash?: FieldElement;
+  actualFee?: FeePayment;
+  executionResources?: ExecutionResources;
+  executionResult?: ExecutionSucceeded | ExecutionReverted;
+};
 
-export type FeePayment = Partial<{
-  /** Amount paid. */
-  amount: FieldElement;
-  /** Unit of the amount. */
-  unit: PriceUnit;
-}>;
+export type InvokeTransactionReceipt = {
+  _tag: "invoke";
+  invoke: {}
+};
 
-export type ExecutionResources = Partial<{
-  /** Computation resources. */
-  computation: ComputationResources;
-  /** Data availability resources. */
-  dataAvailability: DataAvailabilityResources;
-}>;
+export type L1HandlerTransactionReceipt = {
+  _tag: "l1Handler";
+  l1Handler: {
+    messageHash?: Uint8Array;
+  };
+};
 
-export type ComputationResources = Partial<{
-  /** The gas consumed by this transaction's data, 0 if it uses data gas for DA. */
-  l1Gas: number;
-  /** The data gas consumed by this transaction's data, 0 if it uses gas for DA. */
-  l1DataGas: number;
-}>;
+export type DeclareTransactionReceipt = {
+  _tag: "declare";
+  declare: {};
+};
 
-export type DataAvailabilityResources = Partial<{
-  /** The number of Cairo steps used. */
-  steps: number;
-  /** The number of unused memory cells. */
-  memoryHoles: number;
-  /** The number of RANGE_CHECK builtin instances. */
-  rangeCheckBuiltinApplications: number;
-  /** The number of Pedersen builtin instances. */
-  pedersenBuiltinApplications: number;
-  /** The number of Poseidon builtin instances. */
-  poseidonBuiltinApplications: number;
-  /** The number of EC_OP builtin instances. */
-  ecOpBuiltinApplications: number;
-  /** The number of ECDSA builtin instances. */
-  ecdsaBuiltinApplications: number;
-  /** The number of BITWISE builtin instances. */
-  bitwiseBuiltinApplications: number;
-  /** The number of KECCAK builtin instances. */
-  keccakBuiltinApplications: number;
-  /** The number of accesses to the segment arena. */
-  segmentArenaBuiltin: number;
-}>;
+export type DeployTransactionReceipt = {
+  _tag: "deploy";
+  deploy: {
+    contractAddress?: FieldElement;
+  };
+};
 
-export type PriceUnit =
-  | "PRICE_UNIT_UNSPECIFIED"
-  | "PRICE_UNIT_FRI"
-  | "PRICE_UNIT_WEI";
+export type DeployAccountTransactionReceipt = {
+  _tag: "deployAccount";
+  deployAccount: {
+    contractAddress?: FieldElement;
+  };
+};
+
+export type ExecutionSucceeded = {
+  _tag: "succeeded";
+  succeeded: {};
+};
+
+export type ExecutionReverted = {
+  _tag: "reverted";
+  reverted: {
+    reason: string;
+  };
+};
+
+export type FeePayment = {
+  amount?: FieldElement;
+  unit?: "wei" | "strk";
+};
 ```
 
-## Event
+### Message to L1
 
-Event emitted while executing a transaction.
-
-```ts
-export type Event = Partial<{
-  /** Event index. */
-  index: number;
-  /** Contract address. */
-  fromAddress: FieldElement;
-  /** Event selector. */
-  keys: FieldElement[];
-  /** Event data. */
-  data: FieldElement[];
-}>;
-```
-
-## L2 -> L1 message
-
-Message from Starknet to L1.
+A message to L1 is sent by a transaction.
 
 ```ts
-export type L2ToL1Message = Partial<{
-  /** Message index. */
-  index: number;
-  /** L2 sender address. */
-  fromAddress: FieldElement;
-  /** L1 target address. */
-  toAddress: FieldElement;
-  /** Calldata. */
+export type MessageToL1 = {
+  filterIds: number[];
+  fromAddress?: FieldElement;
+  toAddress?: FieldElement;
   payload: FieldElement[];
-}>;
+  messageIndex?: number;
+  transactionIndex?: number;
+  transactionHash?: FieldElement;
+  transactionStatus?: "succeeded" | "reverted";
+};
 ```
 
-## State update
+**Properties**
 
-Changes to the Starknet state after executing all transactions in the block.
+ - `fromAddress`: the address of the contract that sent the message.
+ - `toAddress`: the address of the contract that received the message.
+ - `payload`: the payload of the message.
+ - `messageIndex`: the index of the message in the block.
+ - `transactionIndex`: the index of the transaction that sent the message.
+ - `transactionHash`: the hash of the transaction that sent the message.
+ - `transactionStatus`: the status of the transaction that sent the message.
+
+### Storage diff
+
+A storage diff is a change to the storage of a contract.
 
 ```ts
-export type StateUpdate = Partial<{
-  /** New state root. */
-  newRoot: FieldElement;
-  /** Old state root. */
-  oldRoot: FieldElement;
-  /** State diff. */
-  stateDiff: StateDiff;
-}>;
-
-export type StateDiff = Partial<{
-  /** Changes in storage. */
-  storageDiffs: StorageDiff[];
-  /** Declared contracts. */
-  declaredContracts: DeclaredContract[];
-  /** Deployed contracts. */
-  deployedContracts: DeployedContract[];
-  /** Nonce updates. */
-  nonces: NonceUpdate[];
-  /** Classes declared. */
-  declaredClasses: DeclaredClass[];
-  /** Classes replaced. */
-  replacedClasses: ReplacedClass[];
-}>;
-
-export type StorageDiff = Partial<{
-  /** Contract address. */
-  contractAddress: FieldElement;
-  /** Changes in storage. */
+export type StorageDiff = {
+  filterIds: number[];
+  contractAddress?: FieldElement;
   storageEntries: StorageEntry[];
-}>;
+};
 
-export type StorageEntry = Partial<{
-  /** Storage key. */
-  key: FieldElement;
-  /** New storage value. */
-  value: FieldElement;
-}>;
-
-export type DeclaredContract = Partial<{
-  /** Class hash. */
-  classHash: FieldElement;
-}>;
-
-export type DeclaredClass = Partial<{
-  /** Class hash. */
-  classHash: FieldElement;
-  /** Compiled class hash. */
-  compiledClassHash: FieldElement;
-}>;
-
-export type ReplacedClass = Partial<{
-  /** Contract address. */
-  contractAddress: FieldElement;
-  /** Class hash. */
-  classHash: FieldElement;
-}>;
-
-export type DeployedContract = Partial<{
-  /** Contract address. */
-  contractAddress: FieldElement;
-  /** Class hash. */
-  classHash: FieldElement;
-}>;
-
-export type NonceUpdate = Partial<{
-  /** Contract address. */
-  contractAddress: FieldElement;
-  /** New nonce. */
-  nonce: FieldElement;
-}>;
+export type StorageEntry = {
+  key?: FieldElement;
+  value?: FieldElement;
+};
 ```
 
-End of docs.
+**Properties**
+
+ - `contractAddress`: the contract whose storage changed.
+ - `storageEntries`: the storage entries that changed.
+
+ - `key`: the key of the storage entry that changed.
+ - `value`: the new value of the storage entry that changed.
+
+### Contract change
+
+A change in the declared or deployed contracts.
+
+```ts
+export type ContractChange = {
+  filterIds: number[];
+  change?: DeclaredClass | ReplacedClass | DeployedContract;
+};
+
+export type DeclaredClass = {
+  _tag: "declaredClass";
+  declaredClass: {
+    classHash?: FieldElement;
+    compiledClassHash?: FieldElement;
+  };
+};
+
+export type ReplacedClass = {
+  _tag: "replacedClass";
+  replacedClass: {
+    contractAddress?: FieldElement;
+    classHash?: FieldElement;
+  };
+};
+
+export type DeployedContract = {
+  _tag: "deployedContract";
+  deployedContract: {
+    contractAddress?: FieldElement;
+    classHash?: FieldElement;
+  };
+};
+```
+
+### Nonce update
+
+A change in the nonce of a contract.
+
+```ts
+export type NonceUpdate = {
+  filterIds: number[];
+  contractAddress?: FieldElement;
+  nonce?: FieldElement;
+};
+```
+
+**Properties**
+
+ - `contractAddress`: the address of the contract whose nonce changed.
+ - `nonce`: the new nonce of the contract.
