@@ -118,6 +118,13 @@ export type Event = {
  - `transactionHash`: the hash of the transaction that emitted the event.
  - `transactionStatus`: the status of the transaction that emitted the event.
 
+**Relevant filters**
+
+- `filter.events`
+- `filter.transactions[].includeEvents`
+- `filter.events[].includeSiblings`
+- `filter.messages[].includeEvents`
+
 ### Transaction
 
 Starknet has different types of transactions, all of them are grouped together
@@ -157,6 +164,12 @@ export type Transaction = {
  - `meta.transactionIndex`: the index of the transaction in the block.
  - `meta.transactionHash`: the hash of the transaction.
  - `meta.transactionStatus`: the status of the transaction.
+
+**Relevant filters**
+
+ - `filter.transactions`
+ - `filter.events[].includeTransaction`
+ - `filter.messages[].includeTransaction`
 
 ```ts
 export type InvokeTransactionV0 = {
@@ -512,6 +525,12 @@ export type FeePayment = {
 };
 ```
 
+**Relevant filters**
+
+ - `filter.transactions[].includeReceipt`
+ - `filter.events[].includeReceipt`
+ - `filter.messages[].includeReceipt`
+
 ### Message to L1
 
 A message to L1 is sent by a transaction.
@@ -539,6 +558,12 @@ export type MessageToL1 = {
  - `transactionHash`: the hash of the transaction that sent the message.
  - `transactionStatus`: the status of the transaction that sent the message.
 
+**Relevant filters**
+
+ - `filter.messages`
+ - `filter.transactions[].includeMessages`
+ - `filter.events[].includeMessages`
+
 ### Storage diff
 
 A storage diff is a change to the storage of a contract.
@@ -563,6 +588,10 @@ export type StorageEntry = {
 
  - `key`: the key of the storage entry that changed.
  - `value`: the new value of the storage entry that changed.
+
+**Relevant filters**
+
+ - `filter.storageDiffs`
 
 ### Contract change
 
@@ -599,6 +628,10 @@ export type DeployedContract = {
 };
 ```
 
+**Relevant filters**
+
+ - `filter.contractChanges`
+
 ### Nonce update
 
 A change in the nonce of a contract.
@@ -615,3 +648,7 @@ export type NonceUpdate = {
 
  - `contractAddress`: the address of the contract whose nonce changed.
  - `nonce`: the new nonce of the contract.
+
+**Relevant filters**
+
+ - `filter.nonceUpdates`
