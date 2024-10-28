@@ -29,6 +29,14 @@ converted to BSON and then written to the collection. The MongoDB integration
 adds a `_cursor` column to each record so that data can be invalidated in case
 of chain reorganizations.
 
+## Important indices
+
+To ensure the best performance, you need to add the following indices to your
+MongoDB collections. **This is especially important if you're indexing pending blocks**.
+
+ - `_cursor.from`
+ - `_cursor.to`
+
 ## Querying data
 
 When querying data, you should always add the following property to your MongoDB filter
