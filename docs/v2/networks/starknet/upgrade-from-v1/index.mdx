@@ -15,6 +15,39 @@ This package now works in combination with `@apibara/protocol` to provide a DNA 
 that automatically encodes and decodes the Protobuf data. This means tha field elements
 are automatically converted to `0x${string}` values.
 
+Notice that the data stream is now unary.
+
+```js
+import { createClient } from "@apibara/protocol";
+import { Filter, StarknetStream } from "@apibara/starknet";
+
+const client = createClient(StarknetStream, process.env.STREAM_URL);
+
+const filter = Filter.make({
+    events: [
+        {
+        address:
+            "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        },
+    ],
+});
+
+
+for await (const message of client.streamData(request)) {
+    switch (message._tag) {
+    case "data": {
+        break;
+    }
+    case "invalidate": {
+        break;
+    }
+    default: {
+        break;
+    }
+    }
+}
+```
+
 ## Filter
 
 ### Header
