@@ -24,27 +24,78 @@ import { Filter, StarknetStream } from "@apibara/starknet";
 const client = createClient(StarknetStream, process.env.STREAM_URL);
 
 const filter = Filter.make({
-    events: [
-        {
-        address:
-            "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-        },
-    ],
+  events: [{
+    address:
+      "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+  }],
 });
 
+const request = StarknetStream.Request.make({
+  filter: [filter],
+  finality: "accepted",
+  startingCursor: {
+    orderKey: 800_000n,
+  },
+});
 
 for await (const message of client.streamData(request)) {
-    switch (message._tag) {
-        case "data": {
-            break;
-        }
-        case "invalidate": {
-            break;
-        }
-        default: {
-            break;
-        }
+  switch (message._tag) {
+    case "data": {
+      break;
     }
+    case "invalidate": {
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+}
+```
+
+### Reconnecting on error
+
+The client now doesn't automatically reconnect on error. This is because the reconnection step
+is very delicate and depends on your indexer's implementation.
+The recommended approach is to wrap your indexer's main loop in a `try/catch` block.
+
+```ts
+import { createClient, type ClientError, type Status } from "@apibara/protocol";
+import { Filter, StarknetStream } from "@apibara/starknet";
+
+const client = createClient(StarknetStream, process.env.STREAM_URL);
+
+const filter = Filter.make({
+  events: [{
+    address:
+      "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+  }],
+});
+
+while (true) {
+  try {
+    const startingCursor = await loadCursorFromDatabase();
+    const request = StarknetStream.Request.make({
+      filter: [filter],
+      finality: "accepted",
+      startingCursor,
+    });
+  
+    for await (const message of client.streamData(request)) {
+    }
+  } catch (err) {
+    if (err instanceof ClientError) {
+      // It's a gRPC error.
+      if (err.status !== Status.INTERNAL) {
+        // NON-INTERNAL errors are not recoverable.
+        throw err;
+      }
+  
+      // INTERNAL errors are caused by a disconnection.
+      // Sleep and reconnect.
+      await new Promise(r => setTimeout(r, 2_000));
+    }
+  }
 }
 ```
 
