@@ -9,7 +9,7 @@ updatedAt: 2024-11-06
 
 This page contains a list of changes between DNA v1 and DNA v2.
 
-## `@apibara/starknet` package
+## @apibara/starknet package
 
 This package now works in combination with `@apibara/protocol` to provide a DNA stream
 that automatically encodes and decodes the Protobuf data. This means tha field elements
@@ -35,15 +35,15 @@ const filter = Filter.make({
 
 for await (const message of client.streamData(request)) {
     switch (message._tag) {
-    case "data": {
-        break;
-    }
-    case "invalidate": {
-        break;
-    }
-    default: {
-        break;
-    }
+        case "data": {
+            break;
+        }
+        case "invalidate": {
+            break;
+        }
+        default: {
+            break;
+        }
     }
 }
 ```
