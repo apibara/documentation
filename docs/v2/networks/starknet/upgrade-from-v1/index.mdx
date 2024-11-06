@@ -1,0 +1,85 @@
+---
+title: Upgrading from v1
+description: "This page explains how to upgrade from DNA v1 to DNA v2."
+diataxis: how-to
+updatedAt: 2024-11-06
+---
+
+# Upgrading from v1
+
+This page contains a list of changes between DNA v1 and DNA v2.
+
+## `@apibara/starknet` package
+
+This package now works in combination with `@apibara/protocol` to provide a DNA stream
+that automatically encodes and decodes the Protobuf data. This means tha field elements
+are automatically converted to `0x${string}` values.
+
+## Filter
+
+### Header
+
+ - The `header` field is now an enum. See the [dedicated section](/docs/v2/networks/starknet/filter#header)
+in the filter documentation for more information.
+
+### Events
+
+ - `fromAddress` is now `address`.
+ - The `keys` field accepts `null` values to match any key at that position.
+ - The `data` field was removed.
+ - Use `transactionStatus: "all"` instead of `includeReverted` to include reverted transactions.
+ - `includeReceipt` and `includeTransaction` are now `false` by default.
+
+### Transactions
+
+ - Now you can only filter by transaction type.
+ - We will add transaction-specific filters in the future.
+ - Use `transactionStatus: "all"` instead of `includeReverted` to include reverted transactions.
+ - `includeReceipt` is now `false` by default.
+
+### Messages
+
+ - Can now filter by `fromAddress` and `toAddress`.
+ - Use `transactionStatus: "all"` instead of `includeReverted` to include reverted transactions.
+ - `includeReceipt` and `includeTransaction` are now `false` by default.
+
+### State Update
+ 
+ - State update has been split into separate filters for storage diffs, contract
+   changes, and nonce updates.
+ - Declared and deployed contracts, declared classes, and replaced classes are now
+   a single `contractChanges` filter.
+
+## Block data
+
+ - Block data has been _"flattened"_. Use the `*Index` field to access related data.
+   For example, the following code iterates over all events and looks up their
+   transactions.
+
+```js
+for (const event of block.events) {
+  const transaction = block.transactions.find(tx => tx.transactionIndex === event.transactionIndex);
+}
+```
+
+### Events
+
+ - `fromAddress` is now `address`.
+ - `index` is now `eventIndex`.
+ - Events now include `transactionIndex`, `transactionHash`, and `transactionStatus`.
+
+### Transactions
+
+ - `TransactionMeta` now includes `transactionIndex`, `transactionHash`, and `transactionStatus`.
+ - The transaction type is now an enum using the `_tag` field as discriminator.
+ - For other minor changes, see the [transaction documentation](/docs/v2/networks/starknet/data#transaction).
+
+### Receipts
+
+ - Transaction receipts are now transaction-specific.
+ - For other minor changes, see the [receipts documentation](/docs/v2/networks/starknet/data#transaction-receipt).
+
+### Messages
+
+ - `index` is now `messageIndex`.
+ - Messages now include `transactionIndex`, `transactionHash`, and `transactionStatus`.

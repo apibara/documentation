@@ -14,6 +14,11 @@
             "name": "Block data",
             "type": "page",
             "path": "/data"
+        },
+        {
+            "name": "Upgrading",
+            "type": "page",
+            "path": "/upgrade-from-v1"
         }
     ]
 }
