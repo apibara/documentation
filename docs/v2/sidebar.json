@@ -8,6 +8,11 @@
           "name": "Overview",
           "type": "page",
           "path": "/"
+        },
+        {
+          "name": "Installation",
+          "type": "page",
+          "path": "/getting-started/installation"
         }
       ]
     },

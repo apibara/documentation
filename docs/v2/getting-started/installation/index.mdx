@@ -1,0 +1,271 @@
+---
+title: Installation
+description: "Learn how to install and get started with Apibara."
+diataxis: tutorial
+updatedAt: 2024-11-27
+---
+
+# Installation
+
+This tutorial shows how to setup an Apibara project from scratch. The goal is to
+start indexing data as quickly as possible and to understand the basic structure
+of a project. By the end of this tutorial, you will have a basic indexer that
+streams data from two networks (Ethereum and Starknet).
+
+## Installation
+
+This tutorial starts with a fresh Typescript project. Let's start by creating it.
+
+```bash [Terminal]
+mkdir my-indexer
+cd my-indexer
+npm init -y
+```
+
+After that, you can add the Apibara NPM packages.
+
+:::cli-command
+
+```bash [Terminal]
+npm add --save apibara@next @apibara/protocol@next @apibara/indexer@next
+```
+
+```
+added 325 packages, and audited 327 packages in 11s
+
+73 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+```
+
+:::
+
+## Apibara Config
+
+Your indexers' configuration goes in the `apibara.config.ts` file. You can
+leave the configuration empty for now.
+
+```typescript [apibara.config.ts]
+import { defineConfig } from "apibara/config";
+
+export default defineConfig({});
+```
+
+## EVM Indexer
+
+Let's create the first EVM indexer. All indexers must go in the `indexers`
+directory and have a name that ends with `.indexer.ts` or `.indexer.js`.
+The Apibara CLI will automatically detect the indexers in this directory and
+make them available to the project.
+
+Since Apibara is chain-agnostic, we need to add the EVM package to stream Ethereum data.
+
+:::cli-command
+
+```bash [Terminal]
+npm add --save @apibara/evm@next
+```
+
+```
+added 2 packages, and audited 329 packages in 4s
+
+73 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+```
+
+:::
+
+Then you can create the first indexer.
+
+```bash [Terminal]
+mkdir indexers
+touch indexers/rocket-pool.indexer.ts
+```
+
+```typescript [rocket-pool.indexer.ts]
+import { EvmStream } from "@apibara/evm";
+import { defineIndexer } from "@apibara/indexer";
+
+export default defineIndexer(EvmStream)({
+  streamUrl: "https://ethereum.preview.apibara.org",
+  finality: "accepted",
+  startingCursor: {
+    orderKey: 21_000_000n
+  },
+  filter: {
+    logs: [{
+      address: "0xae78736Cd615f374D3085123A210448E74Fc6393"
+    }]
+  },
+  async transform({ block }) {
+    const { logs, header } = block;
+    console.log(`Block number ${header?.blockNumber}`)
+    for (const log of logs) {
+      console.log(`Log ${log.logIndex} from ${log.address} tx=${log.transactionHash}`)
+    }
+  },
+});
+```
+
+Notice the following:
+
+ - The indexer file exports a single indexer.
+ - The `defineIndexer` function takes the stream as parameter. In this case, the
+ `EvmStream` is used. This is needed because Apibara supports multiple networks
+ with different data types.
+ - The `filter` specifies which data to receive. You can read more about the available
+ data for EVM chains in the [EVM documentation](/docs/v2/networks/evm/filter/).
+ - The `transform` function is called for each block. It receives the block as parameter.
+ This is where your indexer processes the data.
+
+
+## Running the indexer
+
+During development, you will use the `apibara` CLI to build and run indexers. For convenience,
+you should add the following scripts to your `package.json` file.
+
+```json [package.json]
+{
+  "scripts": {
+    "dev": "apibara dev",
+    "build": "apibara build",
+    "start": "apibara start"
+  }
+}
+```
+
+ - `dev`: runs all indexers in development mode. Indexers are automatically
+ reloaded when they change.
+ - `build`: builds the indexers for production.
+ - `start`: runs a _single indexer_ in production mode. Notice you must first
+ build the indexers.
+
+Now, run the indexer in development mode.
+
+:::cli-command
+
+```bash [Terminal]
+npm run dev
+```
+
+```
+> my-indexer@1.0.0 dev
+> apibara dev
+
+✔ Output directory .apibara/build cleaned
+✔ Types written to .apibara/types
+✔ Indexers built in 3587 ms
+✔ Restarting indexers
+Block number 21000071
+Log 239 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0xe3b7e285c02e9a1dad654ba095ee517cf4c15bf0c2c0adec555045e86ea1de89
+Block number 21000097
+Log 265 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0x8946aaa1ae303a19576d6dca9abe0f774709ff6c3f2de40c11dfda2ab276fbba
+Log 266 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0x8946aaa1ae303a19576d6dca9abe0f774709ff6c3f2de40c11dfda2ab276fbba
+...
+```
+
+:::
+
+
+## Starknet indexer
+
+You can index data on different networks from the same project. Let's add an indexer for Starknet.
+Like before, you need to add the package to support the network.
+
+:::cli-command
+
+```bash [Terminal]
+npm add --save @apibara/starknet@next
+```
+
+```
+added 1 package, and audited 330 packages in 5s
+
+73 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+```
+
+:::
+
+After that, you can implement the indexer. In this case, the indexer listens for all events
+emitted by the STRK staking contract.
+
+```typescript [strk-staking.indexer.ts]
+import { StarknetStream } from "@apibara/starknet";
+import { defineIndexer } from "@apibara/indexer";
+
+export default defineIndexer(StarknetStream)({
+  streamUrl: "https://starknet.preview.apibara.org",
+  finality: "accepted",
+  startingCursor: {
+    orderKey: 900_000n,
+  },
+  filter: {
+    events: [{
+      address: "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
+    }],
+  },
+  async transform({ block }) {
+    const { events, header } = block;
+    console.log(`Block number ${header?.blockNumber}`)
+    for (const event of events) {
+      console.log(`Event ${event.eventIndex} tx=${event.transactionHash}`)
+    }
+  },
+});
+```
+
+You can now run the indexer. In this case, you can specify which indexer you want to run
+with the `--indexers` option. When the flag is omitted, all indexers are run concurrently.
+
+:::cli-command
+
+```bash [Terminal]
+npm run dev -- --indexers strk-staking
+```
+
+```
+> my-indexer@1.0.0 dev
+> apibara dev --indexers=strk-staking
+
+✔ Output directory .apibara/build cleaned
+✔ Types written to .apibara/types
+✔ Indexers built in 3858 ms
+✔ Restarting indexers
+Block number 929092
+Event 233 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
+Event 234 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
+Event 235 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
+Event 236 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
+Block number 929119
+Event 122 tx=0x01078c3bb0f339eeaf303bc5c47ea03b781841f7b4628f79bb9886ad4c170be7
+Event 123 tx=0x01078c3bb0f339eeaf303bc5c47ea03b781841f7b4628f79bb9886ad4c170be7
+...
+```
+
+:::
+
+## Production build
+
+TODO
+
+## Runtime configuration & presets
+
+TODO
+
+## Storing data
+
+TODO
+
+## Persisting state across restarts
+
+TODO
+
+## Plugins
+
+TODO
