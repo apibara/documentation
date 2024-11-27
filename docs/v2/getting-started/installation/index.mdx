@@ -91,7 +91,6 @@ import { defineIndexer } from "@apibara/indexer";
 
 export default defineIndexer(EvmStream)({
   streamUrl: "https://ethereum.preview.apibara.org",
-  finality: "accepted",
   startingCursor: {
     orderKey: 21_000_000n
   },
@@ -116,11 +115,15 @@ Notice the following:
  - The `defineIndexer` function takes the stream as parameter. In this case, the
  `EvmStream` is used. This is needed because Apibara supports multiple networks
  with different data types.
+ - `streamUrl` specifies where the data comes from. You can connect to streams hosted
+ by us, or to self-hosted streams.
+ - `startingCursor` specifies from which block to start streaming.
  - The `filter` specifies which data to receive. You can read more about the available
- data for EVM chains in the [EVM documentation](/docs/v2/networks/evm/filter/).
+ data for EVM chains in the [EVM documentation](/docs/v2/networks/evm/filter).
  - The `transform` function is called for each block. It receives the block as parameter.
  This is where your indexer processes the data.
 
+There are more indexer options available, you can find them in the documentation (TODO: link).
 
 ## Running the indexer
 
@@ -201,7 +204,6 @@ import { defineIndexer } from "@apibara/indexer";
 
 export default defineIndexer(StarknetStream)({
   streamUrl: "https://starknet.preview.apibara.org",
-  finality: "accepted",
   startingCursor: {
     orderKey: 900_000n,
   },
