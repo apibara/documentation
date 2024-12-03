@@ -17,6 +17,17 @@
       ]
     },
     {
+      "name": "Storage",
+      "path": "/storage",
+      "items": [
+        {
+          "name": "Drizzle",
+          "type": "group",
+          "path": "/drizzle-pg"
+        }
+      ]
+    },
+    {
       "name": "Networks",
       "path": "/networks",
       "items": [

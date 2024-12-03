@@ -450,14 +450,14 @@ strk-staking | log Event 123 tx=0x01078c3bb0f339eeaf303bc5c47ea03b781841f7b4628f
 
 :::
 
-## Storing data
+## Storing data & persisting state across restarts
 
-TODO
+All indexers implemented in this tutorial are stateless. They don't store any
+data to a database and if you restart them they will restart indexing from the
+beginning.
 
-## Persisting state across restarts
+You can refer to our storage section to learn more about writing data to a database
+and persisting the indexer's state across restarts.
 
-TODO
+ - [Drizzle with PostgreSQL](/docs/v2/storage/drizzle-pg)
 
-## Plugins
-
-TODO
