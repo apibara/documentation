@@ -2,7 +2,7 @@
 title: Installation
 description: "Learn how to install and get started with Apibara."
 diataxis: tutorial
-updatedAt: 2024-11-27
+updatedAt: 2024-12-03
 ---
 
 # Installation
@@ -88,6 +88,7 @@ touch indexers/rocket-pool.indexer.ts
 ```typescript [rocket-pool.indexer.ts]
 import { EvmStream } from "@apibara/evm";
 import { defineIndexer } from "@apibara/indexer";
+import { useLogger } from "@apibara/indexer/plugins/logger";
 
 export default defineIndexer(EvmStream)({
   streamUrl: "https://ethereum.preview.apibara.org",
@@ -100,10 +101,11 @@ export default defineIndexer(EvmStream)({
     }]
   },
   async transform({ block }) {
+    const logger = useLogger();
     const { logs, header } = block;
-    console.log(`Block number ${header?.blockNumber}`)
+    logger.log(`Block number ${header?.blockNumber}`)
     for (const log of logs) {
-      console.log(`Log ${log.logIndex} from ${log.address} tx=${log.transactionHash}`)
+      logger.log(`Log ${log.logIndex} from ${log.address} tx=${log.transactionHash}`)
     }
   },
 });
@@ -122,6 +124,7 @@ Notice the following:
  data for EVM chains in the [EVM documentation](/docs/v2/networks/evm/filter).
  - The `transform` function is called for each block. It receives the block as parameter.
  This is where your indexer processes the data.
+ - The `useLogger` hook returns an indexer-specific logger.
 
 There are more indexer options available, you can find them in the documentation (TODO: link).
 
@@ -141,7 +144,7 @@ you should add the following scripts to your `package.json` file.
 ```
 
  - `dev`: runs all indexers in development mode. Indexers are automatically
- reloaded when they change.
+ reloaded and restarted when they change.
  - `build`: builds the indexers for production.
  - `start`: runs a _single indexer_ in production mode. Notice you must first
  build the indexers.
@@ -162,11 +165,13 @@ npm run dev
 ✔ Types written to .apibara/types
 ✔ Indexers built in 3587 ms
 ✔ Restarting indexers
-Block number 21000071
-Log 239 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0xe3b7e285c02e9a1dad654ba095ee517cf4c15bf0c2c0adec555045e86ea1de89
-Block number 21000097
-Log 265 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0x8946aaa1ae303a19576d6dca9abe0f774709ff6c3f2de40c11dfda2ab276fbba
-Log 266 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0x8946aaa1ae303a19576d6dca9abe0f774709ff6c3f2de40c11dfda2ab276fbba
+rocket-pool  | log Block number 21000071
+rocket-pool  | log Log 239 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0xe3b7e285c02e9a1dad654ba095ee517cf4c15bf0c2c0adec555045e86ea1de89
+rocket-pool  | log Block number 21000097
+rocket-pool  | log Log 265 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0x8946aaa1ae303a19576d6dca9abe0f774709ff6c3f2de40c11dfda2ab276fbba
+rocket-pool  | log Log 266 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0x8946aaa1ae303a19576d6dca9abe0f774709ff6c3f2de40c11dfda2ab276fbba
+rocket-pool  | log Block number 21000111
+rocket-pool  | log Log 589 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0xa01ec6551e76364f6cf687f52823d66b1c07f7a47ce157a9cd9e441691a021f0
 ...
 ```
 
@@ -201,6 +206,7 @@ emitted by the STRK staking contract.
 ```typescript [strk-staking.indexer.ts]
 import { StarknetStream } from "@apibara/starknet";
 import { defineIndexer } from "@apibara/indexer";
+import { useLogger } from "@apibara/indexer/plugins/logger";
 
 export default defineIndexer(StarknetStream)({
   streamUrl: "https://starknet.preview.apibara.org",
@@ -213,10 +219,11 @@ export default defineIndexer(StarknetStream)({
     }],
   },
   async transform({ block }) {
+    const logger = useLogger();
     const { events, header } = block;
-    console.log(`Block number ${header?.blockNumber}`)
+    logger.log(`Block number ${header?.blockNumber}`)
     for (const event of events) {
-      console.log(`Event ${event.eventIndex} tx=${event.transactionHash}`)
+      logger.log(`Event ${event.eventIndex} tx=${event.transactionHash}`)
     }
   },
 });
@@ -239,14 +246,14 @@ npm run dev -- --indexers strk-staking
 ✔ Types written to .apibara/types
 ✔ Indexers built in 3858 ms
 ✔ Restarting indexers
-Block number 929092
-Event 233 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
-Event 234 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
-Event 235 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
-Event 236 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
-Block number 929119
-Event 122 tx=0x01078c3bb0f339eeaf303bc5c47ea03b781841f7b4628f79bb9886ad4c170be7
-Event 123 tx=0x01078c3bb0f339eeaf303bc5c47ea03b781841f7b4628f79bb9886ad4c170be7
+strk-staking | log Block number 929092
+strk-staking | log Event 233 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
+strk-staking | log Event 234 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
+strk-staking | log Event 235 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
+strk-staking | log Event 236 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
+strk-staking | log Block number 929119
+strk-staking | log Event 122 tx=0x01078c3bb0f339eeaf303bc5c47ea03b781841f7b4628f79bb9886ad4c170be7
+strk-staking | log Event 123 tx=0x01078c3bb0f339eeaf303bc5c47ea03b781841f7b4628f79bb9886ad4c170be7
 ...
 ```
 
@@ -254,11 +261,194 @@ Event 123 tx=0x01078c3bb0f339eeaf303bc5c47ea03b781841f7b4628f79bb9886ad4c170be7
 
 ## Production build
 
-TODO
+The `apibara build` command is used to build a production version of the indexer. There are two main
+changes for the production build:
+
+ - No hot code reloading is available.
+ - Only one indexer is started. If your project has multiple indexers, it should start them independently.
+
+:::cli-command
+
+```bash [Terminal]
+npm run build
+```
+
+```
+> my-indexer@1.0.0 build
+> apibara build
+
+✔ Output directory .apibara/build cleaned
+✔ Types written to .apibara/types
+◐ Building 2 indexers
+✔ Build succeeded!
+ℹ You can start the indexers with apibara start
+```
+
+:::
+
+Once the indexers are built, you can run them in two (equivalent) ways:
+
+ - The `apibara start` command by specifying which indexer to run with the
+   `--indexer` flag. In this tutorial we are going to use this method.
+ - Running `.apibara/build/start.mjs` with Node. This is useful when building Docker images for your indexers.
+
+:::cli-command
+
+```bash [Terminal]
+npm run start -- --indexer rocket-pool
+```
+
+```
+> my-indexer@1.0.0 start
+> apibara start --indexer rocket-pool
+
+◐ Starting indexer rocket-pool
+rocket-pool  | log Block number 21000071
+rocket-pool  | log Log 239 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0xe3b7e285c02e9a1dad654ba095ee517cf4c15bf0c2c0adec555045e86ea1de89
+rocket-pool  | log Block number 21000097
+rocket-pool  | log Log 265 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0x8946aaa1ae303a19576d6dca9abe0f774709ff6c3f2de40c11dfda2ab276fbba
+rocket-pool  | log Log 266 from 0xae78736cd615f374d3085123a210448e74fc6393 tx=0x8946aaa1ae303a19576d6dca9abe0f774709ff6c3f2de40c11dfda2ab276fbba
+...
+```
+
+:::
 
 ## Runtime configuration & presets
 
-TODO
+Apibara provides a mechanism for indexers to load their configuration from the `apibara.config.ts` file:
+
+ - Add the configuration under the `runtimeConfig` key in `apibara.config.ts`.
+ - Change your indexer's module to return a function that, given the runtime configuration, returns the indexer.
+
+You can update the configuration to define values that are configurable by your indexer. This example is going to
+store the DNA stream URL and contract address in the configuration.
+
+```ts [apibara.config.ts]
+import { defineConfig } from "apibara/config";
+
+export default defineConfig({
+  runtimeConfig: {
+    streamUrl: "https://starknet.preview.apibara.org",
+    contractAddress: "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
+  },
+});
+```
+
+Then update the indexer to return a function that returns the indexer. Your editor is going to show a type error
+since the types of `config.streamUrl` and `config.contractAddress` are unknown, the next session is going to
+explain how to solve that issue.
+
+```ts [strk-staking.indexer.ts]
+import { StarknetStream } from "@apibara/starknet";
+import { defineIndexer } from "@apibara/indexer";
+import { useLogger } from "@apibara/indexer/plugins/logger";
+import { ApibaraRuntimeConfig } from "apibara/types";
+
+export default function (config: ApibaraRuntimeConfig) {
+  return defineIndexer(StarknetStream)({
+    streamUrl: config.streamUrl,
+    startingCursor: {
+      orderKey: 900_000n,
+    },
+    filter: {
+      events: [{
+        address: config.contractAddress as `0x${string}`
+      }],
+    },
+    async transform({ block }) {
+      // Unchanged.
+    },
+  });
+};
+```
+
+### Typescript & type safety
+
+You may have noticed that the CLI generates types in `.apibara/types` before
+building the indexers (both in development and production mode).
+These types contain the type definition of your runtime configuration. You can
+instruct Typescript to use them by adding the following `tsconfig.json` to your
+project.
+
+```json [tsconfig.json]
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler"
+  },
+  "include": [
+    "**/*.ts",
+    ".apibara/types"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+}
+```
+
+After restarting the Typescript language server you will have a type-safe runtime configuration
+right into your indexer!
+
+### Presets
+
+Having a single runtime configuration is useful but not enough for real-world
+indexers. The CLI provides a way to have multiple "presets" and select which
+one to use at runtime. This is useful, for example, if you're deploying the
+same indexers on multiple networks where only the DNA stream URL and contract
+addresses change.
+
+You can any number of presets in the configuration and use the `--preset` flag to select which one to use.
+For example, you can add a `sepolia` preset that contains the URL of the Starknet Sepolia DNA stream.
+If a preset doesn't specify a key, then the value from the root configuration is used.
+
+```ts [apibara.config.ts]
+import { defineConfig } from "apibara/config";
+
+export default defineConfig({
+  runtimeConfig: {
+    streamUrl: "https://starknet.preview.apibara.org",
+    contractAddress: "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a" as `0x${string}`,
+  },
+  presets: {
+    sepolia: {
+      runtimeConfig: {
+        streamUrl: "https://starknet-sepolia.preview.apibara.org",
+      },
+    }
+  },
+});
+```
+
+You can then run the indexer in development mode using the `sepolia` preset.
+
+:::cli-command
+
+```bash [Terminal]
+npm run dev -- --indexers=strk-staking --preset=sepolia
+```
+
+```
+> my-indexer@1.0.0 dev
+> apibara dev --indexers=strk-staking --preset=sepolia
+
+✔ Output directory .apibara/build cleaned
+✔ Types written to .apibara/types
+✔ Indexers built in 3858 ms
+✔ Restarting indexers
+strk-staking | log Block number 100092
+strk-staking | log Event 233 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
+strk-staking | log Event 234 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
+strk-staking | log Event 235 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
+strk-staking | log Event 236 tx=0x012f8356ef02c36ed1ffddd5252c4f03707166cabcccb49046acf4ab565051c7
+strk-staking | log Block number 100119
+strk-staking | log Event 122 tx=0x01078c3bb0f339eeaf303bc5c47ea03b781841f7b4628f79bb9886ad4c170be7
+strk-staking | log Event 123 tx=0x01078c3bb0f339eeaf303bc5c47ea03b781841f7b4628f79bb9886ad4c170be7
+...
+```
+
+:::
 
 ## Storing data
 
