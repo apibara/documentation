@@ -71,6 +71,19 @@ export type TransactionFilter = {
  - `create`: filter by whether the transaction is a create transaction.
  - `includeBlob`: also return all blobs included in the transaction.
 
+**Examples**
+
+ - All blobs included in a transaction to a specific contract.
+
+```ts
+const filter = [{
+  transactions: [{
+    to: "0xff00000000000000000000000000000000074248",
+    includeBlob: true,
+  }],
+}];
+```
+
 ### Blobs
 
 A blob and its content.
@@ -85,6 +98,18 @@ export type BlobFilter = {
 **Properties**
 
  - `includeTransaction`: also return the transaction that included the blob.
+
+**Examples**
+
+ - All blobs posted to the network together with the transaction that posted them.
+
+```ts
+const filter = [{
+  blobs: [{
+    includeTransaction: true,
+  }],
+}];
+```
 
 ### Validators
 
@@ -113,3 +138,17 @@ export type ValidatorFilter = {
 
  - `validatorIndex`: filter by the validator index.
  - `status`: filter by validator status.
+
+**Examples**
+
+ - All validators that exited, both slashed and unlashed.
+
+```ts
+const filter = [{
+  validators: [{
+    status: "exited_unslashed"
+  }, {
+    status: "exited_slashed"
+  }],
+}];
+```
