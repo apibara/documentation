@@ -18,6 +18,11 @@
           "name": "Plugins & Hooks",
           "type": "page",
           "path": "/getting-started/plugins"
+        },
+        {
+          "name": "Upgrading from v1",
+          "type": "page",
+          "path": "/getting-started/upgrading"
         }
       ]
     },
