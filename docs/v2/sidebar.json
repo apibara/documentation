@@ -13,6 +13,11 @@
           "name": "Installation",
           "type": "page",
           "path": "/getting-started/installation"
+        },
+        {
+          "name": "Plugins & Hooks",
+          "type": "page",
+          "path": "/getting-started/plugins"
         }
       ]
     },
