@@ -9,6 +9,11 @@ updatedAt: 2025-01-05
 
 Indexers are created using the `defineIndexer` higher-order function. This function takes a _stream definition_ and returns a function to define the indexer.
 
+The job of an indexer is to stream and process historical data (backfilling) and then switch to real-time mode. Indexers built using our SDK are designed to handle chain-reorganizations automatically.
+If, for any reason, you need to receive notifications about reorgs, you can define [a custom `message:invalidate` hook](/docs/v2/getting-started/plugins#hooks) to handle them.
+
+By default, the indexer is stateless (restarts from the beginning on restart) and does not provide any storage. You can add persistence and storage by using one of the provided storage plugins.
+
 ### Examples
 
 The following examples show how to create indexers for the Beacon Chain, EVM (Ethereum), and Starknet.
