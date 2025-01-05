@@ -1,0 +1,118 @@
+---
+title: Indexers
+description: "Learn how to create indexers to stream and transform onchain data."
+diataxis: explanation
+updatedAt: 2025-01-05
+---
+
+# Building indexers
+
+Indexers are created using the `defineIndexer` higher-order function. This function takes a _stream definition_ and returns a function to define the indexer.
+
+### Examples
+
+The following examples show how to create indexers for the Beacon Chain, EVM (Ethereum), and Starknet.
+
+**Beacon Chain indexer**
+
+```ts [beaconchain.indexer.ts]
+import { BeaconChainStream } from "@apibara/beaconchain";
+import { defineIndexer } from "@apibara/indexer";
+
+export default defineIndexer(BeaconChainStream)({ /* ... */  });
+```
+
+**EVM (Ethereum) indexer**
+
+```ts [evm.indexer.ts]
+import { EvmStream } from "@apibara/evm";
+import { defineIndexer } from "@apibara/indexer";
+
+export default defineIndexer(EvmStream)({ /* ... */  });
+```
+
+**Starknet indexer**
+
+```ts [starknet.indexer.ts]
+import { StarknetStream } from "@apibara/starknet";
+import { defineIndexer } from "@apibara/indexer";
+
+export default defineIndexer(StarknetStream)({ /* ... */  });
+```
+
+## Indexer configuration
+
+All indexers take the same configuration options.
+
+- `streamUrl` (required, string): The URL of the DNA stream to connect to.
+- `filter` (required, object): The filter to apply to the DNA stream. This argument is specific to the stream definition. You should refer to the chain's filter reference for the available options.
+- `finality` (optional, one of `finalized`, `accepted`, `pending`): Receive data with the specified finality. Defaults to `accepted`.
+- `startingCursor` (optional, object): The cursor to start the indexer from. Defaults to the genesis block.
+- `debug` (optional, boolean): Enable debug mode. This will print debug information to the console.
+- `transform` (required, function): The transform function called for each block received from the DNA stream.
+- `factory` (optional, function): The factory function used to add data filters at runtime. Useful for creating indexers for smart contracts like Uniswap V2.
+- `hooks` (optional, object): The hooks to register with the indexer. Refer to the [plugins & hooks](/docs/v2/getting-started/plugins) page for more information.
+- `plugins` (optional, array): The plugins to register with the indexer. Refer to the [plugins & hooks](/docs/v2/getting-started/plugins) page for more information.
+
+### The transform function
+
+The `transform` function is invoked for each block received from the DNA stream. This function is where you should implement your business logic.
+
+**Arguments**
+
+ - `block`: The block received from the DNA stream. This is chain-specific.
+ - `cursor`: The cursor of the block before the received block.
+ - `endCursor`: The cursor of the current block.
+ - `finality`: The finality of the block, e.g. `finalized`, `accepted`, or `pending`.
+ - `context`: The context shared between the indexer and the plugins.
+
+The following example shows a minimal indexer that streams block headers and prints them to the console.
+
+```ts [evm.indexer.ts]
+import { EvmStream } from "@apibara/evm";
+import { defineIndexer } from "@apibara/indexer";
+
+export default defineIndexer(EvmStream)({
+  streamUrl: "https://ethereum.preview.apibara.org",
+  filter: {
+    header: "always",
+  },
+  async transform({ block }) {
+    const { header } = block;
+    console.log(header);
+  },
+});
+```
+
+### The factory function
+
+The `factory` function is used to add data filters at runtime. This is useful for creating indexers for smart contracts that deploy other smart contracts like Uniswap V2 and its forks.
+
+
+**Arguments**
+
+ - `block`: The block received from the DNA stream. This is chain-specific.
+ - `context`: The context shared between the indexer and the plugins.
+
+The following example shows a minimal indexer that streams `PairCreated` events from Uniswap V2 to detect new pools, and then streams the pool's events.
+
+```ts [uniswap-v2.indexer.ts]
+import { EvmStream } from "@apibara/evm";
+import { defineIndexer } from "@apibara/indexer";
+
+export default defineIndexer(EvmStream)({
+  streamUrl: "https://ethereum.preview.apibara.org",
+  filter: {
+    logs: [{ /* ... */ }],
+  },
+  async factory({ block }) {
+    const { logs } = block;
+    return { /* ... */ };
+  },
+  async transform({ block }) {
+    const { header, logs } = block;
+    console.log(header);
+    console.log(logs);
+  },
+});
+```

@@ -15,6 +15,11 @@
           "path": "/getting-started/installation"
         },
         {
+          "name": "Indexers",
+          "type": "page",
+          "path": "/getting-started/indexers"
+        },
+        {
           "name": "Plugins & Hooks",
           "type": "page",
           "path": "/getting-started/plugins"
