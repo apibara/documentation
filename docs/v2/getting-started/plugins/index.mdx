@@ -2,14 +2,12 @@
 title: Plugins & Hooks
 description: "Learn how to use plugins to extend the functionality of your indexers."
 diataxis: explanation
-updatedAt: 2024-12-04
+updatedAt: 2025-01-05
 ---
 
 # Plugins & Hooks
 
-Indexers are extensible through hooks and plugins. Hooks are functions that are
-called at specific points in the indexer's lifecycle. Plugins are components
-that contain reusable hooks callbacks.
+Indexers are extensible through hooks and plugins. Hooks are functions that are called at specific points in the indexer's lifecycle. Plugins are components that contain reusable hooks callbacks.
 
 ## Hooks
 
@@ -20,11 +18,8 @@ The following hooks are available in all indexers.
  - `connect:before`: Called before the indexer connects to the DNA stream. Can be used to change the request or stream options.
  - `connect:after`: Called after the indexer has connected to the DNA stream.
  - `connect:factory`: Called before the indexer reconnects to the DNA stream with a new filter (in factory mode).
- - `message` and `message:*`: Called for each message received from the DNA stream.
- - `handler:before`: Called before the indexer handles a block.
- - `handler:after`: Called after the indexer has handled a block successfully.
- - `handler:error`: Called if the indexer encounters an error while handling a block.
- - `transaction:commit`: Called after the indexer's sink transaction has been committed.
+ - `message`: Called for each message received from the DNA stream. Additionally, message-specific hooks are available: `message:invalidate`, `message:finalize`, `message:heartbeat`, `message:systemMessage`.
+ - `handler:middleware`: Called to register indexer's middlewares.
 
 ## Using plugins
 
@@ -48,11 +43,9 @@ export default defineIndexer(BeaconChainStream)({
 
 ## Building plugins
 
-Developers can create new plugins to be shared across multiple indexers or projects. Plugins use the available hooks
-to extend the functionality of indexers.
+Developers can create new plugins to be shared across multiple indexers or projects. Plugins use the available hooks to extend the functionality of indexers.
 
-The main way to define a plugin is by using the `defineIndexerPlugin` function. This function takes a callback with
-the indexer as parameter, the plugin should register itself with the indexer's hooks.
+The main way to define a plugin is by using the `defineIndexerPlugin` function. This function takes a callback with the indexer as parameter, the plugin should register itself with the indexer's hooks.
 When the runner runs the indexer, all the relevant hooks are called.
 
 ```ts [my-plugin.ts]
@@ -61,16 +54,46 @@ import { defineIndexerPlugin } from "@apibara/indexer/plugins";
 
 export function myAwesomePlugin<TFilter, TBlock, TTxnParams>() {
   return defineIndexerPlugin<TFilter, TBlock, TTxnParams>((indexer) => {
-    let lastCursor: Cursor | undefined;
-
-    indexer.hooks.hook("transaction:commit", ({ endCursor }) => {
-      if (endCursor) {
-        lastCursor = endCursor;
-      }
+    indexer.hooks.hook("connect:before", ({ request, options }) => {
+      // Do something before the indexer connects to the DNA stream.
     });
 
     indexer.hooks.hook("run:after", () => {
-      console.log(`Last cursor: ${lastCursor}`);
+      // Do something after the indexer has finished running.
+    });
+  });
+}
+```
+
+## Middleware
+
+Apibara indexers support wrapping the `transform` function in middleware. This is used, for example, to wrap all database operations in a transaction.
+
+The middleware is registered using the `handler:middleware` hook. This hook takes a `use` argument to register the middleware with the indexer.
+The argument to `use` is a function that takes the indexer's context and a `next` function to call the next middleware or the transform function.
+
+```ts [my-plugin.ts]
+import type { Cursor } from "@apibara/protocol";
+import { defineIndexerPlugin } from "@apibara/indexer/plugins";
+
+export function myAwesomePlugin<TFilter, TBlock, TTxnParams>() {
+  return defineIndexerPlugin<TFilter, TBlock, TTxnParams>((indexer) => {
+    const db = openDatabase();
+    indexer.hooks.hook("handler:middleware", ({ use }) => {
+      use(async (context, next) => {
+        // Start a transaction.
+        await db.transaction(async (txn) => {
+          // Add the transaction to the context.
+          context.db = txn;
+          try {
+            // Call the next middleware or the transform function.
+            await next();
+          } finally {
+            // Remove the transaction from the context.
+            context.db = undefined;
+          }
+        });
+      });
     });
   });
 }
@@ -79,6 +102,8 @@ export function myAwesomePlugin<TFilter, TBlock, TTxnParams>() {
 ## Inline hooks
 
 For all cases where you want to use a hook without creating a plugin, you can use the `hooks` property of the indexer.
+
+IMPORTANT: inline hooks are the recommended way to add hooks to an indexer. If the same hook is needed in multiple indexers, it is better to create a plugin. Usually, plugins lives in the `lib` folder, for example `lib/my-plugin.ts`.
 
 ```ts [my-indexer.indexer.ts]
 import { BeaconChainStream } from "@apibara/beaconchain";
@@ -100,14 +125,15 @@ export default defineIndexer(BeaconChainStream)({
 
 ## Indexer lifecycle
 
-The following Javascript pseudocode shows the indexer's lifecycle. This should give you a good understand of
-when hooks are called.
+The following Javascript pseudocode shows the indexer's lifecycle. This should give you a good understanding of when hooks are called.
 
 ```js
 function run(indexer) {
   indexer.callHook("run:before");
 
-  const sink = indexer.sink;
+  const { use, middleware } = registerMiddleware(indexer);
+
+  indexer.callHook("handler:middleware", { use });
 
   // Create the request based on the indexer's configuration.
   const request = Request.create({
@@ -137,7 +163,7 @@ function run(indexer) {
     switch (message._tag) {
       case "data": {
         const { block, endCursor, finality } = message.data
-        sink.transaction(() => {
+        middleware(() => {
           if (indexer.isFactoryMode()) {
             // Handle the factory portion of the indexer data.
             // Implementation detail is not important here.
@@ -148,15 +174,8 @@ function run(indexer) {
             stream = indexer.streamData(request, options);
           }
   
-          indexer.callHook("handler:before", { block, endCursor, finality });
-          try {
-            indexer.transform({ block, endCursor, finality });
-            indexer.callHook("handler:after", { block, endCursor, finality });
-          } catch (error) {
-            indexer.callHook("handler:error", { error });
-          }
+          indexer.transform({ block, endCursor, finality });
         });
-        indexer.callHook("transaction:commit", { finality, endCursor });
         break;
       }
       case "invalidate": {
