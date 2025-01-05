@@ -44,15 +44,15 @@ export default defineIndexer(StarknetStream)({ /* ... */  });
 
 All indexers take the same configuration options.
 
-- `streamUrl` (required, string): The URL of the DNA stream to connect to.
-- `filter` (required, object): The filter to apply to the DNA stream. This argument is specific to the stream definition. You should refer to the chain's filter reference for the available options.
-- `finality` (optional, one of `finalized`, `accepted`, `pending`): Receive data with the specified finality. Defaults to `accepted`.
-- `startingCursor` (optional, object): The cursor to start the indexer from. Defaults to the genesis block.
-- `debug` (optional, boolean): Enable debug mode. This will print debug information to the console.
-- `transform` (required, function): The transform function called for each block received from the DNA stream.
-- `factory` (optional, function): The factory function used to add data filters at runtime. Useful for creating indexers for smart contracts like Uniswap V2.
-- `hooks` (optional, object): The hooks to register with the indexer. Refer to the [plugins & hooks](/docs/v2/getting-started/plugins) page for more information.
-- `plugins` (optional, array): The plugins to register with the indexer. Refer to the [plugins & hooks](/docs/v2/getting-started/plugins) page for more information.
+- **`streamUrl`**: `string`<br/>The URL of the DNA stream to connect to.
+- **`filter`**: `TFilter`<br/>The filter to apply to the DNA stream. This argument is specific to the stream definition. You should refer to the chain's filter reference for the available options (see [Beacon Chain](/docs/v2/networks/beaconchain/filter), [EVM (Ethereum)](/docs/v2/networks/evm/filter), [Starknet](/docs/v2/networks/starknet/filter)).
+- **`finality`**: `"finalized" | "accepted" | "pending"`<br/>Receive data with the specified finality. Defaults to `accepted`.
+- **`startingCursor`**: `{ orderKey: bigint, uniqueKey?: string }`<br/>The cursor to start the indexer from. Defaults to the genesis block. The `orderKey` represents the block number, and the `uniqueKey` represents the block hash (optional).
+- **`debug`**: `boolean`<br/>Enable debug mode. This will print debug information to the console.
+- **`transform`**: `({ block, cursor, endCursor, finality, context }) => Promise<void>`<br/>The transform function called for each block received from the DNA stream.
+- **`factory`**: `({ block, context }) => Promise<{ filter?: TFilter }>`<br/>The factory function used to add data filters at runtime. Useful for creating indexers for smart contracts like Uniswap V2.
+- **`hooks`**: `object`<br/>The hooks to register with the indexer. Refer to the [plugins & hooks](/docs/v2/getting-started/plugins) page for more information.
+- **`plugins`**: `array`<br/>The plugins to register with the indexer. Refer to the [plugins & hooks](/docs/v2/getting-started/plugins) page for more information.
 
 ### The transform function
 
