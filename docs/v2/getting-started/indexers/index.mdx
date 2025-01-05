@@ -60,11 +60,11 @@ The `transform` function is invoked for each block received from the DNA stream.
 
 **Arguments**
 
- - `block`: The block received from the DNA stream. This is chain-specific.
- - `cursor`: The cursor of the block before the received block.
- - `endCursor`: The cursor of the current block.
- - `finality`: The finality of the block, e.g. `finalized`, `accepted`, or `pending`.
- - `context`: The context shared between the indexer and the plugins.
+ - **`block`**: `TBlock`<br/>The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/v2/networks/beaconchain/data), [EVM (Ethereum)](/docs/v2/networks/evm/data), [Starknet](/docs/v2/networks/starknet/data)).
+ - **`cursor`**: `{ orderKey: bigint, uniqueKey?: string }`<br/>The cursor of the block before the received block.
+ - **`endCursor`**: `{ orderKey: bigint, uniqueKey?: string }`<br/>The cursor of the current block.
+ - **`finality`**: `"finalized" | "accepted" | "pending"`<br/>The finality of the block.
+ - **`context`**: `object`<br/>The context shared between the indexer and the plugins.
 
 The following example shows a minimal indexer that streams block headers and prints them to the console.
 
@@ -91,8 +91,8 @@ The `factory` function is used to add data filters at runtime. This is useful fo
 
 **Arguments**
 
- - `block`: The block received from the DNA stream. This is chain-specific.
- - `context`: The context shared between the indexer and the plugins.
+ - **`block`**: `TBlock`<br/>The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/v2/networks/beaconchain/data), [EVM (Ethereum)](/docs/v2/networks/evm/data), [Starknet](/docs/v2/networks/starknet/data)).
+ - **`context`**: `object`<br/>The context shared between the indexer and the plugins.
 
 The following example shows a minimal indexer that streams `PairCreated` events from Uniswap V2 to detect new pools, and then streams the pool's events.
 
