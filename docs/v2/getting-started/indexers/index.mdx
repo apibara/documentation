@@ -49,15 +49,15 @@ export default defineIndexer(StarknetStream)({ /* ... */  });
 
 All indexers take the same configuration options.
 
-- **`streamUrl`**<span class="text-muted-foreground">`string`</span><br/>The URL of the DNA stream to connect to.
-- **`filter`**<span class="text-muted-foreground">`TFilter`</span><br/>The filter to apply to the DNA stream. This argument is specific to the stream definition. You should refer to the chain's filter reference for the available options (see [Beacon Chain](/docs/v2/networks/beaconchain/filter), [EVM (Ethereum)](/docs/v2/networks/evm/filter), [Starknet](/docs/v2/networks/starknet/filter)).
-- **`finality`**<span class="text-muted-foreground">`"finalized" | "accepted" | "pending"`</span><br/>Receive data with the specified finality. Defaults to `accepted`.
-- **`startingCursor`**<span class="text-muted-foreground">`{ orderKey: bigint, uniqueKey?: string }`</span><br/>The cursor to start the indexer from. Defaults to the genesis block. The `orderKey` represents the block number, and the `uniqueKey` represents the block hash (optional).
-- **`debug`**<span class="text-muted-foreground">`boolean`</span><br/>Enable debug mode. This will print debug information to the console.
-- **`transform`**<span class="text-muted-foreground">`({ block, cursor, endCursor, finality, context }) => Promise<void>`</span><br/>The transform function called for each block received from the DNA stream.
-- **`factory`**<span class="text-muted-foreground">`({ block, context }) => Promise<{ filter?: TFilter }>`</span><br/>The factory function used to add data filters at runtime. Useful for creating indexers for smart contracts like Uniswap V2.
-- **`hooks`**<span class="text-muted-foreground">`object`</span><br/>The hooks to register with the indexer. Refer to the [plugins & hooks](/docs/v2/getting-started/plugins) page for more information.
-- **`plugins`**<span class="text-muted-foreground">`array`</span><br/>The plugins to register with the indexer. Refer to the [plugins & hooks](/docs/v2/getting-started/plugins) page for more information.
+- **`streamUrl`**<span class="text-muted-foreground">`string`</span><br/><span class="text-muted-foreground">The URL of the DNA stream to connect to.</span>
+- **`filter`**<span class="text-muted-foreground">`TFilter`</span><br/><span class="text-muted-foreground">The filter to apply to the DNA stream. This argument is specific to the stream definition. You should refer to the chain's filter reference for the available options (see [Beacon Chain](/docs/v2/networks/beaconchain/filter), [EVM (Ethereum)](/docs/v2/networks/evm/filter), [Starknet](/docs/v2/networks/starknet/filter)).</span>
+- **`finality`**<span class="text-muted-foreground">`"finalized" | "accepted" | "pending"`</span><br/><span class="text-muted-foreground">Receive data with the specified finality. Defaults to `accepted`.</span>
+- **`startingCursor`**<span class="text-muted-foreground">`{ orderKey: bigint, uniqueKey?: string }`</span><br/><span class="text-muted-foreground">The cursor to start the indexer from. Defaults to the genesis block. The `orderKey` represents the block number, and the `uniqueKey` represents the block hash (optional).</span>
+- **`debug`**<span class="text-muted-foreground">`boolean`</span><br/><span class="text-muted-foreground">Enable debug mode. This will print debug information to the console.</span>
+- **`transform`**<span class="text-muted-foreground">`({ block, cursor, endCursor, finality, context }) => Promise<void>`</span><br/><span class="text-muted-foreground">The transform function called for each block received from the DNA stream.</span>
+- **`factory`**<span class="text-muted-foreground">`({ block, context }) => Promise<{ filter?: TFilter }>`</span><br/><span class="text-muted-foreground">The factory function used to add data filters at runtime. Useful for creating indexers for smart contracts like Uniswap V2.</span>
+- **`hooks`**<span class="text-muted-foreground">`object`</span><br/><span class="text-muted-foreground">The hooks to register with the indexer. Refer to the [plugins & hooks](/docs/v2/getting-started/plugins) page for more information.</span>
+- **`plugins`**<span class="text-muted-foreground">`array`</span><br/><span class="text-muted-foreground">The plugins to register with the indexer. Refer to the [plugins & hooks](/docs/v2/getting-started/plugins) page for more information.</span>
 
 ### The transform function
 
@@ -65,11 +65,11 @@ The `transform` function is invoked for each block received from the DNA stream.
 
 **Arguments**
 
- - **`block`**<span class="text-muted-foreground">`TBlock`</span><br/>The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/v2/networks/beaconchain/data), [EVM (Ethereum)](/docs/v2/networks/evm/data), [Starknet](/docs/v2/networks/starknet/data)).
- - **`cursor`**<span class="text-muted-foreground">`{ orderKey: bigint, uniqueKey?: string }`</span><br/>The cursor of the block before the received block.
- - **`endCursor`**<span class="text-muted-foreground">`{ orderKey: bigint, uniqueKey?: string }`</span><br/>The cursor of the current block.
- - **`finality`**<span class="text-muted-foreground">`"finalized" | "accepted" | "pending"`</span><br/>The finality of the block.
- - **`context`**<span class="text-muted-foreground">`object`</span><br/>The context shared between the indexer and the plugins.
+ - **`block`**<span class="text-muted-foreground">`TBlock`</span><br/><span class="text-muted-foreground">The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/v2/networks/beaconchain/data), [EVM (Ethereum)](/docs/v2/networks/evm/data), [Starknet](/docs/v2/networks/starknet/data)).</span>
+ - **`cursor`**<span class="text-muted-foreground">`{ orderKey: bigint, uniqueKey?: string }`</span><br/><span class="text-muted-foreground">The cursor of the block before the received block.</span>
+ - **`endCursor`**<span class="text-muted-foreground">`{ orderKey: bigint, uniqueKey?: string }`</span><br/><span class="text-muted-foreground">The cursor of the current block.</span>
+ - **`finality`**<span class="text-muted-foreground">`"finalized" | "accepted" | "pending"`</span><br/><span class="text-muted-foreground">The finality of the block.</span>
+ - **`context`**<span class="text-muted-foreground">`object`</span><br/><span class="text-muted-foreground">The context shared between the indexer and the plugins.</span>
 
 The following example shows a minimal indexer that streams block headers and prints them to the console.
 
