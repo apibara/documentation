@@ -13,13 +13,20 @@ Indexers are extensible through hooks and plugins. Hooks are functions that are 
 
 The following hooks are available in all indexers.
 
- - `run:before`: Called before the indexer starts running.
- - `run:after`: Called after the indexer has finished running.
- - `connect:before`: Called before the indexer connects to the DNA stream. Can be used to change the request or stream options.
- - `connect:after`: Called after the indexer has connected to the DNA stream.
- - `connect:factory`: Called before the indexer reconnects to the DNA stream with a new filter (in factory mode).
- - `message`: Called for each message received from the DNA stream. Additionally, message-specific hooks are available: `message:invalidate`, `message:finalize`, `message:heartbeat`, `message:systemMessage`.
- - `handler:middleware`: Called to register indexer's middlewares.
+ - **`run:before`**<span class="arg-type">`() => void`</span><br/>
+   <span class="arg-description">Called before the indexer starts running.</span>
+ - **`run:after`**<span class="arg-type">`() => void`</span><br/>
+   <span class="arg-description">Called after the indexer has finished running.</span>
+ - **`connect:before`**<span class="arg-type">`({ request, options }: { request: StreamDataRequest<TFilter>, options: StreamDataOptions }) => void`</span><br/>
+   <span class="arg-description">Called before the indexer connects to the DNA stream. Can be used to change the request or stream options.</span>
+ - **`connect:after`**<span class="arg-type">`({ request }: { request: StreamDataRequest<TFilter> }) => void`</span><br/>
+   <span class="arg-description">Called after the indexer has connected to the DNA stream.</span>
+ - **`connect:factory`**<span class="arg-type">`({ request, endCursor }: { request: StreamDataRequest<TFilter>, endCursor: { orderKey: bigint, uniqueKey?: string } }) => void`</span><br/>
+   <span class="arg-description">Called before the indexer reconnects to the DNA stream with a new filter (in factory mode).</span>
+ - **`message`**<span class="arg-type">`({ message }: { message: StreamDataResponse<TBlock> }) => void`</span><br/>
+   <span class="arg-description">Called for each message received from the DNA stream. Additionally, message-specific hooks are available: `message:invalidate`, `message:finalize`, `message:heartbeat`, `message:systemMessage`.</span>
+ - **`handler:middleware`**<span class="arg-type">`({ use }: { use: MiddlewareFunction) => void }) => void`</span><br/>
+   <span class="arg-description">Called to register indexer's middlewares.</span>
 
 ## Using plugins
 

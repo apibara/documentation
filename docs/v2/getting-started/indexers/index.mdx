@@ -96,8 +96,8 @@ The `factory` function is used to add data filters at runtime. This is useful fo
 
 **Arguments**
 
- - **`block`**: `TBlock`<br/>The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/v2/networks/beaconchain/data), [EVM (Ethereum)](/docs/v2/networks/evm/data), [Starknet](/docs/v2/networks/starknet/data)).
- - **`context`**: `object`<br/>The context shared between the indexer and the plugins.
+ - **`block`**<span class="arg-type">`TBlock`</span><br/><span class="arg-description">The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/v2/networks/beaconchain/data), [EVM (Ethereum)](/docs/v2/networks/evm/data), [Starknet](/docs/v2/networks/starknet/data)).</span>
+ - **`context`**<span class="arg-type">`object`</span><br/><span class="arg-description">The context shared between the indexer and the plugins.</span>
 
 The following example shows a minimal indexer that streams `PairCreated` events from Uniswap V2 to detect new pools, and then streams the pool's events.
 
