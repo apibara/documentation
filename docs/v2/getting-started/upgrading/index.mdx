@@ -126,7 +126,7 @@ index bb09fdc..701a494 100644
 -    finality: "DATA_STATUS_ACCEPTED",
 +import { StarknetStream } from "@apibara/starknet";
 +import { defineIndexer } from "@apibara/indexer";
-+import { useLogger } from "@apibara/indexer/plugins/logger";
++import { useLogger } from "@apibara/indexer/plugins";
 +
 +export default defineIndexer(StarknetStream)({
 +    streamUrl: "https://starknet.preview.apibara.org",
