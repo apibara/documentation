@@ -88,7 +88,7 @@ touch indexers/rocket-pool.indexer.ts
 ```typescript [rocket-pool.indexer.ts]
 import { EvmStream } from "@apibara/evm";
 import { defineIndexer } from "@apibara/indexer";
-import { useLogger } from "@apibara/indexer/plugins/logger";
+import { useLogger } from "@apibara/indexer/plugins";
 
 export default defineIndexer(EvmStream)({
   streamUrl: "https://ethereum.preview.apibara.org",
@@ -206,7 +206,7 @@ emitted by the STRK staking contract.
 ```typescript [strk-staking.indexer.ts]
 import { StarknetStream } from "@apibara/starknet";
 import { defineIndexer } from "@apibara/indexer";
-import { useLogger } from "@apibara/indexer/plugins/logger";
+import { useLogger } from "@apibara/indexer/plugins";
 
 export default defineIndexer(StarknetStream)({
   streamUrl: "https://starknet.preview.apibara.org",
@@ -341,7 +341,7 @@ explain how to solve that issue.
 ```ts [strk-staking.indexer.ts]
 import { StarknetStream } from "@apibara/starknet";
 import { defineIndexer } from "@apibara/indexer";
-import { useLogger } from "@apibara/indexer/plugins/logger";
+import { useLogger } from "@apibara/indexer/plugins";
 import { ApibaraRuntimeConfig } from "apibara/types";
 
 export default function (config: ApibaraRuntimeConfig) {
