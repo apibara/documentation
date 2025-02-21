@@ -4,6 +4,11 @@
             "name": "Overview",
             "type": "page",
             "path": "/"
+        },
+        {
+            "name": "Internals",
+            "type": "page",
+            "path": "/internals"
         }
     ]
 }

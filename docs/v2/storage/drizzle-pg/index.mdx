@@ -2,7 +2,7 @@
 title: Drizzle with PostgreSQL
 description: "Store your indexer's data to PostgreSQL using Drizzle ORM."
 diataxis: reference
-updatedAt: 2024-12-15
+updatedAt: 2025-02-21
 ---
 
 # Drizzle with PostgreSQL
@@ -11,13 +11,22 @@ The Apibara Indexer SDK supports Drizzle ORM for storing data to PostgreSQL.
 
 ## Installation
 
+### Using the CLI
+
+You can add an indexer that uses Drizzle for storage by selecting "PostgreSQL"
+in the "Storage" section when creating an indexer.
+
+The CLI automatically updates your `package.json` to add all necessary dependencies.
+
+### Manually
+
 To use Drizzle with PostgreSQL, you need to install the following dependencies:
 
 ```bash [Terminal]
-npm install drizzle-orm pg
+npm install drizzle-orm pg @apibara/plugin-drizzle@next
 ```
 
-We reccomend using Drizzle Kit to manage the database schema.
+We recommend using Drizzle Kit to manage the database schema.
 
 ```bash [Terminal]
 npm install --save-dev drizzle-kit
@@ -25,90 +34,66 @@ npm install --save-dev drizzle-kit
 
 ## Schema configuration
 
-Indexer's tables require storing data in a way that can handle chain reorgs. The
-approach used by Apibara is to add an additional `_cursor` column that tracks
-when the data was inserted or updated. This is handled transparently by the
-`pgIndexerTable` function.
+You can use the `pgTable` function from `drizzle-orm/pg-core` to define the schema,
+no changes required.
 
-```ts [schema.ts]
-import { pgIndexerTable } from "@apibara/indexer/sinks/drizzle";
+The only important thing to notice is that your table must have an `id` column (name configurable)
+that uniquely identifies each row. This requirement is necessary to handle chain reorganizations.
+Read more how the plugin handles chain reorganizations[on the internals page](/docs/v2/storage/drizzle-pg/internals).
 
-export const transfers = pgIndexerTable("transfers", {
+```ts [lib/schema.ts]
+import { bigint, pgTable, text, uuid } from "drizzle-orm/pg-core";
+
+export const transfers = pgTable("transfers", {
+  id: uuid("id").primaryKey().defaultRandom(),
   amount: bigint("amount", { mode: "number" }),
   transactionHash: text("transaction_hash"),
 });
 ```
 
-When generating the database migrations with Drizzle Kit, you can see the extra `_cursor` column added to the table.
+## Adding the plugin to your indexer
 
-```sql [migrations/00000000000000_create_table.sql]
-CREATE TABLE IF NOT EXISTS "transfers" (
-	"amount" bigint,
-	"transaction_hash" text,
-	"_cursor" "int8range" NOT NULL
-);
+Add the `drizzleStorage` plugin to your indexer's `plugins`:
+
+```ts [my-indexer.indexer.ts]
+import { drizzleStorage, useDrizzleStorage } from "@apibara/plugin-drizzle";
+
+import { db } from "@/lib/db";
+
+export default defineIndexer(EvmStream)({
+  // ...
+  plugins: [drizzleStorage({ db })],
+  // ...
+});
 ```
 
 ## Writing and reading data from within the indexer
 
-From within the indexer, use the `useSink` hook to access the current Drizzle database transaction.
-Notice that all operations inside the `transform` function are executed inside the same transaction
-to ensure that the data is inserted or updated atomically. The `db` object returned by the hook
-provides the following methods:
+Use the `useDrizzleStorage` hook to access the current database transaction.
+This transaction behaves exactly like a regular Drizzle ORM transaction because
+it is. Thanks to the way the plugin works and handles chain reorganizations, it
+can expose the full Drizzle ORM API without any limitations.
 
- - `insert`: to insert new rows into the table.
- - `update`: to update existing rows in the table.
- - `delete`: to delete rows from the table.
- - `select`: to query the table.
+```ts [my-indexer.indexer.ts]
+export default defineIndexer(EvmStream)({
+  // ...
+  async transform({ endCursor, block, context, finality }) {
+    const { db } = useDrizzleStorage();
 
-All four methods work analogously to the `insert`, `update`, `delete`, and
-`select` methods from the `drizzle-orm` package.
-
-```ts [indexers/my-indexer.indexer.ts]
-import pg from "pg";
-import { defineIndexer, useSink } from "@apibara/indexer";
-import { drizzle as drizzleSink } from "@apibara/indexer/sinks/drizzle";
-import { StarknetStream } from "@apibara/starknet";
-
-import * as schema, { transfers } from "@/lib/schema";
-
-const connectionString = "postgres://postgres:postgres@localhost:5432/postgres";
-const pool = new pg.Pool({ connectionString });
-const db = drizzle(pool, { schema });
-
-export default defineIndexer(StarknetStream)({
-  streamUrl: "https://starknet.preview.apibara.org",
-  finality: "accepted",
-  startingCursor,
-  filter,
-  sink: drizzleSink({ database, tables: [transfers] }),
-  async transform({ endCursor, block, context }) {
-    const { db } = useSink({ context });
-    const { events } = block;
-
-    const values = events.map(decodeTransferEvent);
-    await db.insert(transfers).values(values);
+    for (const event of block.events) {
+      await db.insert(transfers).values(decodeEvent(event));
+    }
   },
 });
 ```
 
+You are not limited to inserting data, you can also update and delete rows.
+
 ## Querying data from outside the indexer
 
-When selecting data from outside the indexer, you need to add the following
-condition on `_cursor` to your query. This ensure that only data that has not been
-removed or updated is returned by the query.
-
-```sql
-WHERE upper_inf(_cursor)
-```
+You can query data from your application like you always do, using the standard Drizzle ORM library.
 
 ## Improving performance
 
-You should always add an index on the `_cursor` column to improve the
-performance of the queries.
-
-## Cleaning up old data
-
-Data that cannot be removed because of reorgs is automatically removed by the
-indexer as it receives updates to the finalized block. Thanks to this, your database
-contains the minimal amount of data required to safely handle reorgs.
+You should always add an index on the `id` column. This column is used every time the indexer handles
+a chain reorganization or a new pending block.
