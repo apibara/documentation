@@ -2,7 +2,7 @@
 title: Drizzle with PostgreSQL
 description: "Store your indexer's data to PostgreSQL using Drizzle ORM."
 diataxis: reference
-updatedAt: 2025-02-21
+updatedAt: 2025-03-10
 ---
 
 # Drizzle with PostgreSQL
@@ -53,12 +53,29 @@ export const transfers = pgTable("transfers", {
 
 ## Adding the plugin to your indexer
 
-Add the `drizzleStorage` plugin to your indexer's `plugins`:
+Add the `drizzleStorage` plugin to your indexer's `plugins`. Notice the following:
+
+- Use the `drizzle` helper exported by `@apibara/plugin-drizzle` to create a
+  drizzle instance. This method supports creating an in-memory database (powered by PgLite)
+  by specifying the `memory:` connection string.
+- Always specify the database schema. This schema is used by the indexer to know which tables
+  it needs to protect against chain reorganizations.
 
 ```ts [my-indexer.indexer.ts]
-import { drizzleStorage, useDrizzleStorage } from "@apibara/plugin-drizzle";
+import {
+  drizzle,
+  drizzleStorage,
+  useDrizzleStorage,
+} from "@apibara/plugin-drizzle";
 
-import { db } from "@/lib/db";
+import { transfers } from "@/lib/schema";
+
+const db = drizzle({
+  schema: {
+    transfers,
+  },
+  connectionString: process.env.DATABASE_URL,
+});
 
 export default defineIndexer(EvmStream)({
   // ...
@@ -89,6 +106,27 @@ export default defineIndexer(EvmStream)({
 
 You are not limited to inserting data, you can also update and delete rows.
 
+### Drizzle query
+
+Using the [Drizzle Query interface](https://orm.drizzle.team/docs/rqb) is easy.
+Pass the database instance to `useDrizzleStorage`: in this case the database type
+is used to automatically deduce the database schema.
+
+**Note**: the database instance is _not_ used to query data but only for type inference.
+
+```ts [my-indexer.indexer.ts]
+const database = drizzle({ schema, connectionString });
+
+export default defineIndexer(EvmStream)({
+  // ...
+  async transform({ endCursor, block, context, finality }) {
+    const { db } = useDrizzleStorage(database);
+
+    const existingToken = await db.query.tokens.findFirst({ address });
+  },
+});
+```
+
 ## Querying data from outside the indexer
 
 You can query data from your application like you always do, using the standard Drizzle ORM library.
@@ -97,3 +135,32 @@ You can query data from your application like you always do, using the standard 
 
 You should always add an index on the `id` column. This column is used every time the indexer handles
 a chain reorganization or a new pending block.
+
+## Database migrations
+
+There are two strategies you can adopt for database migrations:
+
+- run migrations separately, for example using the drizzle-kit CLI.
+- run migrations automatically upon starting the indexer.
+
+If you decide to adopt the latter strategy, use the `migrations` option:
+
+```ts [my-indexer.indexer.ts]
+import { drizzle } from "@apibara/plugin-drizzle";
+
+const database = drizzle({ schema, connectionString });
+
+export default defineIndexer(EvmStream)({
+  // ...
+  plugins: [
+    drizzleStorage({
+      db,
+      migrate: {
+        // Path relative to the project's root.
+        migrationsFolder: "./migrations",
+      },
+    }),
+  ],
+  // ...
+});
+```
