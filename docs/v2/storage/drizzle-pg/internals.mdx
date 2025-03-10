@@ -2,9 +2,76 @@
 title: Drizzle's plugin internals
 description: "Store your indexer's data to PostgreSQL using Drizzle ORM."
 diataxis: reference
-updatedAt: 2025-02-21
+updatedAt: 2025-03-10
 ---
 
 # Drizzle's plugin internals
 
-Coming soon.
+This section describes how the Drizzle plugin works. Understanding the content of this page is not needed for using the plugin.
+
+## Drizzle and the indexer
+
+The plugin wraps all database operations in the `transform` and `factory` functions in a database transaction.
+This ensures that the indexer's state is always consistent and that data is never lost due to crashes or network failures.
+
+More specifically, the plugin is implemented as a [middleware](/docs/v2/getting-started/plugins#middleware).
+
+At a very high level, the plugin looks like the following:
+
+```ts
+indexer.hooks.hook("handler:middleware", async ({ use }) => {
+  use(async (context, next) => {
+    await db.transaction(async (txn) => {
+      // Assign the transaction to the context, to be accessed using useDrizzleStorage
+      context.db = txn;
+
+      await next();
+
+      delete context.db;
+
+      // Update the indexer's state with cursor.
+      await updateState(txn);
+    });
+  });
+});
+```
+
+## Chain reorganizations
+
+The indexer needs to be able to rollback state after a chain reorganization.
+The behavior described in this section is only relevant for un-finalized blocks.
+Finalized blocks don't need special handling since they are, by definition, not going to
+be part of a chain reorganization.
+
+The main idea is to create an ["audit table"](https://supabase.com/blog/postgres-audit) with
+all changes to the indexer's schema.
+
+The name of the audit table is `__reorg_rollback` and has the following schema.
+
+```txt
++------------+--------------+-----------------------+
+| Column     | Type         | Modifiers             |
+|------------+--------------+-----------------------|
+| n          | integer      |  not null default ... |
+| op         | character(1) |  not null             |
+| table_name | text         |  not null             |
+| cursor     | integer      |  not null             |
+| row_id     | text         |                       |
+| row_value  | jsonb        |                       |
+| indexer_id | text         |  not null             |
++------------+--------------+-----------------------+
+```
+
+The data stored in the `row_value` column is specific to each operation (INSERT, DELETE, UPDATE) contains the data needed to revert the operation. Notice that the table's row must be JSON-serializable.
+
+At each block, the plugin registers a trigger for each table managed by the indexer. At the end of the transaction, the trigger inserts data into the audit table.
+
+The audit table is periodically pruned to remove snapshots of data that is now finalized.
+
+### Reverting a block
+
+When a chain reorganization is detected, all operations in the audit table where `cursor` is greater than the new chain's head are reverted in reverse order.
+
+- `op = INSERT`: the row with id `row_id` is deleted from the table.
+- `op = DELETE`: the row with id `row_id` is inserted back into the table, with the value stored in `row_value`.
+- `op = UPDATE`: the row with id `row_id` is updated in the table, with the value stored in `row_value`.
