@@ -2,7 +2,7 @@
 title: Upgrading from v1
 description: "Learn how to upgrade your indexers to Apibara v2."
 diataxis: how-to
-updatedAt: 2024-12-04
+updatedAt: 2025-03-21
 ---
 
 # Upgrading from v1
@@ -10,24 +10,23 @@ updatedAt: 2024-12-04
 This guide explains how to upgrade your Starknet indexers from the old Apibara
 CLI experience to the new Apibara v2 experience.
 
-At the time of writing (December 2024), Apibara v2 is still in beta. This means
+At the time of writing (March 2025), Apibara v2 is still in beta. This means
 that it's ready for developers to start testing it, but you should not use it in
 production yet.
 
 ## Main changes
 
- - The underlying gRPC protocol and data types have changed. You can review all
- the changes [on this page](/docs/v2/networks/starknet/upgrade-from-v1).
- - The old CLI has been replaced by a pure Typescript library. This means you
- can now leverage the full Node ecosystem (including Bun and Deno).
- - You can now extend indexers with [plugins and hooks](/docs/v2/getting-started/plugins).
+- The underlying gRPC protocol and data types have changed. You can review all
+  the changes [on this page](/docs/v2/networks/starknet/upgrade-from-v1).
+- The old CLI has been replaced by a pure Typescript library. This means you
+  can now leverage the full Node ecosystem (including Bun and Deno).
+- You can now extend indexers with [plugins and hooks](/docs/v2/getting-started/plugins).
 
 ## Missing (but planned) features
 
 These features will be added before the final DNA v2 release:
 
- - Support pending (mempool) data. 
- - Add missing integrations like MongoDB.
+- Add missing integrations like MongoDB.
 
 ## Migration
 
@@ -87,7 +86,7 @@ found 0 vulnerabilities
 
 ### Step 2: initialize the Apibara project
 
-Create a new file called `apibara.config.ts` in the root of your project. 
+Create a new file called `apibara.config.ts` in the root of your project.
 
 ```ts [apibara.config.ts]
 import { defineConfig } from "apibara/config";
@@ -97,19 +96,19 @@ export default defineConfig({});
 
 ### Step 3: update the indexer
 
-Now it's time to update the indexer. 
+Now it's time to update the indexer.
 
 - Move the indexer to the `indexers/` folder, ensuring tha the file name ends
-with `.indexer.ts`.
+  with `.indexer.ts`.
 - Wrap the indexer in a `defineIndexer(StarknetStream)({ /* ... */ })` call.
-Notice that now the stream configuration and transform function live in the same
-configuration object.
- - `startingBlock` is now `startingCursor.orderKey`.
- - `streamUrl` is the same, but the URL is different while in beta.
- - `finality` is now simpler to type.
- - The `filter` object changed. Please refer to the [filter documentation](/docs/v2/networks/starknet/filter) for more information.
- - `sinkType` and `sinkOptions` are gone.
- - The `transform` function now takes named arguments, with `block` containing the block data.
+  Notice that now the stream configuration and transform function live in the same
+  configuration object.
+- `startingBlock` is now a `BigInt`.
+- `streamUrl` is the same, but the URL is different while in beta.
+- `finality` is now simpler to type.
+- The `filter` object changed. Please refer to the [filter documentation](/docs/v2/networks/starknet/filter) for more information.
+- `sinkType` and `sinkOptions` are gone.
+- The `transform` function now takes named arguments, with `block` containing the block data.
 
 The following `git diff` shows the changes to the indexer at the beginning of the guide.
 
@@ -130,9 +129,7 @@ index bb09fdc..701a494 100644
 +
 +export default defineIndexer(StarknetStream)({
 +    streamUrl: "https://starknet.preview.apibara.org",
-+    startingCursor: {
-+        orderKey: 800_000n,
-+    },
++    startingBlock: 800_000n,
 +    finality: "accepted",
      filter: {
 -        header: {},
@@ -153,3 +150,10 @@ index bb09fdc..701a494 100644
 +});
 \ No newline at end of file
 ```
+
+### Step 4: writing data
+
+In version 1, the indexer would write data returned by `transform` to a sink.
+Now, you use plugins to write data to databases like PostgreSQL or MongoDB.
+
+Refer to the plugins documentation for more information.
