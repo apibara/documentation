@@ -1,0 +1,90 @@
+---
+title: Configuration - apibara.config.ts
+description: "Learn how to configure your indexers using the apibara.config.ts file."
+diataxis: reference
+updatedAt: 2025-03-11
+---
+
+# apibara.config.ts
+
+The `apibara.config.ts` file is where you configure your project. If the project is using Javascript, the file is named `apibara.config.js`.
+
+## General
+
+**`runtimeConfig: R extends Record<string, unknown>`**
+
+The `runtimeConfig` contains the runtime configuration passed to indexers [if they accept it](/docs/v2/getting-started/indexers#with-runtime-config).
+Use this to configure chain or environment specific options such as starting block and contract address.
+
+```ts [apibara.config.ts]
+export default defineConfig({
+  runtimeConfig: {
+    connectionString: process.env["POSTGRES_CONNECTION_STRING"] ?? "memory://",
+  },
+});
+```
+
+**`presets: Record<string, R>`**
+
+Presets represent different configurations of `runtimeConfig`. You can use presets to switch between different environments, like development, test, and production.
+
+```ts [apibara.config.ts]
+export default defineConfig({
+  runtimeConfig: {
+    connectionString: process.env["POSTGRES_CONNECTION_STRING"] ?? "memory://",
+  },
+  presets: {
+    dev: {
+      connectionString: "memory://",
+    },
+  },
+});
+```
+
+**`preset: string`**
+
+The default preset to use.
+
+**`rootDir: string`**
+
+Change the project's root directory.
+
+**`buildDir: string`**
+
+The directory used for building the indexers. Defaults to `.apibara`.
+
+**`outputDir: string`**
+
+The directory where to output the built indexers. Defaults to `.apibara/build`.
+
+**`indexersDir: string`**
+
+The directory where to look for `*.indexer.ts` or `.indexer.js` files. Defaults to `indexers`.
+
+**`hooks`**
+
+Project level [hooks](/docs/v2/getting-started/plugins).
+
+**`logger: LoggerFactory`**
+
+A function that returns an indexer-specific logger for the indexers.
+
+**`debug: boolean`**
+
+Enable debug mode, printing more detailed logs.
+
+## Build config
+
+**`rolldownConfig: RolldownConfig`**
+
+Override any field in the [Rolldown](https://rolldown.rs/) configuration.
+
+**`exportConditions?: string[]`**
+
+Shorthand for `rolldownConfig.resolve.exportConditions`.
+
+## File watcher
+
+**`watchOptions: WatchOptions`**
+
+Configure Rolldown's file watcher. Defaults to `{ignore: ["**/node_modules/**", "**/.apibara/**"]}`.

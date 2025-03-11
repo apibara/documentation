@@ -2,7 +2,7 @@
 title: Installation
 description: "Learn how to install and get started with Apibara."
 diataxis: tutorial
-updatedAt: 2024-12-03
+updatedAt: 2025-03-11
 ---
 
 # Installation
@@ -52,15 +52,10 @@ Your indexers' configuration goes in the `apibara.config.ts` file. You can
 leave the configuration as is for now.
 
 ```typescript [apibara.config.ts]
-import typescript from "@rollup/plugin-typescript";
-import type { Plugin } from "apibara/rollup";
 import { defineConfig } from "apibara/config";
 
 export default defineConfig({
   runtimeConfig: {},
-  rollupConfig: {
-    plugins: [typescript() as Plugin],
-  },
 });
 ```
 
@@ -104,8 +99,6 @@ Notice the indexer's specific runtime configuration. This is a good time to upda
 the indexing starting block.
 
 ```typescript [apibara.config.ts]
-import typescript from "@rollup/plugin-typescript";
-import type { Plugin } from "apibara/rollup";
 import { defineConfig } from "apibara/config";
 
 export default defineConfig({
@@ -114,9 +107,6 @@ export default defineConfig({
       startingBlock: 21_000_000,
       streamUrl: "https://ethereum.preview.apibara.org",
     },
-  },
-  rollupConfig: {
-    plugins: [typescript() as Plugin],
   },
 });
 ```

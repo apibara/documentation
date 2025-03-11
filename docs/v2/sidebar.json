@@ -25,6 +25,11 @@
           "path": "/getting-started/plugins"
         },
         {
+          "name": "apibara.config.ts",
+          "type": "page",
+          "path": "/getting-started/configuration"
+        },
+        {
           "name": "Upgrading from v1",
           "type": "page",
           "path": "/getting-started/upgrading"

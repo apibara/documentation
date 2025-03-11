@@ -24,7 +24,9 @@ The following examples show how to create indexers for the Beacon Chain, EVM (Et
 import { BeaconChainStream } from "@apibara/beaconchain";
 import { defineIndexer } from "@apibara/indexer";
 
-export default defineIndexer(BeaconChainStream)({ /* ... */  });
+export default defineIndexer(BeaconChainStream)({
+  /* ... */
+});
 ```
 
 **EVM (Ethereum) indexer**
@@ -33,7 +35,9 @@ export default defineIndexer(BeaconChainStream)({ /* ... */  });
 import { EvmStream } from "@apibara/evm";
 import { defineIndexer } from "@apibara/indexer";
 
-export default defineIndexer(EvmStream)({ /* ... */  });
+export default defineIndexer(EvmStream)({
+  /* ... */
+});
 ```
 
 **Starknet indexer**
@@ -42,7 +46,25 @@ export default defineIndexer(EvmStream)({ /* ... */  });
 import { StarknetStream } from "@apibara/starknet";
 import { defineIndexer } from "@apibara/indexer";
 
-export default defineIndexer(StarknetStream)({ /* ... */  });
+export default defineIndexer(StarknetStream)({
+  /* ... */
+});
+```
+
+## With runtime config
+
+To configure the indexer at runtime, export a function that takes the configuration and returns the indexer's definition.
+
+```ts
+import { EvmStream } from "@apibara/evm";
+import type { ApibaraRuntimeConfig } from "apibara/types";
+import { defineIndexer } from "@apibara/indexer";
+
+export default function (runtimeConfig: ApibaraRuntimeConfig) {
+  return defineIndexer(EvmStream)({
+    // ...
+  });
+}
 ```
 
 ## Indexer configuration
@@ -65,11 +87,11 @@ The `transform` function is invoked for each block received from the DNA stream.
 
 **Arguments**
 
- - **`block`**<span class="arg-type">`TBlock`</span><br/><span class="arg-description">The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/v2/networks/beaconchain/data), [EVM (Ethereum)](/docs/v2/networks/evm/data), [Starknet](/docs/v2/networks/starknet/data)).</span>
- - **`cursor`**<span class="arg-type">`{ orderKey: bigint, uniqueKey?: string }`</span><br/><span class="arg-description">The cursor of the block before the received block.</span>
- - **`endCursor`**<span class="arg-type">`{ orderKey: bigint, uniqueKey?: string }`</span><br/><span class="arg-description">The cursor of the current block.</span>
- - **`finality`**<span class="arg-type">`"finalized" | "accepted" | "pending"`</span><br/><span class="arg-description">The finality of the block.</span>
- - **`context`**<span class="arg-type">`object`</span><br/><span class="arg-description">The context shared between the indexer and the plugins.</span>
+- **`block`**<span class="arg-type">`TBlock`</span><br/><span class="arg-description">The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/v2/networks/beaconchain/data), [EVM (Ethereum)](/docs/v2/networks/evm/data), [Starknet](/docs/v2/networks/starknet/data)).</span>
+- **`cursor`**<span class="arg-type">`{ orderKey: bigint, uniqueKey?: string }`</span><br/><span class="arg-description">The cursor of the block before the received block.</span>
+- **`endCursor`**<span class="arg-type">`{ orderKey: bigint, uniqueKey?: string }`</span><br/><span class="arg-description">The cursor of the current block.</span>
+- **`finality`**<span class="arg-type">`"finalized" | "accepted" | "pending"`</span><br/><span class="arg-description">The finality of the block.</span>
+- **`context`**<span class="arg-type">`object`</span><br/><span class="arg-description">The context shared between the indexer and the plugins.</span>
 
 The following example shows a minimal indexer that streams block headers and prints them to the console.
 
@@ -93,11 +115,10 @@ export default defineIndexer(EvmStream)({
 
 The `factory` function is used to add data filters at runtime. This is useful for creating indexers for smart contracts that deploy other smart contracts like Uniswap V2 and its forks.
 
-
 **Arguments**
 
- - **`block`**<span class="arg-type">`TBlock`</span><br/><span class="arg-description">The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/v2/networks/beaconchain/data), [EVM (Ethereum)](/docs/v2/networks/evm/data), [Starknet](/docs/v2/networks/starknet/data)).</span>
- - **`context`**<span class="arg-type">`object`</span><br/><span class="arg-description">The context shared between the indexer and the plugins.</span>
+- **`block`**<span class="arg-type">`TBlock`</span><br/><span class="arg-description">The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/v2/networks/beaconchain/data), [EVM (Ethereum)](/docs/v2/networks/evm/data), [Starknet](/docs/v2/networks/starknet/data)).</span>
+- **`context`**<span class="arg-type">`object`</span><br/><span class="arg-description">The context shared between the indexer and the plugins.</span>
 
 The following example shows a minimal indexer that streams `PairCreated` events from Uniswap V2 to detect new pools, and then streams the pool's events.
 
@@ -108,11 +129,17 @@ import { defineIndexer } from "@apibara/indexer";
 export default defineIndexer(EvmStream)({
   streamUrl: "https://ethereum.preview.apibara.org",
   filter: {
-    logs: [{ /* ... */ }],
+    logs: [
+      {
+        /* ... */
+      },
+    ],
   },
   async factory({ block }) {
     const { logs } = block;
-    return { /* ... */ };
+    return {
+      /* ... */
+    };
   },
   async transform({ block }) {
     const { header, logs } = block;
