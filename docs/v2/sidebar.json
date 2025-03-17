@@ -30,6 +30,11 @@
           "path": "/getting-started/configuration"
         },
         {
+          "name": "instrumentation.ts",
+          "type": "page",
+          "path": "/getting-started/instrumentation"
+        },
+        {
           "name": "Upgrading from v1",
           "type": "page",
           "path": "/getting-started/upgrading"

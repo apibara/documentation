@@ -1,0 +1,58 @@
+---
+title: Instrumentation - instrumentation.ts
+description: "Learn how to send metrics and traces to your observability platform using instrumentation.ts."
+diataxis: reference
+updatedAt: 2025-03-17
+---
+
+# instrumentation.ts
+
+It's easy to add observability to your indexer using our native instrumentation powered by [OpenTelemetry](https://opentelemetry.io/).
+
+## Convention
+
+To add instrumentation to your project, create a `instrumentation.ts` file at the root (next to `apibara.config.ts`).
+
+This file should export a `register` function, this function is called _once_ by the runtime before the production indexer is started.
+
+```ts [instrumentation.ts]
+import type { RegisterFn } from "apibara/types";
+
+export const register: RegisterFn = async () => {
+  // Setup OpenTelemetry SDK exporter
+}
+```
+
+### Logger
+
+You can also replace the default logger by exporting a `logger` function from `instrumentation.ts`. This function should return a `console`-like object with the same methods as `console`.
+
+```ts [instrumentation.ts]
+import type { LoggerFactoryFn } from "apibara/types";
+
+export const logger: LoggerFactoryFn = ({ indexer, indexers, preset }) => {
+  // Build console here.
+}
+```
+
+## Examples
+
+### OpenTelemetry with OpenTelemetry Collector
+
+TODO: this section is incomplete.
+
+1. Provide the OpenTelemetry collector configuration used in the example (with debug exporter).
+2. Connect the indexer to the collector using the Node.js SDK.
+3. Run the indexer with `apibara start --indexer=your-indexer` and observe metrics and traces in the collector.
+
+### Prometheus metrics
+
+TODO: this section is incomplete.
+
+1. Install and configure `@opentelemetry/exporter-prometheus`.
+
+### Sentry
+
+TODO: this section is incomplete.
+
+1. Follow [this guide](https://docs.sentry.io/platforms/javascript/guides/node/opentelemetry/using-opentelemetry-apis/).
