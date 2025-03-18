@@ -9,6 +9,11 @@
             "name": "Internals",
             "type": "page",
             "path": "/internals"
+        },
+        {
+            "name": "FAQ",
+            "type": "page",
+            "path": "/faq"
         }
     ]
 }

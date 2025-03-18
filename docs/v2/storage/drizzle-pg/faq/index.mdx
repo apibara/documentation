@@ -1,0 +1,33 @@
+---
+title: Drizzle's plugin - Frequently Asked Questions
+description: "Find answers to common questions about using Drizzle with PostgreSQL."
+updatedAt: 2025-03-18
+---
+
+# Frequently Asked Questions
+
+## Performance
+
+### Why is indexing slower after I add the plugin?
+
+There are many possible reasons for this, but the most common ones are:
+
+- The latency between your indexer and the database is high.
+- Your indexer is inserting rows too frequently.
+
+In the first case, consider moving your indexer's deployment closer to the database to improve latency.
+
+In the second case, consider using a bulk insert strategy to reduce the number of individual insert operations.
+Usually, this means converting many `db.insert(..)` operations inside a loop into a single `db.insert()` call.
+
+```ts
+// Before
+for (const event of block.events) {
+  const transfer = decodeEvent(event);
+  await db.insert(schema.transfers).values(transfer);
+}
+
+// After
+const transfers = block.events.map((event) => decodeEvent(event));
+await db.insert(schema.transfers).values(transfers);
+```
