@@ -20,7 +20,7 @@ import type { RegisterFn } from "apibara/types";
 
 export const register: RegisterFn = async () => {
   // Setup OpenTelemetry SDK exporter
-}
+};
 ```
 
 ### Logger
@@ -32,27 +32,147 @@ import type { LoggerFactoryFn } from "apibara/types";
 
 export const logger: LoggerFactoryFn = ({ indexer, indexers, preset }) => {
   // Build console here.
-}
+};
 ```
 
 ## Examples
 
-### OpenTelemetry with OpenTelemetry Collector
+### Prometheus
 
-TODO: this section is incomplete.
+Collecting metrics with Prometheus and visualizing them is a powerful way to monitor your indexers. This section shows how to set up OpenTelemetry with Prometheus.
 
-1. Provide the OpenTelemetry collector configuration used in the example (with debug exporter).
-2. Connect the indexer to the collector using the Node.js SDK.
-3. Run the indexer with `apibara start --indexer=your-indexer` and observe metrics and traces in the collector.
+#### 1. Install required dependencies
 
-### Prometheus metrics
+First, install the required OpenTelemetry packages:
 
-TODO: this section is incomplete.
+```bash
+pnpm install @opentelemetry/api @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-prometheus @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/sdk-node @opentelemetry/sdk-trace-node @opentelemetry/semantic-conventions
+```
 
-1. Install and configure `@opentelemetry/exporter-prometheus`.
+#### 2. Configure OpenTelemetry
+
+Create an `otel` directory with an `otel.ts` file to set up the OpenTelemetry SDK:
+
+```ts [otel/otel.ts]
+import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
+import { PrometheusExporter } from "@opentelemetry/exporter-prometheus";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import {
+  defaultResource,
+  resourceFromAttributes,
+} from "@opentelemetry/resources";
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-node";
+import {
+  ATTR_SERVICE_NAME,
+  ATTR_SERVICE_VERSION,
+} from "@opentelemetry/semantic-conventions";
+
+// Create a resource that identifies your service
+const resource = defaultResource().merge(
+  resourceFromAttributes({
+    [ATTR_SERVICE_NAME]: "apibara",
+    [ATTR_SERVICE_VERSION]: "1.0.0",
+  })
+);
+
+// By default port 9464 will be exposed on the apibara app
+const prometheusExporter = new PrometheusExporter();
+
+// Configure the OTLP exporter for traces using http protocol,
+// You can use grpc protocol as well by switching to `@opentelemetry/exporter-trace-otlp-grpc`.
+const traceExporter = new OTLPTraceExporter({
+  // configure the endpoint of the trace collector
+  url: "http://localhost:4318/v1/traces",
+});
+const spanProcessors = [new BatchSpanProcessor(traceExporter)];
+
+// Configure the SDK
+export const sdk = new NodeSDK({
+  resource,
+  metricReader: prometheusExporter,
+  spanProcessors,
+  instrumentations: [getNodeAutoInstrumentations()],
+});
+```
+
+#### 3. Update instrumentation.ts to use the OpenTelemetry SDK
+
+Update the `instrumentation.ts` file at the root of your project:
+
+```ts [instrumentation.ts]
+import type { RegisterFn } from "apibara/types";
+import { sdk } from "./otel/otel";
+
+export const register: RegisterFn = async () => {
+  sdk.start();
+};
+```
+
+#### 4. Build and run your indexer to see the metrics and traces on your configured observability platform.
+
+```bash
+pnpm build
+pnpm start --indexer=your-indexer
+```
+
+In Grafana, you can create dashboards to visualize metrics from your Apibara indexer. The following metrics are available out of the box:
+
+- `current_block`: The latest block number being processed by the indexer
+- `processed_block_count`: Total number of blocks that have been processed
+- `reorg_count`: Number of chain reorganizations detected and handled
+
+Additionally, you can observe detailed traces showing:
+
+- Block processing lifecycle and duration
+- Individual transform function execution time
+- Chain reorganization handling
 
 ### Sentry
 
-TODO: this section is incomplete.
+#### 1. Install required dependencies
 
-1. Follow [this guide](https://docs.sentry.io/platforms/javascript/guides/node/opentelemetry/using-opentelemetry-apis/).
+First, install the required Sentry package:
+
+```bash
+pnpm install @sentry/node
+```
+
+#### 2. Configure Sentry
+
+Create an `otel` directory with an `otel.ts` file to set up Sentry:
+
+```ts [otel/otel.ts]
+import * as Sentry from "@sentry/node";
+
+export function setupSentry() {
+  return Sentry.init({
+    dsn: "__YOUR_DSN__",
+    tracesSampleRate: 1.0,
+  });
+}
+```
+
+#### 3. Update instrumentation.ts to use Sentry
+
+Update the `instrumentation.ts` file at the root of your project:
+
+```ts [instrumentation.ts]
+import type { RegisterFn } from "apibara/types";
+import { setupSentry } from "./otel/otel";
+
+export const register: RegisterFn = async () => {
+  setupSentry();
+};
+```
+
+#### 4. Build and run your indexer with Sentry error tracking enabled
+
+```bash
+pnpm build
+pnpm start --indexer=your-indexer
+```
+
+The Sentry SDK uses OpenTelemetry under the hood, which means any OpenTelemetry instrumentation that emits spans will automatically be picked up by Sentry without additional configuration.
+
+For more information on how to use Sentry with OpenTelemetry, refer to the [Sentry documentation](https://docs.sentry.io/platforms/javascript/guides/node/opentelemetry/).
