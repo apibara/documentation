@@ -45,7 +45,7 @@ The OpenTelemetry Collector offers a vendor-agnostic implementation for receivin
 
 First, install the required OpenTelemetry packages:
 
-```bash
+```bash [Terminal]
 pnpm install @opentelemetry/api @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-metrics-otlp-grpc @opentelemetry/exporter-trace-otlp-grpc @opentelemetry/resources @opentelemetry/sdk-node @opentelemetry/sdk-metrics @opentelemetry/sdk-trace-node @opentelemetry/semantic-conventions
 ```
 
@@ -109,7 +109,7 @@ export const register: RegisterFn = async () => {
 
 #### 3. Build and run your indexer to see the metrics and traces on the configured OpenTelemetry Collector.
 
-```bash
+```bash [Terminal]
 pnpm build
 pnpm start --indexer=your-indexer
 ```
@@ -134,7 +134,7 @@ Collecting metrics with Prometheus and visualizing them is a powerful way to mon
 
 First, install the required OpenTelemetry packages:
 
-```bash
+```bash [Terminal]
 pnpm install @opentelemetry/api @opentelemetry/auto-instrumentations-node @opentelemetry/exporter-prometheus @opentelemetry/resources @opentelemetry/sdk-node @opentelemetry/semantic-conventions
 ```
 
@@ -181,7 +181,7 @@ export const register: RegisterFn = async () => {
 
 #### 3. Build and run your indexer to see the metrics and traces on your configured observability platform.
 
-```bash
+```bash [Terminal]
 pnpm build
 pnpm start --indexer=your-indexer
 ```
@@ -192,7 +192,7 @@ pnpm start --indexer=your-indexer
 
 First, install the required Sentry package:
 
-```bash
+```bash [Terminal]
 pnpm install @sentry/node
 ```
 
@@ -214,7 +214,7 @@ export const register: RegisterFn = async () => {
 
 #### 3. Build and run your indexer with Sentry error tracking enabled
 
-```bash
+```bash [Terminal]
 pnpm build
 pnpm start --indexer=your-indexer
 ```
