@@ -6,6 +6,30 @@ updatedAt: 2025-03-18
 
 # Frequently Asked Questions
 
+## General
+
+### Argument of type `PgTableWithColumns` is not assignable to parameter of type `PgTable`.
+
+When structuring your project as monorepo, you may encounter the following error when type checking your project.
+
+```txt
+indexers/my-indexer.indexer.ts:172:25 - error TS2345: Argument of type 'PgTableWithColumns<{ name: "my_table"; schema: undefined; columns: { ... }; dialect:...' is not assignable to parameter of type 'PgTable<TableConfig>'.
+  The types of '_.config.columns' are incompatible between these types.
+    Type '{ ... }' is not assignable to type 'Record<string, PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}>>'.
+      Property 'myColumn' is incompatible with index signature.
+        Type 'PgColumn<{ name: "my_column"; tableName: "my_table"; dataType: "number"; columnType: "PgBigInt53"; data: number; driverParam: string | number; notNull: false; hasDefault: false; isPrimaryKey: false; ... 5 more ...; generated: undefined; }, {}, {}>' is not assignable to type 'PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}>'.
+          The types of 'table._.config.columns' are incompatible between these types.
+            Type 'Record<string, import("/my/project/node_modules/.pnpm/drizzle-orm@0.40.1_@types+pg@8.11.10_pg@8.14.1/node_modules/drizzle-orm/pg-core/columns/common").PgColumn<import("/my/project/node_modules/.pnpm/drizzle-orm@0.40.1_@types+pg@8.11.10_pg@8.14.1/node_modules/...' is not assignable to type 'Record<string, import("/my/project/node_modules/.pnpm/drizzle-orm@0.40.1_@types+pg@8.11.11_pg@8.14.1/node_modules/drizzle-orm/pg-core/columns/common").PgColumn<import("/my/project/node_modules/.pnpm/drizzle-orm@0.40.1_@types+pg@8.11.11_pg@8.14.1/node_modules/...'.
+              'string' index signatures are incompatible.
+                Type 'import("/my/project/node_modules/.pnpm/drizzle-orm@0.40.1_@types+pg@8.11.10_pg@8.14.1/node_modules/drizzle-orm/pg-core/columns/common").PgColumn<import("/my/project/node_modules/.pnpm/drizzle-orm@0.40.1_@types+pg@8.11.10_pg@8.14.1/node_modules/drizzle-orm/col...' is not assignable to type 'import("/my/project/node_modules/.pnpm/drizzle-orm@0.40.1_@types+pg@8.11.11_pg@8.14.1/node_modules/drizzle-orm/pg-core/columns/common").PgColumn<import("/my/project/node_modules/.pnpm/drizzle-orm@0.40.1_@types+pg@8.11.11_pg@8.14.1/node_modules/drizzle-orm/col...'.
+                  Property 'config' is protected but type 'Column<T, TRuntimeConfig, TTypeConfig>' is not a class derived from 'Column<T, TRuntimeConfig, TTypeConfig>'.
+
+            await db.insert(myTable).values(rows);
+```
+
+This error is caused by different versions of `drizzle-orm`, `pg`, and `@types/pg` being used in different packages in your project.
+The solution is to make sure all of them use the same version, delete the `node_modules` folder and reinstall your dependencies.
+
 ## Performance
 
 ### Why is indexing slower after I add the plugin?
