@@ -32,6 +32,12 @@ We recommend using Drizzle Kit to manage the database schema.
 npm install --save-dev drizzle-kit
 ```
 
+Additionally, if you want to use PGLite to run a Postgres compatible database without a full Postgres installation, you should install that package too.
+
+```bash [Terminal]
+npm install @electric-sql/pglite
+```
+
 ## Schema configuration
 
 You can use the `pgTable` function from `drizzle-orm/pg-core` to define the schema,
@@ -60,6 +66,7 @@ Add the `drizzleStorage` plugin to your indexer's `plugins`. Notice the followin
   by specifying the `memory:` connection string.
 - Always specify the database schema. This schema is used by the indexer to know which tables
   it needs to protect against chain reorganizations.
+- By default, the connection string is read from the `POSTGRES_CONNECTION_STRING` environment variable. If left empty, a local PGLite database will be created. This is great because it means you don't need to start Postgres on your machine to develop locally!
 
 ```ts [my-indexer.indexer.ts]
 import {
@@ -74,7 +81,6 @@ const db = drizzle({
   schema: {
     transfers,
   },
-  connectionString: process.env.DATABASE_URL,
 });
 
 export default defineIndexer(EvmStream)({
@@ -143,12 +149,12 @@ There are two strategies you can adopt for database migrations:
 - run migrations separately, for example using the drizzle-kit CLI.
 - run migrations automatically upon starting the indexer.
 
-If you decide to adopt the latter strategy, use the `migrations` option:
+If you decide to adopt the latter strategy, use the `migrate` option. Notice that the `migrationsFolder` path is relative from the project's root.
 
 ```ts [my-indexer.indexer.ts]
 import { drizzle } from "@apibara/plugin-drizzle";
 
-const database = drizzle({ schema, connectionString });
+const database = drizzle({ schema });
 
 export default defineIndexer(EvmStream)({
   // ...
