@@ -2,7 +2,7 @@
 title: Drizzle's plugin internals
 description: "Store your indexer's data to PostgreSQL using Drizzle ORM."
 diataxis: reference
-updatedAt: 2025-03-10
+updatedAt: 2025-03-30
 ---
 
 # Drizzle's plugin internals
@@ -46,7 +46,7 @@ be part of a chain reorganization.
 The main idea is to create an ["audit table"](https://supabase.com/blog/postgres-audit) with
 all changes to the indexer's schema.
 
-The name of the audit table is `__reorg_rollback` and has the following schema.
+The name of the audit table is `airfoil.reorg_rollback` and has the following schema.
 
 ```txt
 +------------+--------------+-----------------------+
@@ -75,3 +75,32 @@ When a chain reorganization is detected, all operations in the audit table where
 - `op = INSERT`: the row with id `row_id` is deleted from the table.
 - `op = DELETE`: the row with id `row_id` is inserted back into the table, with the value stored in `row_value`.
 - `op = UPDATE`: the row with id `row_id` is updated in the table, with the value stored in `row_value`.
+
+## State persistence
+
+The state of the indexer is persisted in the database, in the `airfoil.checkpoints` and `airfoil.filters` tables.
+
+The checkpoints table contains the last indexed block for each indexer.
+
+```txt
++------------+--------------+-----------------------+
+| Column     | Type         | Modifiers             |
+|------------+--------------+-----------------------|
+| id         | text         |  primary key          |
+| order_key  | integer      |  not null             |
+| unique_key | text         |                       |
++------------+--------------+-----------------------+
+```
+
+The filters table is used to manage the dynamic filter of factory indexers. It contains the JSON-serialized filter together with the block range it applies to.
+
+```txt
++------------+--------------+-----------------------+
+| Column     | Type         | Modifiers             |
+|------------+--------------+-----------------------|
+| id         | text         |  not null             |
+| filter     | text         |  not null             |
+| from_block | integer      |  not null             |
+| to_block   | integer      |  default null         |
++------------+--------------+-----------------------+
+```
