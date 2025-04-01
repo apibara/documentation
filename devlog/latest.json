@@ -1,0 +1,20 @@
+{
+  "$schema": "./schema.json",
+  "previous": "2025-03.json",
+  "entries": [
+    {
+      "type": "feature",
+      "title": "Add support for requests hash EVM data",
+      "author": "fracek",
+      "publishedAt": "2025-03-31T16:00:00Z",
+      "summary": "The `requests_hash` field (EIP-7685) is present on Ethereum Sepolia streams."
+    },
+    {
+      "type": "change",
+      "title": "PGLite and pg packages are now a peer dependency",
+      "author": "fracek",
+      "publishedAt": "2025-03-25T18:00:00Z",
+      "summary": "We changed the `@apibara/plugin-drizzle` package to lazily load the Node Postgres and PGLite packages."
+    }
+  ]
+}
