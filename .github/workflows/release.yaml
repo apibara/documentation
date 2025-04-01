@@ -17,3 +17,4 @@ jobs:
           rclone_config: ${{ secrets.RCLONE_CONFIG }}
 
       - run: "rclone sync docs s3:docs/ --stats-one-line -v"
+      - run: "rclone sync devlog s3:devlog/ --stats-one-line -v"
