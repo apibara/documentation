@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://useairfoil.com/devlog/schema.json",
+  "title": "Devlog Entries",
+  "type": "object",
+  "properties": {
+    "previous": { "type": "string" },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": ["type", "title", "author", "publishedAt", "summary"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["bugfix", "feature", "breaking", "change"]
+        },
+        "title": { "type": "string", "description": "The title of the entry" },
+        "link": { "type": "string", "description": "The link to the entry" },
+        "author": {
+          "type": "string",
+          "description": "The author of the entry"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date the entry was published"
+        },
+        "summary": {
+          "type": "string",
+          "description": "A summary of the entry"
+        },
+        "content": {
+          "type": "string",
+          "description": "The content of the entry"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "$schema": "./schema.json",
+  "entries": [
+    {
+      "type": "feature",
+      "title": "Add support for requests hash EVM data",
+      "author": "fracek",
+      "publishedAt": "2025-03-31T16:00:00Z",
+      "summary": "The `requests_hash` field (EIP-7685) is present on Ethereum Sepolia streams."
+    },
+    {
+      "type": "change",
+      "title": "PGLite and pg packages are now a peer dependency",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-03-25T18:00:00Z",
+      "summary": "We changed the `@apibara/plugin-drizzle` package to lazily load the Node Postgres and PGLite packages."
+    },
+    {
+      "type": "change",
+      "title": "Quality of life improvements to the CLI",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-03-24T18:00:00Z",
+      "summary": "We improved the CLI tool to be more user friendly."
+    },
+    {
+      "type": "change",
+      "title": "Quality of life improvements to the Drizzle plugin",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-03-24T17:00:00Z",
+      "summary": "The Drizzle plugin nows checks that the configuration is correct on startup."
+    },
+    {
+      "type": "bugfix",
+      "title": "Support more PostgreSQL connection strings",
+      "author": "fracek",
+      "publishedAt": "2025-03-24T16:00:00Z",
+      "summary": "The Drizzle plugin now supports PostgreSQL connection strings starting with `postgresql://`."
+    },
+    {
+      "type": "feature",
+      "title": "Add traces to EVM and Starknet streams",
+      "author": "fracek",
+      "publishedAt": "2025-03-22T16:00:00Z",
+      "summary": "The EVM and Starknet streams now include traces. Request them by setting the `includeTransactionTrace` filter option."
+    },
+    {
+      "type": "bugfix",
+      "title": "Fix persistence bug in the Drizzle plugin",
+      "author": "fracek",
+      "publishedAt": "2025-03-21T22:00:00Z",
+      "summary": "We fixed a bug in the Drizzle's persistence plugin that caused the indexer to reconnect using a non-existent starting block, causing a crash loop."
+    },
+    {
+      "type": "feature",
+      "title": "Relax Drizzle's plugins peer dependencies",
+      "author": "fracek",
+      "publishedAt": "2025-03-21T21:00:00Z",
+      "summary": "We relaxed the Drizzle's plugin peer dependencies versions to work in larger monorepo projects."
+    },
+    {
+      "type": "bugfix",
+      "title": "Fix MongoDB plugin issue on transaction error",
+      "author": "fracek",
+      "publishedAt": "2025-03-21T18:00:00Z",
+      "summary": "We fixed an issue with the indexer crashing if the MongoDB plugin encountered a transaction error."
+    },
+    {
+      "type": "breaking",
+      "title": "Move Drizzle plugin internal tables to a separate schema",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-03-21T17:00:00Z",
+      "summary": "We moved the Drizzle plugin's internal tables to a separate `airfoil` schema, to avoid name collisions."
+    },
+    {
+      "type": "change",
+      "title": "Show all errors in a stack trace",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-03-21T16:00:00Z",
+      "summary": "The CLI now shows all errors in a stack trace, improving debuggability."
+    },
+    {
+      "type": "change",
+      "title": "Read authentication token from DNA_AUTH environment variable",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-03-21T16:00:00Z",
+      "summary": "The indexer now reads an authentication token from the `DNA_AUTH` environment variable."
+    },
+    {
+      "type": "bugfix",
+      "title": "Export network-specific types",
+      "author": "fracek",
+      "publishedAt": "2025-03-20T18:00:00Z",
+      "summary": "We fixed the `@apibara/starknet` and `@apibara/evm` packages to export some missing network-specific types."
+    },
+    {
+      "type": "feature",
+      "title": "Add instrumentation.ts",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-03-20T16:00:00Z",
+      "summary": "Users can now collect and export metrics and traces using OpenTelemetry."
+    },
+    {
+      "type": "bugfix",
+      "title": "Fix handling of pending blocks in Drizzle and MongoDB plugins",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-03-17T16:00:00Z",
+      "summary": "We fixed how pending blocks are handled by the Drizzle and MongoDB plugins. Now data is correctly invalidated between pending blocks."
+    }
+  ]
+}
