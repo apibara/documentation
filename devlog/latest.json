@@ -1,5 +1,13 @@
 {
   "$schema": "./schema.json",
   "previous": "2025-03.json",
-  "entries": []
+  "entries": [
+    {
+      "type": "change",
+      "title": "Improve DNA message decoder performance",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-04-01T11:00:00Z",
+      "summary": "We switched the implementation of the DNA message decoder, resulting in 2x performance improvements. Users streaming large blocks will notice a significant speedup."
+    }
+  ]
 }
