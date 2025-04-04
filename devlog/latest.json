@@ -3,6 +3,20 @@
   "previous": "2025-03.json",
   "entries": [
     {
+      "type": "bugfix",
+      "title": "Fix Drizzle plugin support for TimescaleDB",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-04-04T18:00:00Z",
+      "summary": "We fixed an issue with the Drizzle plugin not correctly working with TimescaleDB. Now the reorg-related tables correctly deduce the user's table names."
+    },
+    {
+      "type": "feature",
+      "title": "Add support for 'enum' Starknet events",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-04-04T14:00:00Z",
+      "summary": "The Starknet event decoder now supports 'enum' events. This means it's now possible to parse a contract's root events."
+    },
+    {
       "type": "change",
       "title": "Improve DNA message decoder performance",
       "author": "jaipaljadeja",
