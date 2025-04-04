@@ -23,12 +23,12 @@ import { Filter, StarknetStream } from "@apibara/starknet";
 
 const client = createClient(StarknetStream, process.env.STREAM_URL);
 
-const filter = Filter.make({
+const filter = {
   events: [{
     address:
       "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
   }],
-});
+} satisfies Filter;
 
 const request = StarknetStream.Request.make({
   filter: [filter],
@@ -55,6 +55,8 @@ for await (const message of client.streamData(request)) {
 
 ### Reconnecting on error
 
+**NOTE:** this section only applies if you're using the gRPC client directly.
+
 The client now doesn't automatically reconnect on error. This is because the reconnection step
 is very delicate and depends on your indexer's implementation.
 The recommended approach is to wrap your indexer's main loop in a `try/catch` block.
@@ -65,12 +67,14 @@ import { Filter, StarknetStream } from "@apibara/starknet";
 
 const client = createClient(StarknetStream, process.env.STREAM_URL);
 
-const filter = Filter.make({
-  events: [{
-    address:
-      "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-  }],
-});
+const filter = {
+  events: [
+    {
+      address:
+        "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+    },
+  ],
+} satisfies Filter;
 
 while (true) {
   try {
@@ -80,7 +84,7 @@ while (true) {
       finality: "accepted",
       startingCursor,
     });
-  
+
     for await (const message of client.streamData(request)) {
     }
   } catch (err) {
@@ -90,10 +94,10 @@ while (true) {
         // NON-INTERNAL errors are not recoverable.
         throw err;
       }
-  
+
       // INTERNAL errors are caused by a disconnection.
       // Sleep and reconnect.
-      await new Promise(r => setTimeout(r, 2_000));
+      await new Promise((r) => setTimeout(r, 2_000));
     }
   }
 }
@@ -103,67 +107,69 @@ while (true) {
 
 ### Header
 
- - The `header` field is now an enum. See the [dedicated section](/docs/v2/networks/starknet/filter#header)
-in the filter documentation for more information.
+- The `header` field is now an enum. See the [dedicated section](/docs/v2/networks/starknet/filter#header)
+  in the filter documentation for more information.
 
 ### Events
 
- - `fromAddress` is now `address`.
- - The `keys` field accepts `null` values to match any key at that position.
- - The `data` field was removed.
- - Use `transactionStatus: "all"` instead of `includeReverted` to include reverted transactions.
- - `includeReceipt` and `includeTransaction` are now `false` by default.
+- `fromAddress` is now `address`.
+- The `keys` field accepts `null` values to match any key at that position.
+- The `data` field was removed.
+- Use `transactionStatus: "all"` instead of `includeReverted` to include reverted transactions.
+- `includeReceipt` and `includeTransaction` are now `false` by default.
 
 ### Transactions
 
- - Now you can only filter by transaction type.
- - We will add transaction-specific filters in the future.
- - Use `transactionStatus: "all"` instead of `includeReverted` to include reverted transactions.
- - `includeReceipt` is now `false` by default.
+- Now you can only filter by transaction type.
+- We will add transaction-specific filters in the future.
+- Use `transactionStatus: "all"` instead of `includeReverted` to include reverted transactions.
+- `includeReceipt` is now `false` by default.
 
 ### Messages
 
- - Can now filter by `fromAddress` and `toAddress`.
- - Use `transactionStatus: "all"` instead of `includeReverted` to include reverted transactions.
- - `includeReceipt` and `includeTransaction` are now `false` by default.
+- Can now filter by `fromAddress` and `toAddress`.
+- Use `transactionStatus: "all"` instead of `includeReverted` to include reverted transactions.
+- `includeReceipt` and `includeTransaction` are now `false` by default.
 
 ### State Update
- 
- - State update has been split into separate filters for storage diffs, contract
-   changes, and nonce updates.
- - Declared and deployed contracts, declared classes, and replaced classes are now
-   a single `contractChanges` filter.
+
+- State update has been split into separate filters for storage diffs, contract
+  changes, and nonce updates.
+- Declared and deployed contracts, declared classes, and replaced classes are now
+  a single `contractChanges` filter.
 
 ## Block data
 
- - Block data has been _"flattened"_. Use the `*Index` field to access related data.
-   For example, the following code iterates over all events and looks up their
-   transactions.
+- Block data has been _"flattened"_. Use the `*Index` field to access related data.
+  For example, the following code iterates over all events and looks up their
+  transactions.
 
 ```js
 for (const event of block.events) {
-  const transaction = block.transactions.find(tx => tx.transactionIndex === event.transactionIndex);
+  const transaction = block.transactions.find(
+    (tx) => tx.transactionIndex === event.transactionIndex
+  );
 }
 ```
 
 ### Events
 
- - `fromAddress` is now `address`.
- - `index` is now `eventIndex`.
- - Events now include `transactionIndex`, `transactionHash`, and `transactionStatus`.
+- `fromAddress` is now `address`.
+- `index` is now `eventIndex`.
+- Events now include `transactionIndex`, `transactionHash`, and `transactionStatus`.
 
 ### Transactions
 
- - `TransactionMeta` now includes `transactionIndex`, `transactionHash`, and `transactionStatus`.
- - The transaction type is now an enum using the `_tag` field as discriminator.
- - For other minor changes, see the [transaction documentation](/docs/v2/networks/starknet/data#transaction).
+- `TransactionMeta` now includes `transactionIndex`, `transactionHash`, and `transactionStatus`.
+- The transaction type is now an enum using the `_tag` field as discriminator.
+- For other minor changes, see the [transaction documentation](/docs/v2/networks/starknet/data#transaction).
 
 ### Receipts
 
- - Transaction receipts are now transaction-specific.
- - For other minor changes, see the [receipts documentation](/docs/v2/networks/starknet/data#transaction-receipt).
+- Transaction receipts are now transaction-specific.
+- For other minor changes, see the [receipts documentation](/docs/v2/networks/starknet/data#transaction-receipt).
 
 ### Messages
 
- - `index` is now `messageIndex`.
- - Messages now include `transactionIndex`, `transactionHash`, and `transactionStatus`.
+- `index` is now `messageIndex`.
+- Messages now include `transactionIndex`, `transactionHash`, and `transactionStatus`.
