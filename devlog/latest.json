@@ -4,6 +4,13 @@
   "entries": [
     {
       "type": "bugfix",
+      "title": "Reconnect on DNA server errors",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-04-06T12:00:00Z",
+      "summary": "We changed the indexers to automatically reconnect on DNA server errors."
+    },
+    {
+      "type": "bugfix",
       "title": "Fix Drizzle plugin support for TimescaleDB",
       "author": "jaipaljadeja",
       "publishedAt": "2025-04-04T18:00:00Z",
