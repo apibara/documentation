@@ -3,6 +3,13 @@
   "previous": "2025-03.json",
   "entries": [
     {
+      "type": "feature",
+      "title": "Add source map support for better error reporting",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-04-08T12:00:00Z",
+      "summary": "We added source map support to the indexer, which will improve error reporting by showing the original source code instead of the compiled code."
+    },
+    {
       "type": "bugfix",
       "title": "Reconnect on DNA server errors",
       "author": "jaipaljadeja",
