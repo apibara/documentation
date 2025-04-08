@@ -4,6 +4,13 @@
   "entries": [
     {
       "type": "feature",
+      "title": "Add cli command to output machine-readable project information",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-04-08T15:00:00Z",
+      "summary": "The new `apibara write-project-info` command outputs machine-readable project information in JSON. Use this to get a list of available indexers and presets."
+    },
+    {
+      "type": "feature",
       "title": "Add source map support for better error reporting",
       "author": "jaipaljadeja",
       "publishedAt": "2025-04-08T12:00:00Z",
