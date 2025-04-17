@@ -114,11 +114,11 @@ const filter = {
   events: [
     {
       address: MY_CONTRACT,
-      keys: [APPROVE_SELECTOR],
+      keys: [getSelector("Approve")],
     },
     {
       address: MY_CONTRACT,
-      keys: [TRANSFER_SELECTOR],
+      keys: [getSelector("Transfer")],
     },
   ],
 };
@@ -131,16 +131,41 @@ const filter = {
   events: [
     {
       address: CONTRACT_A,
-      keys: [TRANSFER_SELECTOR],
+      keys: [getSelector("Transfer")],
     },
     {
       address: CONTRACT_B,
-      keys: [TRANSFER_SELECTOR],
+      keys: [getSelector("Transfer")],
       includeReceipt: false,
     },
     {
       address: CONTRACT_C,
-      keys: [TRANSFER_SELECTOR],
+      keys: [getSelector("Transfer")],
+    },
+  ],
+};
+```
+
+- All `Transfer` events, from any contract.
+
+```ts
+const filter = {
+  events: [
+    {
+      keys: [getSelector("Transfer")]
+    }
+  ],
+};
+```
+
+- All "new type" `Transfer` events with indexed sender and destination addresses.
+
+```ts
+const filter = {
+  events: [
+    {
+      keys: [getSelector("Transfer"), null, null],
+      strict: true,
     },
   ],
 };
