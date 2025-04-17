@@ -1,0 +1,66 @@
+---
+title: Starknet helpers reference
+description: "Starknet: DNA helpers reference guide."
+diataxis: reference
+updatedAt: 2025-04-17
+---
+
+# Starknet helpers reference
+
+The `@apibara/starknet` package provides helper functions to work with Starknet data.
+
+## Selector
+
+Selectors are used to identify events and function calls.
+
+### `getSelector`
+
+This function returns the selector of a function or event given its name. The return value is a `0x${string}` value.
+
+```ts
+import { getSelector } from "@apibara/starknet";
+
+const selector = getSelector("Approve");
+```
+
+### `getBigIntSelector`
+
+This function returns the selector of a function or event given its name. The return value is a `BigInt`.
+
+```ts
+import { getBigIntSelector } from "@apibara/starknet";
+
+const selector = getBigIntSelector("Approve");
+```
+
+## Data access
+
+The SDK provides helper functions to access data from the block. Since data (transactions and receipts) are sorted by their index in the block, these helpers implement binary search to find them quickly.
+
+### `getTransaction`
+
+This function returns a transaction by its index in the block, if any.
+
+```ts
+import { getTransaction } from "@apibara/starknet";
+
+// Accept `{ transactions: readonly Transaction[] }`.
+const transaction = getTransaction(event.transactionIndex, block);
+
+// Accept `readonly Transaction[]`.
+const transaction = getTransaction(event.transactionIndex, block.transactions);
+```
+
+### `getReceipt`
+
+This function returns a receipt by its index in the block, if any.
+
+```ts
+import { getReceipt } from "@apibara/starknet";
+
+// Accept `{ receipts: readonly Receipt[] }`.
+const receipt = getReceipt(event.receiptIndex, block);
+
+// Accept `readonly Receipt[]`.
+const receipt = getReceipt(event.receiptIndex, block.receipts);
+```

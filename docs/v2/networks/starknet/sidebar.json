@@ -16,6 +16,11 @@
             "path": "/data"
         },
         {
+            "name": "Helpers",
+            "type": "page",
+            "path": "/helpers"
+        },
+        {
             "name": "Upgrading",
             "type": "page",
             "path": "/upgrade-from-v1"
