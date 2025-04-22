@@ -3,6 +3,27 @@
   "previous": "2025-03.json",
   "entries": [
     {
+      "type": "feature",
+      "title": "Reload runtime configurations on changes to project files",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-04-18T15:00:00Z",
+      "summary": "When the apibara.config.ts file changes, the runtime configuration is reloaded and all indexers restarted."
+    },
+    {
+      "type": "change",
+      "title": "Re-export `@apibara/indexer` in `apibara/indexer`",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-04-18T13:00:00Z",
+      "summary": "Users now need only to install the `apibara` package to implement indexers. All previous exports from `@apibara/indexer` are now available in `apibara/indexer`."
+    },
+    {
+      "type": "feature",
+      "title": "Add option to override stream's gRPC options",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-04-18T11:00:00Z",
+      "summary": "Indexers can now override the default gRPC client options. This is useful for custom authentication schemes or to increase the maximum allowed message size."
+    },
+    {
       "type": "bugfix",
       "title": "Fix live-reload of indexers that exited with an error",
       "author": "jaipaljadeja",
