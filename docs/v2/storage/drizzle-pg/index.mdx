@@ -2,7 +2,7 @@
 title: Drizzle with PostgreSQL
 description: "Store your indexer's data to PostgreSQL using Drizzle ORM."
 diataxis: reference
-updatedAt: 2025-03-30
+updatedAt: 2025-05-01
 ---
 
 # Drizzle with PostgreSQL
@@ -38,14 +38,21 @@ Additionally, if you want to use PGLite to run a Postgres compatible database wi
 npm install @electric-sql/pglite
 ```
 
+## Persisting the indexer's state
+
+The Drizzle plugin automatically persists the indexer's state to the database.
+You can explicitly configure this option with the `persistState` flag.
+
+Read more [about state persistence in the internals page](/docs/v2/storage/drizzle-pg/internals#state-persistence).
+
 ## Schema configuration
 
 You can use the `pgTable` function from `drizzle-orm/pg-core` to define the schema,
 no changes required.
 
-The only important thing to notice is that your table must have an `id` column (name configurable)
+The only important thing to notice is that your table **must have an `id` column (name configurable)**
 that uniquely identifies each row. This requirement is necessary to handle chain reorganizations.
-Read more how the plugin handles chain reorganizations[on the internals page](/docs/v2/storage/drizzle-pg/internals).
+Read more how the plugin handles chain reorganizations [on the internals page](/docs/v2/storage/drizzle-pg/internals).
 
 ```ts [lib/schema.ts]
 import { bigint, pgTable, text, uuid } from "drizzle-orm/pg-core";
@@ -56,6 +63,49 @@ export const transfers = pgTable("transfers", {
   transactionHash: text("transaction_hash"),
 });
 ```
+
+## Specifying the `id` column
+
+As mentioned in the previous section, the id column is required by the plugin to handle chain reorganizations.
+
+The plugin allows you to specify the id column name for each table in the schema. You can do this by passing the `idColumn` option to the `drizzleStorage` plugin. This option accepts either a string value or a record mapping table names to column names.  You can use the special `"*"` table name to define the default id column name for all tables.
+
+### Example
+
+This example uses the same id column name (`_id`) for all tables.
+
+```ts [my-indexer.indexer.ts]
+export default defineIndexer(EvmStream)({
+  // ...
+  plugins: [
+    drizzleStorage({
+      db,
+      idColumn: "_id",
+    }),
+  ],
+  // ...
+});
+```
+
+This example uses different id column names for each table. The `transfers` table will use `transfer_id` as the id column, while all other tables will use `_id`.
+
+```ts [my-indexer.indexer.ts]
+export default defineIndexer(EvmStream)({
+  // ...
+  plugins: [
+    drizzleStorage({
+      db,
+      idColumn: {
+        transfers: "transfer_id",
+        "*": "_id",
+      },
+    }),
+  ],
+  // ...
+});
+```
+
+
 
 ## Adding the plugin to your indexer
 
@@ -136,11 +186,6 @@ export default defineIndexer(EvmStream)({
 ## Querying data from outside the indexer
 
 You can query data from your application like you always do, using the standard Drizzle ORM library.
-
-## Improving performance
-
-You should always add an index on the `id` column. This column is used every time the indexer handles
-a chain reorganization or a new pending block.
 
 ## Database migrations
 
