@@ -4,6 +4,13 @@
   "entries": [
     {
       "type": "feature",
+      "title": "New devlog section",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-04-26T15:00:00Z",
+      "summary": "The devlog is now available at `/devlog`."
+    },
+    {
+      "type": "feature",
       "title": "Reload runtime configurations on changes to project files",
       "author": "jaipaljadeja",
       "publishedAt": "2025-04-18T15:00:00Z",
