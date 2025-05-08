@@ -3,6 +3,13 @@
   "previous": "2025-03.json",
   "entries": [
     {
+      "type": "bugfix",
+      "title": "Fix exception accessing blockHash of pending blocks",
+      "author": "fracek",
+      "publishedAt": "2025-05-07T15:00:00Z",
+      "summary": "We fixed an exception raise when accessing the blockHash of a pending block on EVM and Starknet indexers."
+    },
+    {
       "type": "feature",
       "title": "New devlog section",
       "author": "jaipaljadeja",
