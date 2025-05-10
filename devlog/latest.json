@@ -3,6 +3,13 @@
   "previous": "2025-03.json",
   "entries": [
     {
+      "type": "change",
+      "title": "DNA v2 is now available on production streams",
+      "author": "fracek",
+      "publishedAt": "2025-05-10T10:00:00Z",
+      "summary": "The production streams at a5a.ch now support DNA v2. These streams will support both v1 and v2 until v1 is officially phased out."
+    },
+    {
       "type": "bugfix",
       "title": "Fix exception accessing blockHash of pending blocks",
       "author": "fracek",
