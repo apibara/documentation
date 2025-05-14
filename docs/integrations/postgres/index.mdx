@@ -25,9 +25,9 @@ apibara plugins install sink-postgres
 
 This integration provides two modes:
 
-- [**default mode**](/docs/integrations/postgres/default): insert immutable data
+- [**default mode**](/docs/v1/integrations/postgres/default): insert immutable data
   into the table. For example, a list of `Transfer` events.
-- [**entity mode**](/docs/integrations/postgres/entity): insert mutable data
+- [**entity mode**](/docs/v1/integrations/postgres/entity): insert mutable data
   into the table. Rows represent the state of entities at a specific block. For
   example, account balances.
 
@@ -74,4 +74,4 @@ export default function transform(block) {
 ### TLS
 
 Apibara supports different TLS modes to connect to your database. Refer to the
-[options page](/docs/integrations/postgres/options) to learn more.
+[options page](/docs/v1/integrations/postgres/options) to learn more.

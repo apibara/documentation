@@ -12,7 +12,7 @@ updatedAt: 2024-05-03 10:00
 ## Create a project Dockerfile
 
 The first step is to create a `Dockerfile` for your project. If you're using a
-[monorepo](/docs/indexers/editor-setup#monorepo-with-node-bun-and-deno), place
+[monorepo](/docs/v1/indexers/editor-setup#monorepo-with-node-bun-and-deno), place
 the `Dockerfile` in `apps/indexers`.
 
 ```dockerfile
@@ -79,13 +79,13 @@ GitHub repository.
   - For Mongo: `MONGO_CONNECTION_STRING=${{MongoDB.MONGO_URL}}`
 - Remember to whitelist environment variables used in your indexer with the
   `--allow-env-from-env` option or the `ALLOW_ENV_FROM_ENV` environment variable.
-  See [the environment variables](/docs/indexers/permissions/environment) page
+  See [the environment variables](/docs/v1/indexers/permissions/environment) page
   for more information.
 - Once deployed, you should see the indexer starting and running.
 
 ## Persisting state between restarts
 
-The easiest way to [persist state between restarts](/docs/indexers/persistence)
+The easiest way to [persist state between restarts](/docs/v1/indexers/persistence)
 on Railway is by using Redis.
 
 - Deploy a new Redis instance on Railway, and wait for it to become ready.
