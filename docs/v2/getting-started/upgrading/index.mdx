@@ -17,10 +17,10 @@ production yet.
 ## Main changes
 
 - The underlying gRPC protocol and data types have changed. You can review all
-  the changes [on this page](/docs/v2/networks/starknet/upgrade-from-v1).
+  the changes [on this page](/docs/networks/starknet/upgrade-from-v1).
 - The old CLI has been replaced by a pure Typescript library. This means you
   can now leverage the full Node ecosystem (including Bun and Deno).
-- You can now extend indexers with [plugins and hooks](/docs/v2/getting-started/plugins).
+- You can now extend indexers with [plugins and hooks](/docs/getting-started/plugins).
 
 ## Missing (but planned) features
 
@@ -106,7 +106,7 @@ Now it's time to update the indexer.
 - `startingBlock` is now a `BigInt`.
 - `streamUrl` is the same, but the URL is different while in beta.
 - `finality` is now simpler to type.
-- The `filter` object changed. Please refer to the [filter documentation](/docs/v2/networks/starknet/filter) for more information.
+- The `filter` object changed. Please refer to the [filter documentation](/docs/networks/starknet/filter) for more information.
 - `sinkType` and `sinkOptions` are gone.
 - The `transform` function now takes named arguments, with `block` containing the block data.
 

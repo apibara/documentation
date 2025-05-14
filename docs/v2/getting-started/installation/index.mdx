@@ -162,12 +162,12 @@ Notice the following:
 - These two properties are read from the `runtimeConfig` object. Use the runtime configuration
   object to have multiple presets for the same indexer.
 - The `filter` specifies which data to receive. You can read more about the available
-  data for EVM chains in the [EVM documentation](/docs/v2/networks/evm/filter).
+  data for EVM chains in the [EVM documentation](/docs/networks/evm/filter).
 - The `transform` function is called for each block. It receives the block as parameter.
   This is where your indexer processes the data.
 - The `useLogger` hook returns an indexer-specific logger.
 
-There are more indexer options available, you can find them [in the documentation](/docs/v2/getting-started/indexers).
+There are more indexer options available, you can find them [in the documentation](/docs/getting-started/indexers).
 
 ## Running the indexer
 
@@ -538,4 +538,4 @@ beginning.
 You can refer to our storage section to learn more about writing data to a database
 and persisting the indexer's state across restarts.
 
-- [Drizzle with PostgreSQL](/docs/v2/storage/drizzle-pg)
+- [Drizzle with PostgreSQL](/docs/storage/drizzle-pg)

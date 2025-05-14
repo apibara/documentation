@@ -11,7 +11,7 @@ This page contains reference about the available data in Starknet DNA streams.
 
 ### Related pages
 
-- [Starknet data filter reference](/docs/v2/networks/starknet/filter)
+- [Starknet data filter reference](/docs/networks/starknet/filter)
 
 ## Filter ID
 
@@ -77,19 +77,19 @@ export type ResourcePrice = {
 
 **Properties**
 
- - `blockHash`: the block hash.
- - `parentBlockHash`: the block hash of the parent block.
- - `blockNumber`: the block number.
- - `sequencerAddress`: the sequencer address.
- - `newRoot`: the new state root.
- - `timestamp`: the block timestamp.
- - `starknetVersion`: the Starknet version.
- - `l1GasPrice`: the L1 gas price.
- - `l1DataGasPrice`: the L1 data gas price.
- - `l1DataAvailabilityMode`: the L1 data availability mode.
+- `blockHash`: the block hash.
+- `parentBlockHash`: the block hash of the parent block.
+- `blockNumber`: the block number.
+- `sequencerAddress`: the sequencer address.
+- `newRoot`: the new state root.
+- `timestamp`: the block timestamp.
+- `starknetVersion`: the Starknet version.
+- `l1GasPrice`: the L1 gas price.
+- `l1DataGasPrice`: the L1 data gas price.
+- `l1DataAvailabilityMode`: the L1 data availability mode.
 
- - `priceInFri`: the price of L1 gas in the block, in units of fri (10^-18 $STRK).
- - `priceInWei`: the price of L1 gas in the block, in units of wei (10^-18 $ETH).
+- `priceInFri`: the price of L1 gas in the block, in units of fri (10^-18 $STRK).
+- `priceInWei`: the price of L1 gas in the block, in units of wei (10^-18 $ETH).
 
 ### Event
 
@@ -110,13 +110,13 @@ export type Event = {
 
 **Properties**
 
- - `address`: the address of the contract that emitted the event.
- - `keys`: the keys of the event.
- - `data`: the data of the event.
- - `eventIndex`: the index of the event in the block.
- - `transactionIndex`: the index of the transaction that emitted the event.
- - `transactionHash`: the hash of the transaction that emitted the event.
- - `transactionStatus`: the status of the transaction that emitted the event.
+- `address`: the address of the contract that emitted the event.
+- `keys`: the keys of the event.
+- `data`: the data of the event.
+- `eventIndex`: the index of the event in the block.
+- `transactionIndex`: the index of the transaction that emitted the event.
+- `transactionHash`: the hash of the transaction that emitted the event.
+- `transactionStatus`: the status of the transaction that emitted the event.
 
 **Relevant filters**
 
@@ -141,35 +141,35 @@ export type TransactionMeta = {
 export type Transaction = {
   filterIds: number[];
   meta?: TransactionMeta;
-  transaction?: 
-      | InvokeTransactionV0
-      | InvokeTransactionV1
-      | InvokeTransactionV3
-      | L1HandlerTransaction
-      | DeployTransaction
-      | DeclareTransactionV0
-      | DeclareTransactionV1
-      | DeclareTransactionV2
-      | DeclareTransactionV3
-      | DeployAccountTransactionV1
-      | DeployAccountTransactionV3;
+  transaction?:
+    | InvokeTransactionV0
+    | InvokeTransactionV1
+    | InvokeTransactionV3
+    | L1HandlerTransaction
+    | DeployTransaction
+    | DeclareTransactionV0
+    | DeclareTransactionV1
+    | DeclareTransactionV2
+    | DeclareTransactionV3
+    | DeployAccountTransactionV1
+    | DeployAccountTransactionV3;
 };
 ```
 
 **Properties**
 
- - `meta`: transaction metadata.
- - `transaction`: the transaction type.
+- `meta`: transaction metadata.
+- `transaction`: the transaction type.
 
- - `meta.transactionIndex`: the index of the transaction in the block.
- - `meta.transactionHash`: the hash of the transaction.
- - `meta.transactionStatus`: the status of the transaction.
+- `meta.transactionIndex`: the index of the transaction in the block.
+- `meta.transactionHash`: the hash of the transaction.
+- `meta.transactionStatus`: the status of the transaction.
 
 **Relevant filters**
 
- - `filter.transactions`
- - `filter.events[].includeTransaction`
- - `filter.messages[].includeTransaction`
+- `filter.transactions`
+- `filter.events[].includeTransaction`
+- `filter.messages[].includeTransaction`
 
 ```ts
 export type InvokeTransactionV0 = {
@@ -181,16 +181,16 @@ export type InvokeTransactionV0 = {
     entryPointSelector?: FieldElement;
     calldata: FieldElement[];
   };
-}
+};
 ```
 
 **Properties**
 
- - `maxFee`: the maximum fee for the transaction.
- - `signature`: the signature of the transaction.
- - `contractAddress`: the address of the contract that will receive the call.
- - `entryPointSelector`: the selector of the function that will be called.
- - `calldata`: the calldata of the transaction.
+- `maxFee`: the maximum fee for the transaction.
+- `signature`: the signature of the transaction.
+- `contractAddress`: the address of the contract that will receive the call.
+- `entryPointSelector`: the selector of the function that will be called.
+- `calldata`: the calldata of the transaction.
 
 ```ts
 export type InvokeTransactionV1 = {
@@ -207,17 +207,17 @@ export type InvokeTransactionV1 = {
 
 **Properties**
 
- - `senderAddress`: the address of the account that will send the transaction.
- - `calldata`: the calldata of the transaction.
- - `maxFee`: the maximum fee for the transaction.
- - `signature`: the signature of the transaction.
- - `nonce`: the nonce of the transaction.
+- `senderAddress`: the address of the account that will send the transaction.
+- `calldata`: the calldata of the transaction.
+- `maxFee`: the maximum fee for the transaction.
+- `signature`: the signature of the transaction.
+- `nonce`: the nonce of the transaction.
 
 ```ts
 export type ResourceBounds = {
   maxAmount?: bigint;
   maxPricePerUnit?: bigint;
-}
+};
 
 export type ResourceBoundsMapping = {
   l1Gas?: ResourceBounds;
@@ -243,16 +243,16 @@ export type InvokeTransactionV3 = {
 
 **Properties**
 
- - `senderAddress`: the address of the account that will send the transaction.
- - `calldata`: the calldata of the transaction.
- - `signature`: the signature of the transaction.
- - `nonce`: the nonce of the transaction.
- - `resourceBounds`: the resource bounds of the transaction.
- - `tip`: the tip of the transaction.
- - `paymasterData`: the paymaster data of the transaction.
- - `accountDeploymentData`: the account deployment data of the transaction.
- - `nonceDataAvailabilityMode`: the nonce data availability mode of the transaction.
- - `feeDataAvailabilityMode`: the fee data availability mode of the transaction.
+- `senderAddress`: the address of the account that will send the transaction.
+- `calldata`: the calldata of the transaction.
+- `signature`: the signature of the transaction.
+- `nonce`: the nonce of the transaction.
+- `resourceBounds`: the resource bounds of the transaction.
+- `tip`: the tip of the transaction.
+- `paymasterData`: the paymaster data of the transaction.
+- `accountDeploymentData`: the account deployment data of the transaction.
+- `nonceDataAvailabilityMode`: the nonce data availability mode of the transaction.
+- `feeDataAvailabilityMode`: the fee data availability mode of the transaction.
 
 ```ts
 export type L1HandlerTransaction = {
@@ -263,15 +263,15 @@ export type L1HandlerTransaction = {
     calldata: FieldElement[];
     nonce?: bigint;
   };
-}
+};
 ```
 
 **Properties**
 
- - `contractAddress`: the address of the contract that will receive the call.
- - `entryPointSelector`: the selector of the function that will be called.
- - `calldata`: the calldata of the transaction.
- - `nonce`: the nonce of the transaction.
+- `contractAddress`: the address of the contract that will receive the call.
+- `entryPointSelector`: the selector of the function that will be called.
+- `calldata`: the calldata of the transaction.
+- `nonce`: the nonce of the transaction.
 
 ```ts
 export type DeployTransaction = {
@@ -281,14 +281,14 @@ export type DeployTransaction = {
     constructorCalldata: FieldElement[];
     classHash?: FieldElement;
   };
-}
+};
 ```
 
 **Properties**
 
- - `contractAddressSalt`: the salt used to compute the contract address.
- - `constructorCalldata`: the calldata used to initialize the contract.
- - `classHash`: the class hash of the contract.
+- `contractAddressSalt`: the salt used to compute the contract address.
+- `constructorCalldata`: the calldata used to initialize the contract.
+- `classHash`: the class hash of the contract.
 
 ```ts
 export type DeclareTransactionV0 = {
@@ -299,15 +299,15 @@ export type DeclareTransactionV0 = {
     signature: FieldElement[];
     classHash?: FieldElement;
   };
-}
+};
 ```
 
 **Properties**
 
- - `senderAddress`: the address of the account that will send the transaction.
- - `maxFee`: the maximum fee for the transaction.
- - `signature`: the signature of the transaction.
- - `classHash`: the class hash of the contract.
+- `senderAddress`: the address of the account that will send the transaction.
+- `maxFee`: the maximum fee for the transaction.
+- `signature`: the signature of the transaction.
+- `classHash`: the class hash of the contract.
 
 ```ts
 export type DeclareTransactionV1 = {
@@ -319,16 +319,16 @@ export type DeclareTransactionV1 = {
     classHash?: FieldElement;
     nonce?: FieldElement;
   };
-}
+};
 ```
 
 **Properties**
 
- - `senderAddress`: the address of the account that will send the transaction.
- - `maxFee`: the maximum fee for the transaction.
- - `signature`: the signature of the transaction.
- - `classHash`: the class hash of the contract.
- - `nonce`: the nonce of the transaction.
+- `senderAddress`: the address of the account that will send the transaction.
+- `maxFee`: the maximum fee for the transaction.
+- `signature`: the signature of the transaction.
+- `classHash`: the class hash of the contract.
+- `nonce`: the nonce of the transaction.
 
 ```ts
 export type DeclareTransactionV2 = {
@@ -341,23 +341,23 @@ export type DeclareTransactionV2 = {
     nonce?: FieldElement;
     compiledClassHash?: FieldElement;
   };
-}
+};
 ```
 
 **Properties**
 
- - `senderAddress`: the address of the account that will send the transaction.
- - `maxFee`: the maximum fee for the transaction.
- - `signature`: the signature of the transaction.
- - `classHash`: the class hash of the contract.
- - `nonce`: the nonce of the transaction.
- - `compiledClassHash`: the compiled class hash of the contract.
+- `senderAddress`: the address of the account that will send the transaction.
+- `maxFee`: the maximum fee for the transaction.
+- `signature`: the signature of the transaction.
+- `classHash`: the class hash of the contract.
+- `nonce`: the nonce of the transaction.
+- `compiledClassHash`: the compiled class hash of the contract.
 
 ```ts
 export type ResourceBounds = {
   maxAmount?: bigint;
   maxPricePerUnit?: bigint;
-}
+};
 
 export type ResourceBoundsMapping = {
   l1Gas?: ResourceBounds;
@@ -380,23 +380,23 @@ export type DeclareTransactionV3 = {
     nonceDataAvailabilityMode?: "l1" | "l2";
     feeDataAvailabilityMode?: "l1" | "l2";
   };
-}
+};
 ```
 
 **Properties**
 
- - `senderAddress`: the address of the account that will send the transaction.
- - `maxFee`: the maximum fee for the transaction.
- - `signature`: the signature of the transaction.
- - `classHash`: the class hash of the contract.
- - `nonce`: the nonce of the transaction.
- - `compiledClassHash`: the compiled class hash of the contract.
- - `resourceBounds`: the resource bounds of the transaction.
- - `tip`: the tip of the transaction.
- - `paymasterData`: the paymaster data of the transaction.
- - `accountDeploymentData`: the account deployment data of the transaction.
- - `nonceDataAvailabilityMode`: the nonce data availability mode of the transaction.
- - `feeDataAvailabilityMode`: the fee data availability mode of the transaction.
+- `senderAddress`: the address of the account that will send the transaction.
+- `maxFee`: the maximum fee for the transaction.
+- `signature`: the signature of the transaction.
+- `classHash`: the class hash of the contract.
+- `nonce`: the nonce of the transaction.
+- `compiledClassHash`: the compiled class hash of the contract.
+- `resourceBounds`: the resource bounds of the transaction.
+- `tip`: the tip of the transaction.
+- `paymasterData`: the paymaster data of the transaction.
+- `accountDeploymentData`: the account deployment data of the transaction.
+- `nonceDataAvailabilityMode`: the nonce data availability mode of the transaction.
+- `feeDataAvailabilityMode`: the fee data availability mode of the transaction.
 
 ```ts
 export type DeployAccountTransactionV1 = {
@@ -409,17 +409,17 @@ export type DeployAccountTransactionV1 = {
     constructorCalldata: FieldElement[];
     classHash?: FieldElement;
   };
-}
+};
 ```
 
 **Properties**
 
- - `maxFee`: the maximum fee for the transaction.
- - `signature`: the signature of the transaction.
- - `nonce`: the nonce of the transaction.
- - `contractAddressSalt`: the salt used to compute the contract address.
- - `constructorCalldata`: the calldata used to initialize the contract.
- - `classHash`: the class hash of the contract.
+- `maxFee`: the maximum fee for the transaction.
+- `signature`: the signature of the transaction.
+- `nonce`: the nonce of the transaction.
+- `contractAddressSalt`: the salt used to compute the contract address.
+- `constructorCalldata`: the calldata used to initialize the contract.
+- `classHash`: the class hash of the contract.
 
 ```ts
 export type DeployAccountTransactionV3 = {
@@ -428,7 +428,8 @@ export type DeployAccountTransactionV3 = {
     signature: FieldElement[];
     nonce?: FieldElement;
     contractAddressSalt?: FieldElement;
-    constructorCalldata: FieldElement[];n
+    constructorCalldata: FieldElement[];
+    n;
     classHash?: FieldElement;
     resourceBounds?: ResourceBoundsMapping;
     tip?: bigint;
@@ -441,16 +442,16 @@ export type DeployAccountTransactionV3 = {
 
 **Properties**
 
- - `signature`: the signature of the transaction.
- - `nonce`: the nonce of the transaction.
- - `contractAddressSalt`: the salt used to compute the contract address.
- - `constructorCalldata`: the calldata used to initialize the contract.
- - `classHash`: the class hash of the contract
- - `resourceBounds`: the resource bounds of the transaction.
- - `tip`: the tip of the transaction.
- - `paymasterData`: the paymaster data of the transaction.
- - `nonceDataAvailabilityMode`: the nonce data availability mode of the transaction.
- - `feeDataAvailabilityMode`: the fee data availability mode of the transaction.
+- `signature`: the signature of the transaction.
+- `nonce`: the nonce of the transaction.
+- `contractAddressSalt`: the salt used to compute the contract address.
+- `constructorCalldata`: the calldata used to initialize the contract.
+- `classHash`: the class hash of the contract
+- `resourceBounds`: the resource bounds of the transaction.
+- `tip`: the tip of the transaction.
+- `paymasterData`: the paymaster data of the transaction.
+- `nonceDataAvailabilityMode`: the nonce data availability mode of the transaction.
+- `feeDataAvailabilityMode`: the fee data availability mode of the transaction.
 
 ### Transaction receipt
 
@@ -478,7 +479,7 @@ export type TransactionReceiptMeta = {
 
 export type InvokeTransactionReceipt = {
   _tag: "invoke";
-  invoke: {}
+  invoke: {};
 };
 
 export type L1HandlerTransactionReceipt = {
@@ -527,9 +528,9 @@ export type FeePayment = {
 
 **Relevant filters**
 
- - `filter.transactions[].includeReceipt`
- - `filter.events[].includeReceipt`
- - `filter.messages[].includeReceipt`
+- `filter.transactions[].includeReceipt`
+- `filter.events[].includeReceipt`
+- `filter.messages[].includeReceipt`
 
 ### Message to L1
 
@@ -550,19 +551,19 @@ export type MessageToL1 = {
 
 **Properties**
 
- - `fromAddress`: the address of the contract that sent the message.
- - `toAddress`: the address of the contract that received the message.
- - `payload`: the payload of the message.
- - `messageIndex`: the index of the message in the block.
- - `transactionIndex`: the index of the transaction that sent the message.
- - `transactionHash`: the hash of the transaction that sent the message.
- - `transactionStatus`: the status of the transaction that sent the message.
+- `fromAddress`: the address of the contract that sent the message.
+- `toAddress`: the address of the contract that received the message.
+- `payload`: the payload of the message.
+- `messageIndex`: the index of the message in the block.
+- `transactionIndex`: the index of the transaction that sent the message.
+- `transactionHash`: the hash of the transaction that sent the message.
+- `transactionStatus`: the status of the transaction that sent the message.
 
 **Relevant filters**
 
- - `filter.messages`
- - `filter.transactions[].includeMessages`
- - `filter.events[].includeMessages`
+- `filter.messages`
+- `filter.transactions[].includeMessages`
+- `filter.events[].includeMessages`
 
 ### Storage diff
 
@@ -583,15 +584,15 @@ export type StorageEntry = {
 
 **Properties**
 
- - `contractAddress`: the contract whose storage changed.
- - `storageEntries`: the storage entries that changed.
+- `contractAddress`: the contract whose storage changed.
+- `storageEntries`: the storage entries that changed.
 
- - `key`: the key of the storage entry that changed.
- - `value`: the new value of the storage entry that changed.
+- `key`: the key of the storage entry that changed.
+- `value`: the new value of the storage entry that changed.
 
 **Relevant filters**
 
- - `filter.storageDiffs`
+- `filter.storageDiffs`
 
 ### Contract change
 
@@ -630,7 +631,7 @@ export type DeployedContract = {
 
 **Relevant filters**
 
- - `filter.contractChanges`
+- `filter.contractChanges`
 
 ### Nonce update
 
@@ -646,9 +647,9 @@ export type NonceUpdate = {
 
 **Properties**
 
- - `contractAddress`: the address of the contract whose nonce changed.
- - `nonce`: the new nonce of the contract.
+- `contractAddress`: the address of the contract whose nonce changed.
+- `nonce`: the new nonce of the contract.
 
 **Relevant filters**
 
- - `filter.nonceUpdates`
+- `filter.nonceUpdates`

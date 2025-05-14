@@ -12,7 +12,7 @@ streams.
 
 ### Related pages
 
-- [Starknet block data reference](/docs/v2/networks/starknet/data)
+- [Starknet block data reference](/docs/networks/starknet/data)
 
 ## Filter ID
 
@@ -81,21 +81,21 @@ export type EventFilter = {
 
 **Properties**
 
- - `address`: filter by contract address. If empty, matches any contract
-    address.
- - `keys`: filter by keys. Use `null` to match _any_ value. The server will
-    filter based only the first four elements of the array.
- - `strict`: return events whose keys length matches the filter. By default, the
-    filter does a prefix match on the keys.
- - `transactionStatus`: return events emitted by transactions with the provided
-    status. Defaults to `succeeded`.
- - `includeTransaction`: also return the transaction that emitted the event.
- - `includeReceipt`: also return the receipt of the transaction that emitted the
-    event.
- - `includeMessages`: also return all messages to L1 sent by the transaction that
-    emitted the event.
- - `includeSiblings`: also return all other events emitted by the same transaction
-    that emitted the matched event.
+- `address`: filter by contract address. If empty, matches any contract
+  address.
+- `keys`: filter by keys. Use `null` to match _any_ value. The server will
+  filter based only the first four elements of the array.
+- `strict`: return events whose keys length matches the filter. By default, the
+  filter does a prefix match on the keys.
+- `transactionStatus`: return events emitted by transactions with the provided
+  status. Defaults to `succeeded`.
+- `includeTransaction`: also return the transaction that emitted the event.
+- `includeReceipt`: also return the receipt of the transaction that emitted the
+  event.
+- `includeMessages`: also return all messages to L1 sent by the transaction that
+  emitted the event.
+- `includeSiblings`: also return all other events emitted by the same transaction
+  that emitted the matched event.
 
 **Examples**
 
@@ -152,8 +152,8 @@ const filter = {
 const filter = {
   events: [
     {
-      keys: [getSelector("Transfer")]
-    }
+      keys: [getSelector("Transfer")],
+    },
   ],
 };
 ```
@@ -237,29 +237,29 @@ export type TransactionFilter = {
   includeReceipt?: boolean;
   includeMessages?: boolean;
   includeEvents?: boolean;
-  transactionType?: 
-      | InvokeTransactionV0Filter
-      | InvokeTransactionV1Filter
-      | InvokeTransactionV3Filter
-      | DeployTransactionFilter
-      | DeclareV0TransactionFilter
-      | DeclareV1TransactionFilter
-      | DeclareV2TransactionFilter
-      | DeclareV3TransactionFilter
-      | L1HandlerTransactionFilter
-      | DeployAccountV1TransactionFilter
-      | DeployAccountV3TransactionFilter;
+  transactionType?:
+    | InvokeTransactionV0Filter
+    | InvokeTransactionV1Filter
+    | InvokeTransactionV3Filter
+    | DeployTransactionFilter
+    | DeclareV0TransactionFilter
+    | DeclareV1TransactionFilter
+    | DeclareV2TransactionFilter
+    | DeclareV3TransactionFilter
+    | L1HandlerTransactionFilter
+    | DeployAccountV1TransactionFilter
+    | DeployAccountV3TransactionFilter;
 };
 ```
 
 **Properties**
 
- - `transactionStatus`: return transactions with the provided status. Defaults to
-    `succeeded`.
- - `includeReceipt`: also return the receipt of the transaction.
- - `includeMessages`: also return the messages to L1 sent by the transaction.
- - `includeEvents`: also return the events emitted by the transaction.
- - `transactionType`: filter by transaction type. 
+- `transactionStatus`: return transactions with the provided status. Defaults to
+  `succeeded`.
+- `includeReceipt`: also return the receipt of the transaction.
+- `includeMessages`: also return the messages to L1 sent by the transaction.
+- `includeEvents`: also return the events emitted by the transaction.
+- `transactionType`: filter by transaction type.
 
 **Examples**
 
@@ -273,9 +273,11 @@ const filter = { transactions: [{}] };
 
 ```ts
 const filter = {
-  transactions: [{
-    transactionType: { _tag: "deployAccountV3", deployAccountV3: {} }
-  }]
+  transactions: [
+    {
+      transactionType: { _tag: "deployAccountV3", deployAccountV3: {} },
+    },
+  ],
 };
 ```
 
@@ -297,15 +299,15 @@ export type MessageToL1Filter = {
 
 **Properties**
 
- - `fromAddress`: filter by sender address. If empty, matches any sender address.
- - `toAddress`: filter by receiver address. If empty, matches any receiver address.
- - `transactionStatus`: return messages with the provided status. Defaults to
-    `succeeded`.
- - `includeTransaction`: also return the transaction that sent the message.
- - `includeReceipt`: also return the receipt of the transaction that sent the
-    message.
- - `includeEvents`: also return the events emitted by the transaction that sent 
-    the message.
+- `fromAddress`: filter by sender address. If empty, matches any sender address.
+- `toAddress`: filter by receiver address. If empty, matches any receiver address.
+- `transactionStatus`: return messages with the provided status. Defaults to
+  `succeeded`.
+- `includeTransaction`: also return the transaction that sent the message.
+- `includeReceipt`: also return the receipt of the transaction that sent the
+  message.
+- `includeEvents`: also return the events emitted by the transaction that sent
+  the message.
 
 ### Storage diff
 
@@ -320,8 +322,8 @@ export type StorageDiffFilter = {
 
 **Properties**
 
- - `contractAddress`: filter by contract address. If empty, matches any contract
-    address.
+- `contractAddress`: filter by contract address. If empty, matches any contract
+  address.
 
 ### Contract change
 
@@ -351,10 +353,10 @@ export type ContractChangeFilter = {
 
 **Properties**
 
- - `change`: filter by change type.
-   + `declaredClass`: receive declared classes.
-   + `replacedClass`: receive replaced classes.
-   + `deployedContract`: receive deployed contracts.
+- `change`: filter by change type.
+  - `declaredClass`: receive declared classes.
+  - `replacedClass`: receive replaced classes.
+  - `deployedContract`: receive deployed contracts.
 
 ### Nonce update
 
@@ -369,4 +371,4 @@ export type NonceUpdateFilter = {
 
 **Properties**
 
- - `contractAddress`: filter by contract address. If empty, matches any contract.
+- `contractAddress`: filter by contract address. If empty, matches any contract.

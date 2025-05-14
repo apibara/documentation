@@ -11,7 +11,7 @@ This page contains reference about the available data in EVM DNA streams.
 
 ### Related pages
 
-- [EVM data filter reference](/docs/v2/networks/evm/filter)
+- [EVM data filter reference](/docs/networks/evm/filter)
 
 ## Filter ID
 
@@ -28,9 +28,9 @@ always assert the presence of a field for critical indexers.
 
 The `@apibara/evm` package defines the following scalar types:
 
- - `Address`: a 20-byte Ethereum address, represented as a `0x${string}` type.
- - `B256`: a 32-byte Ethereum value, represented as a `0x${string}` type.
- - `Bytes`: arbitrary length bytes, represented as a `0x${string}` type.
+- `Address`: a 20-byte Ethereum address, represented as a `0x${string}` type.
+- `B256`: a 32-byte Ethereum value, represented as a `0x${string}` type.
+- `Bytes`: arbitrary length bytes, represented as a `0x${string}` type.
 
 ## Usage with viem
 
@@ -80,7 +80,7 @@ export type Bloom = Bytes;
 
 export type BlockHeader = {
   blockNumber?: bigint;
-  blockHash?: B256,
+  blockHash?: B256;
   parentBlockHash?: B256;
   unclesHash?: B256;
   miner?: Address;
@@ -106,28 +106,28 @@ export type BlockHeader = {
 
 **Properties**
 
- - `blockNumber`: the block number.
- - `blockHash`: the block hash.
- - `parentBlockHash`: the block hash of the parent block.
- - `unclesHash`: the block hash of the uncles.
- - `miner`: the address of the miner.
- - `stateRoot`: the state root.
- - `transactionsRoot`: the transactions root.
- - `receiptsRoot`: the receipts root.
- - `logsBloom`: the logs bloom.
- - `difficulty`: the block difficulty.
- - `gasLimit`: the block gas limit.
- - `gasUsed`: the gas used by transactions in the block.
- - `timestamp`: the block timestamp.
- - `extraData`: extra bytes data picked by the miner.
- - `mixHash`: the mix hash.
- - `nonce`: the nonce.
- - `baseFeePerGas`: the base fee per gas.
- - `withdrawalsRoot`: the withdrawals root.
- - `totalDifficulty`: the total difficulty.
- - `blobGasUsed`: the gas used by transactions posting blob data in the block.
- - `excessBlobGas`: the excess blob gas.
- - `parentBeaconBlockRoot`: the parent beacon block root.
+- `blockNumber`: the block number.
+- `blockHash`: the block hash.
+- `parentBlockHash`: the block hash of the parent block.
+- `unclesHash`: the block hash of the uncles.
+- `miner`: the address of the miner.
+- `stateRoot`: the state root.
+- `transactionsRoot`: the transactions root.
+- `receiptsRoot`: the receipts root.
+- `logsBloom`: the logs bloom.
+- `difficulty`: the block difficulty.
+- `gasLimit`: the block gas limit.
+- `gasUsed`: the gas used by transactions in the block.
+- `timestamp`: the block timestamp.
+- `extraData`: extra bytes data picked by the miner.
+- `mixHash`: the mix hash.
+- `nonce`: the nonce.
+- `baseFeePerGas`: the base fee per gas.
+- `withdrawalsRoot`: the withdrawals root.
+- `totalDifficulty`: the total difficulty.
+- `blobGasUsed`: the gas used by transactions posting blob data in the block.
+- `excessBlobGas`: the excess blob gas.
+- `parentBeaconBlockRoot`: the parent beacon block root.
 
 ### Log
 
@@ -149,19 +149,19 @@ export type Log = {
 
 **Properties**
 
- - `address`: the address of the contract that emitted the log.
- - `topics`: the topics of the log.
- - `data`: the data of the log.
- - `logIndex`: the index of the log in the block.
- - `transactionIndex`: the index of the transaction that emitted the log.
- - `transactionHash`: the hash of the transaction that emitted the log.
- - `transactionStatus`: the status of the transaction that emitted the log.
+- `address`: the address of the contract that emitted the log.
+- `topics`: the topics of the log.
+- `data`: the data of the log.
+- `logIndex`: the index of the log in the block.
+- `transactionIndex`: the index of the transaction that emitted the log.
+- `transactionHash`: the hash of the transaction that emitted the log.
+- `transactionStatus`: the status of the transaction that emitted the log.
 
 **Relevant filters**
 
- - `filter.logs`
- - `filter.logs[].includeSiblings`
- - `filter.transactions[].includeLogs`
+- `filter.logs`
+- `filter.logs[].includeSiblings`
+- `filter.transactions[].includeLogs`
 
 ### Transaction
 
@@ -183,7 +183,7 @@ export type Transaction = {
   input: Bytes;
   signature?: Signature;
   chainId?: bigint;
-  accessList: AccessListItem[],
+  accessList: AccessListItem[];
   transactionType?: bigint;
   maxFeePerBlobGas?: bigint;
   blobVersionedHashes?: B256[];
@@ -290,12 +290,12 @@ export type Withdrawal = {
 
 **Properties**
 
- - `withdrawalIndex`: the index of the withdrawal in the block.
- - `index`: the global index of the withdrawal.
- - `validatorIndex`: the index of the validator that created the withdrawal.
- - `address`: the destination address of the withdrawal.
- - `amount`: the amount of the withdrawal, in wei.
+- `withdrawalIndex`: the index of the withdrawal in the block.
+- `index`: the global index of the withdrawal.
+- `validatorIndex`: the index of the validator that created the withdrawal.
+- `address`: the destination address of the withdrawal.
+- `amount`: the amount of the withdrawal, in wei.
 
 **Relevant filters**
 
- - `filter.withdrawals`
+- `filter.withdrawals`

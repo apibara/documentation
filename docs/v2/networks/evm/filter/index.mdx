@@ -12,7 +12,7 @@ streams.
 
 ### Related pages
 
-- [EVM block data reference](/docs/v2/networks/evm/data)
+- [EVM block data reference](/docs/networks/evm/data)
 
 ## Filter ID
 
@@ -33,15 +33,17 @@ const abi = parseAbi([
 ]);
 
 const filter = {
-  logs: [{
-    topics: encodeEventTopics({
-      abi,
-      eventName: "Transfer",
-      args: { from: null, to: null },
-    }),
-    strict: true,
-  }]
-}
+  logs: [
+    {
+      topics: encodeEventTopics({
+        abi,
+        eventName: "Transfer",
+        args: { from: null, to: null },
+      }),
+      strict: true,
+    },
+  ],
+};
 ```
 
 ## Filter types
@@ -83,7 +85,7 @@ their associated data like transactions, receipts, and sibling logs.
 export type LogFilter = {
   id?: number;
   address?: `0x${string}`;
-  topics?: (`0x${string} | null`)[];
+  topics?: `0x${string} | null`[];
   strict?: boolean;
   transactionStatus?: "succeeded" | "reverted" | "all";
   includeTransaction?: boolean;
@@ -94,22 +96,22 @@ export type LogFilter = {
 
 **Properties**
 
- - `address`: filter by contract address. If empty, matches any contract
-    address.
- - `topics`: filter by topic. Use `null` to match _any_ value.
- - `strict`: return logs whose topics length matches the filter. By default, the
-    filter does a prefix match on the topics.
- - `transactionStatus`: return logs emitted by transactions with the provided
-    status. Defaults to `succeeded`.
- - `includeTransaction`: also return the transaction that emitted the log.
- - `includeReceipt`: also return the receipt of the transaction that emitted the
-    log.
- - `includeSiblings`: also return all other logs emitted by the same transaction
-    that emitted the matched log.
+- `address`: filter by contract address. If empty, matches any contract
+  address.
+- `topics`: filter by topic. Use `null` to match _any_ value.
+- `strict`: return logs whose topics length matches the filter. By default, the
+  filter does a prefix match on the topics.
+- `transactionStatus`: return logs emitted by transactions with the provided
+  status. Defaults to `succeeded`.
+- `includeTransaction`: also return the transaction that emitted the log.
+- `includeReceipt`: also return the receipt of the transaction that emitted the
+  log.
+- `includeSiblings`: also return all other logs emitted by the same transaction
+  that emitted the matched log.
 
 **Examples**
 
- - All logs in a block emitted by successful transactions.
+- All logs in a block emitted by successful transactions.
 
 ```ts
 const filter = {
@@ -117,43 +119,52 @@ const filter = {
 };
 ```
 
- - All `Transfer` events emitted by successful transactions. Notice that this will
-   match logs from ERC-20, ERC-721, and other contracts that emit `Transfer`.
+- All `Transfer` events emitted by successful transactions. Notice that this will
+  match logs from ERC-20, ERC-721, and other contracts that emit `Transfer`.
 
 ```ts
 const filter = {
-  logs: [{
-    topics: ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"],
-  }],
+  logs: [
+    {
+      topics: [
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+      ],
+    },
+  ],
 };
 ```
 
- - All `Transfer` events that follow the ERC-721 standard. Notice that this will
-   not match logs from ERC-20 since the number of indexed parameters is different.
+- All `Transfer` events that follow the ERC-721 standard. Notice that this will
+  not match logs from ERC-20 since the number of indexed parameters is different.
 
 ```ts
 const filter = {
-  logs: [{
-    topics: [
+  logs: [
+    {
+      topics: [
         "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
         null, // from
         null, // to
         null, // tokenId
-    ],
-    strict: true,
-  }],
+      ],
+      strict: true,
+    },
+  ],
 };
 ```
 
- - All logs emitted by `CONTRACT_A` OR `CONTRACT_B`.
- 
+- All logs emitted by `CONTRACT_A` OR `CONTRACT_B`.
+
 ```ts
 const filter = {
-  logs: [{
-    address: CONTRACT_A,
-  }, {
-    address: CONTRACT_B,
-  }],
+  logs: [
+    {
+      address: CONTRACT_A,
+    },
+    {
+      address: CONTRACT_B,
+    },
+  ],
 };
 ```
 
@@ -166,7 +177,7 @@ export type TransactionFilter = {
   id?: number;
   from?: `0x${string}`;
   to?: `0x${string}`;
-  create?: true,
+  create?: true;
   transactionStatus?: "succeeded" | "reverted" | "all";
   includeReceipt?: boolean;
   includeLogs?: boolean;
@@ -175,41 +186,45 @@ export type TransactionFilter = {
 
 **Properties**
 
- - `from`: filter by sender address. If empty, matches any sender address.
- - `to`: filter by receiver address. If empty, matches any receiver address.
- - `create`: filter by whether the transaction is a create transaction.
- - `transactionStatus`: return transactions with the provided status. Defaults to
-    `succeeded`.
- - `includeReceipt`: also return the receipt of the transaction.
- - `includeLogs`: also return the logs emitted by the transaction.
+- `from`: filter by sender address. If empty, matches any sender address.
+- `to`: filter by receiver address. If empty, matches any receiver address.
+- `create`: filter by whether the transaction is a create transaction.
+- `transactionStatus`: return transactions with the provided status. Defaults to
+  `succeeded`.
+- `includeReceipt`: also return the receipt of the transaction.
+- `includeLogs`: also return the logs emitted by the transaction.
 
 **Examples**
 
- - All transactions in a block.
- 
+- All transactions in a block.
+
 ```ts
 const filter = {
   transactions: [{}],
 };
 ```
 
- - All transactions from `0xAB...`.
+- All transactions from `0xAB...`.
 
 ```ts
 const filter = {
-  transactions: [{
-    from: "0xAB...",
-  }],
+  transactions: [
+    {
+      from: "0xAB...",
+    },
+  ],
 };
 ```
 
- - All create transactions.
+- All create transactions.
 
 ```ts
 const filter = {
-  transactions: [{
-    create: true,
-  }],
+  transactions: [
+    {
+      create: true,
+    },
+  ],
 };
 ```
 
@@ -227,14 +242,14 @@ export type WithdrawalFilter = {
 
 **Properties**
 
- - `validatorIndex`: filter by validator's index. If empty, matches any
-    validator's index.
- - `address`: filter by withdrawal address. If empty, matches any withdrawal
-    address.
+- `validatorIndex`: filter by validator's index. If empty, matches any
+  validator's index.
+- `address`: filter by withdrawal address. If empty, matches any withdrawal
+  address.
 
 **Examples**
 
- - All withdrawals
+- All withdrawals
 
 ```ts
 const filter = {
@@ -242,34 +257,41 @@ const filter = {
 };
 ```
 
- - All withdrawals from validator with index `1234`.
+- All withdrawals from validator with index `1234`.
 
 ```ts
 const filter = {
-  withdrawals: [{
-    validatorIndex: 1234,
-  }],
+  withdrawals: [
+    {
+      validatorIndex: 1234,
+    },
+  ],
 };
 ```
 
- - All withdrawals from validators with index `1234` OR `7890`.
+- All withdrawals from validators with index `1234` OR `7890`.
 
 ```ts
 const filter = {
-  withdrawals: [{
-    validatorIndex: 1234,
-  }, {
-    validatorIndex: 7890,
-  }],
+  withdrawals: [
+    {
+      validatorIndex: 1234,
+    },
+    {
+      validatorIndex: 7890,
+    },
+  ],
 };
 ```
 
- - All withdrawals to address `0xAB...`.
+- All withdrawals to address `0xAB...`.
 
 ```ts
 const filter = {
-  withdrawals: [{
-    address: "0xAB...",
-  }],
+  withdrawals: [
+    {
+      address: "0xAB...",
+    },
+  ],
 };
 ```
