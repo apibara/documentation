@@ -21,7 +21,7 @@ At minimum, a script needs to export the following:
 - a default function used to transform raw onchain data.
 
 Optionally, indexers can export a `factory` function to [enable factory
-mode](/docs/indexers/factory-mode). Factory mode changes the indexer behavior
+mode](/docs/v1/indexers/factory-mode). Factory mode changes the indexer behavior
 and it's documented separately.
 
 ## Permissions
@@ -29,7 +29,7 @@ and it's documented separately.
 By default, Apibara indexers have no access to environment variables, network,
 and the filesystem. This is done to protect your system from malicious
 Javascript dependencies. [Refer to the permissions section to learn more about
-it](/docs/indexers/permissions).
+it](/docs/v1/indexers/permissions).
 
 ## Configuration
 
@@ -40,7 +40,7 @@ The `config` object configures both the stream and the sink.
 - `network`: the network type, e.g. `starknet` to stream data from Starknet or a Starknet-based appchain.
 - `finality`: data status finality. Can be one of `DATA_STATUS_PENDING`,
   `DATA_STATUS_ACCEPTED`, or `DATA_STATUS_FINALIZED`. Defaults to accepted.
-- `filter`: the filter used to select onchain data. [Learn more about data filtering here](/docs/indexers/filter).
+- `filter`: the filter used to select onchain data. [Learn more about data filtering here](/docs/v1/indexers/filter).
 - `sinkType`: send data to the specified sink plugin. See the "Integrations"
   section in the sidebar to see which sinks are available.
 - `sinkOptions`: options used to configure the sink.
@@ -62,7 +62,7 @@ export const config: Config<NetworkOptions, SinkOptions> = {
 
 You can also further restrict the network and sink options. In this case your
 editor will provide autocompletion for the available `sinkOptions`.
-Refer to the [editor setup page](/docs/indexers/editor-setup) to learn how to
+Refer to the [editor setup page](/docs/v1/indexers/editor-setup) to learn how to
 configure your editor for Apibara.
 
 ```ts [indexer.ts]
@@ -92,7 +92,7 @@ export default function transform(block) {
 
 The transform function can be `async` in case you need to perform async
 operations like network access ([read more about network access
-here](/docs/indexers/permissions/network)).
+here](/docs/v1/indexers/permissions/network)).
 
 Notice that the value returned by the transform function **must be JSON-encodable**.
 For web3 applications, this means you need to convert `BigInt` to either a
