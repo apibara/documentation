@@ -43,7 +43,7 @@ npm install @electric-sql/pglite
 The Drizzle plugin automatically persists the indexer's state to the database.
 You can explicitly configure this option with the `persistState` flag.
 
-Read more [about state persistence in the internals page](/docs/v2/storage/drizzle-pg/internals#state-persistence).
+Read more [about state persistence in the internals page](/docs/storage/drizzle-pg/internals#state-persistence).
 
 ## Schema configuration
 
@@ -52,7 +52,7 @@ no changes required.
 
 The only important thing to notice is that your table **must have an `id` column (name configurable)**
 that uniquely identifies each row. This requirement is necessary to handle chain reorganizations.
-Read more how the plugin handles chain reorganizations [on the internals page](/docs/v2/storage/drizzle-pg/internals).
+Read more how the plugin handles chain reorganizations [on the internals page](/docs/storage/drizzle-pg/internals).
 
 ```ts [lib/schema.ts]
 import { bigint, pgTable, text, uuid } from "drizzle-orm/pg-core";
@@ -68,7 +68,7 @@ export const transfers = pgTable("transfers", {
 
 As mentioned in the previous section, the id column is required by the plugin to handle chain reorganizations.
 
-The plugin allows you to specify the id column name for each table in the schema. You can do this by passing the `idColumn` option to the `drizzleStorage` plugin. This option accepts either a string value or a record mapping table names to column names.  You can use the special `"*"` table name to define the default id column name for all tables.
+The plugin allows you to specify the id column name for each table in the schema. You can do this by passing the `idColumn` option to the `drizzleStorage` plugin. This option accepts either a string value or a record mapping table names to column names. You can use the special `"*"` table name to define the default id column name for all tables.
 
 ### Example
 
@@ -104,8 +104,6 @@ export default defineIndexer(EvmStream)({
   // ...
 });
 ```
-
-
 
 ## Adding the plugin to your indexer
 

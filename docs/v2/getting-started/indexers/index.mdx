@@ -10,7 +10,7 @@ updatedAt: 2025-01-05
 Indexers are created using the `defineIndexer` higher-order function. This function takes a _stream definition_ and returns a function to define the indexer.
 
 The job of an indexer is to stream and process historical data (backfilling) and then switch to real-time mode. Indexers built using our SDK are designed to handle chain-reorganizations automatically.
-If, for any reason, you need to receive notifications about reorgs, you can define [a custom `message:invalidate` hook](/docs/v2/getting-started/plugins#hooks) to handle them.
+If, for any reason, you need to receive notifications about reorgs, you can define [a custom `message:invalidate` hook](/docs/getting-started/plugins#hooks) to handle them.
 
 By default, the indexer is stateless (restarts from the beginning on restart) and does not provide any storage. You can add persistence and storage by using one of the provided storage plugins.
 
@@ -72,14 +72,14 @@ export default function (runtimeConfig: ApibaraRuntimeConfig) {
 All indexers take the same configuration options.
 
 - **`streamUrl`**<span class="arg-type">`string`</span><br/><span class="arg-description">The URL of the DNA stream to connect to.</span>
-- **`filter`**<span class="arg-type">`TFilter`</span><br/><span class="arg-description">The filter to apply to the DNA stream. This argument is specific to the stream definition. You should refer to the chain's filter reference for the available options (see [Beacon Chain](/docs/v2/networks/beaconchain/filter), [EVM (Ethereum)](/docs/v2/networks/evm/filter), [Starknet](/docs/v2/networks/starknet/filter)).</span>
+- **`filter`**<span class="arg-type">`TFilter`</span><br/><span class="arg-description">The filter to apply to the DNA stream. This argument is specific to the stream definition. You should refer to the chain's filter reference for the available options (see [Beacon Chain](/docs/networks/beaconchain/filter), [EVM (Ethereum)](/docs/networks/evm/filter), [Starknet](/docs/networks/starknet/filter)).</span>
 - **`finality`**<span class="arg-type">`"finalized" | "accepted" | "pending"`</span><br/><span class="arg-description">Receive data with the specified finality. Defaults to `accepted`.</span>
 - **`startingCursor`**<span class="arg-type">`{ orderKey: bigint, uniqueKey?: string }`</span><br/><span class="arg-description">The cursor to start the indexer from. Defaults to the genesis block. The `orderKey` represents the block number, and the `uniqueKey` represents the block hash (optional).</span>
 - **`debug`**<span class="arg-type">`boolean`</span><br/><span class="arg-description">Enable debug mode. This will print debug information to the console.</span>
 - **`transform`**<span class="arg-type">`({ block, cursor, endCursor, finality, context }) => Promise<void>`</span><br/><span class="arg-description">The transform function called for each block received from the DNA stream.</span>
 - **`factory`**<span class="arg-type">`({ block, context }) => Promise<{ filter?: TFilter }>`</span><br/><span class="arg-description">The factory function used to add data filters at runtime. Useful for creating indexers for smart contracts like Uniswap V2.</span>
-- **`hooks`**<span class="arg-type">`object`</span><br/><span class="arg-description">The hooks to register with the indexer. Refer to the [plugins & hooks](/docs/v2/getting-started/plugins) page for more information.</span>
-- **`plugins`**<span class="arg-type">`array`</span><br/><span class="arg-description">The plugins to register with the indexer. Refer to the [plugins & hooks](/docs/v2/getting-started/plugins) page for more information.</span>
+- **`hooks`**<span class="arg-type">`object`</span><br/><span class="arg-description">The hooks to register with the indexer. Refer to the [plugins & hooks](/docs/getting-started/plugins) page for more information.</span>
+- **`plugins`**<span class="arg-type">`array`</span><br/><span class="arg-description">The plugins to register with the indexer. Refer to the [plugins & hooks](/docs/getting-started/plugins) page for more information.</span>
 
 ### The transform function
 
@@ -87,7 +87,7 @@ The `transform` function is invoked for each block received from the DNA stream.
 
 **Arguments**
 
-- **`block`**<span class="arg-type">`TBlock`</span><br/><span class="arg-description">The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/v2/networks/beaconchain/data), [EVM (Ethereum)](/docs/v2/networks/evm/data), [Starknet](/docs/v2/networks/starknet/data)).</span>
+- **`block`**<span class="arg-type">`TBlock`</span><br/><span class="arg-description">The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/networks/beaconchain/data), [EVM (Ethereum)](/docs/networks/evm/data), [Starknet](/docs/networks/starknet/data)).</span>
 - **`cursor`**<span class="arg-type">`{ orderKey: bigint, uniqueKey?: string }`</span><br/><span class="arg-description">The cursor of the block before the received block.</span>
 - **`endCursor`**<span class="arg-type">`{ orderKey: bigint, uniqueKey?: string }`</span><br/><span class="arg-description">The cursor of the current block.</span>
 - **`finality`**<span class="arg-type">`"finalized" | "accepted" | "pending"`</span><br/><span class="arg-description">The finality of the block.</span>
@@ -117,7 +117,7 @@ The `factory` function is used to add data filters at runtime. This is useful fo
 
 **Arguments**
 
-- **`block`**<span class="arg-type">`TBlock`</span><br/><span class="arg-description">The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/v2/networks/beaconchain/data), [EVM (Ethereum)](/docs/v2/networks/evm/data), [Starknet](/docs/v2/networks/starknet/data)).</span>
+- **`block`**<span class="arg-type">`TBlock`</span><br/><span class="arg-description">The block received from the DNA stream. This is chain-specific (see [Beacon Chain](/docs/networks/beaconchain/data), [EVM (Ethereum)](/docs/networks/evm/data), [Starknet](/docs/networks/starknet/data)).</span>
 - **`context`**<span class="arg-type">`object`</span><br/><span class="arg-description">The context shared between the indexer and the plugins.</span>
 
 The following example shows a minimal indexer that streams `PairCreated` events from Uniswap V2 to detect new pools, and then streams the pool's events.

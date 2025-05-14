@@ -11,7 +11,7 @@ This page contains reference about the available data in Beacon Chain DNA stream
 
 ### Related pages
 
-- [Beacon Chain data filter reference](/docs/v2/networks/beaconchain/filter)
+- [Beacon Chain data filter reference](/docs/networks/beaconchain/filter)
 
 ## Filter ID
 
@@ -28,10 +28,10 @@ always assert the presence of a field for critical indexers.
 
 The `@apibara/beaconchain` package defines the following scalar types:
 
- - `Address`: a 20-byte Ethereum address, represented as a `0x${string}` type.
- - `B256`: a 32-byte Ethereum value, represented as a `0x${string}` type.
- - `B384`: a 48-byte Ethereum value, represented as a `0x${string}` type.
- - `Bytes`: arbitrary length bytes, represented as a `0x${string}` type.
+- `Address`: a 20-byte Ethereum address, represented as a `0x${string}` type.
+- `B256`: a 32-byte Ethereum value, represented as a `0x${string}` type.
+- `B384`: a 48-byte Ethereum value, represented as a `0x${string}` type.
+- `Bytes`: arbitrary length bytes, represented as a `0x${string}` type.
 
 ## Data type
 
@@ -81,9 +81,9 @@ export type ExecutionPayload = {
 
 **Properties**
 
- - `slot`: the slot number.
- - `proposerIndex`: the index of the validator that proposed the block.
- - `parentRoot`: the parent root.
+- `slot`: the slot number.
+- `proposerIndex`: the index of the validator that proposed the block.
+- `parentRoot`: the parent root.
 - `stateRoot`: the state root.
 - `randaoReveal`: the randao reveal.
 - `depositCount`: the number of deposits.
@@ -113,7 +113,7 @@ export type Transaction = {
   input: Bytes;
   signature?: Signature;
   chainId?: bigint;
-  accessList: AccessListItem[],
+  accessList: AccessListItem[];
   transactionType?: bigint;
   maxFeePerBlobGas?: bigint;
   blobVersionedHashes?: B256[];
@@ -178,19 +178,19 @@ export type Blob = {
 
 **Properties**
 
- - `blobIndex`: the index of the blob in the block.
- - `blob`: the blob content.
- - `kzgCommitment`: the blob kzg commitment.
- - `kzgProof`: the blob kzg proof.
- - `kzgCommitmentInclusionProof`: the blob kzg commitment inclusion proof.
- - `blobHash`: the hash of the blob content.
- - `transactionIndex`: the index of the transaction that included the blob.
- - `transactionHash`: the hash of the transaction that included the blob.
+- `blobIndex`: the index of the blob in the block.
+- `blob`: the blob content.
+- `kzgCommitment`: the blob kzg commitment.
+- `kzgProof`: the blob kzg proof.
+- `kzgCommitmentInclusionProof`: the blob kzg commitment inclusion proof.
+- `blobHash`: the hash of the blob content.
+- `transactionIndex`: the index of the transaction that included the blob.
+- `transactionHash`: the hash of the transaction that included the blob.
 
 **Relevant filters**
 
- - `filter.blobs`
- - `filter.transactions[].includeBlob`
+- `filter.blobs`
+- `filter.transactions[].includeBlob`
 
 ### Validator
 
@@ -198,15 +198,15 @@ Data about validators.
 
 ```ts
 export type ValidatorStatus =
-    | "pending_initialized"
-    | "pending_queued"
-    | "active_ongoing"
-    | "active_exiting"
-    | "active_slashed"
-    | "exited_unslashed"
-    | "exited_slashed"
-    | "withdrawal_possible"
-    | "withdrawal_done";
+  | "pending_initialized"
+  | "pending_queued"
+  | "active_ongoing"
+  | "active_exiting"
+  | "active_slashed"
+  | "exited_unslashed"
+  | "exited_slashed"
+  | "withdrawal_possible"
+  | "withdrawal_done";
 
 export type Validator = {
   filterIds: number[];
@@ -226,17 +226,17 @@ export type Validator = {
 
 **Properties**
 
- - `validatorIndex`: the index of the validator.
- - `balance`: the balance of the validator.
- - `status`: the status of the validator.
- - `pubkey`: the validator's public key.
- - `withdrawalCredentials`: the withdrawal credentials.
- - `effectiveBalance`: the effective balance of the validator.
- - `slashed`: whether the validator is slashed.
- - `activationEligibilityEpoch`: the epoch at which the validator can be activated.
- - `activationEpoch`: the epoch at which the validator was activated.
- - `exitEpoch`: the epoch at which the validator exited.
- - `withdrawableEpoch`: the epoch at which the validator can withdraw.
+- `validatorIndex`: the index of the validator.
+- `balance`: the balance of the validator.
+- `status`: the status of the validator.
+- `pubkey`: the validator's public key.
+- `withdrawalCredentials`: the withdrawal credentials.
+- `effectiveBalance`: the effective balance of the validator.
+- `slashed`: whether the validator is slashed.
+- `activationEligibilityEpoch`: the epoch at which the validator can be activated.
+- `activationEpoch`: the epoch at which the validator was activated.
+- `exitEpoch`: the epoch at which the validator exited.
+- `withdrawableEpoch`: the epoch at which the validator can withdraw.
 
 **Relevant filters**
 

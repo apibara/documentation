@@ -14,7 +14,7 @@ This section describes how the Drizzle plugin works. Understanding the content o
 The plugin wraps all database operations in the `transform` and `factory` functions in a database transaction.
 This ensures that the indexer's state is always consistent and that data is never lost due to crashes or network failures.
 
-More specifically, the plugin is implemented as a [middleware](/docs/v2/getting-started/plugins#middleware).
+More specifically, the plugin is implemented as a [middleware](/docs/getting-started/plugins#middleware).
 
 At a very high level, the plugin looks like the following:
 
