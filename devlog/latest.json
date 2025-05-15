@@ -4,6 +4,20 @@
   "entries": [
     {
       "type": "change",
+      "title": "DNA v2 is now the default version in the documentation",
+      "author": "fracek",
+      "publishedAt": "2025-05-15T10:00:00Z",
+      "summary": "We have updated the documentation to use DNA v2 as the default version."
+    },
+    {
+      "type": "feature",
+      "title": "Block production mode is now available to indexers",
+      "author": "fracek",
+      "publishedAt": "2025-05-13T10:00:00Z",
+      "summary": "Block handlers now receive the `production` argument to detect whether the block is live or backfilled. You can use this to trigger actions only when the chain's head is reached."
+    },
+    {
+      "type": "change",
       "title": "DNA v2 is now available on production streams",
       "author": "fracek",
       "publishedAt": "2025-05-10T10:00:00Z",
