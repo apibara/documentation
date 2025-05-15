@@ -59,6 +59,14 @@ export default defineConfig({
 });
 ```
 
+## API Key
+
+The streams hosted by Apibara require an API key.
+
+- [Sign up for a free account](https://app.apibara.com),
+- Create an API key,
+- Export the API key as the `DNA_TOKEN` environment variable.
+
 ## EVM Indexer
 
 Let's create the first EVM indexer. All indexers must go in the `indexers`
@@ -105,7 +113,7 @@ export default defineConfig({
   runtimeConfig: {
     rocketPool: {
       startingBlock: 21_000_000,
-      streamUrl: "https://ethereum.preview.apibara.org",
+      streamUrl: "https://mainnet.ethereum.a5a.ch",
     },
   },
 });
@@ -259,7 +267,7 @@ export default defineConfig({
     // ...
     strkStaking: {
       startingBlock: 900_000,
-      streamUrl: "https://starknet.preview.apibara.org",
+      streamUrl: "https://mainnet.starknet.a5a.ch",
     },
   },
   // ...
@@ -406,7 +414,7 @@ export default defineConfig({
   runtimeConfig: {
     strkStaking: {
       startingBlock: 900_000,
-      streamUrl: "https://starknet.preview.apibara.org",
+      streamUrl: "https://mainnet.starknet.a5a.ch",
       contractAddress:
         "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
     },
@@ -486,14 +494,14 @@ import { defineConfig } from "apibara/config";
 
 export default defineConfig({
   runtimeConfig: {
-    streamUrl: "https://starknet.preview.apibara.org",
+    streamUrl: "https://mainnet.starknet.a5a.ch",
     contractAddress:
       "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a" as `0x${string}`,
   },
   presets: {
     sepolia: {
       runtimeConfig: {
-        streamUrl: "https://starknet-sepolia.preview.apibara.org",
+        streamUrl: "https://sepolia.starknet.a5a.ch",
       },
     },
   },
