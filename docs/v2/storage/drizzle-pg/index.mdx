@@ -45,6 +45,39 @@ You can explicitly configure this option with the `persistState` flag.
 
 Read more [about state persistence in the internals page](/docs/storage/drizzle-pg/internals#state-persistence).
 
+## Adding the plugin to your indexer
+
+Add the `drizzleStorage` plugin to your indexer's `plugins`. Notice the following:
+
+- Use the `drizzle` helper exported by `@apibara/plugin-drizzle` to create a
+  drizzle instance. This method supports creating an in-memory database (powered by PgLite)
+  by specifying the `memory:` connection string.
+- Always specify the database schema. This schema is used by the indexer to know which tables
+  it needs to protect against chain reorganizations.
+- By default, the connection string is read from the `POSTGRES_CONNECTION_STRING` environment variable. If left empty, a local PGLite database will be created. This is great because it means you don't need to start Postgres on your machine to develop locally!
+
+```ts [my-indexer.indexer.ts]
+import {
+  drizzle,
+  drizzleStorage,
+  useDrizzleStorage,
+} from "@apibara/plugin-drizzle";
+
+import { transfers } from "@/lib/schema";
+
+const db = drizzle({
+  schema: {
+    transfers,
+  },
+});
+
+export default defineIndexer(EvmStream)({
+  // ...
+  plugins: [drizzleStorage({ db })],
+  // ...
+});
+```
+
 ## Schema configuration
 
 You can use the `pgTable` function from `drizzle-orm/pg-core` to define the schema,
@@ -64,7 +97,7 @@ export const transfers = pgTable("transfers", {
 });
 ```
 
-## Specifying the `id` column
+## Specifying the id column
 
 As mentioned in the previous section, the id column is required by the plugin to handle chain reorganizations.
 
@@ -101,39 +134,6 @@ export default defineIndexer(EvmStream)({
       },
     }),
   ],
-  // ...
-});
-```
-
-## Adding the plugin to your indexer
-
-Add the `drizzleStorage` plugin to your indexer's `plugins`. Notice the following:
-
-- Use the `drizzle` helper exported by `@apibara/plugin-drizzle` to create a
-  drizzle instance. This method supports creating an in-memory database (powered by PgLite)
-  by specifying the `memory:` connection string.
-- Always specify the database schema. This schema is used by the indexer to know which tables
-  it needs to protect against chain reorganizations.
-- By default, the connection string is read from the `POSTGRES_CONNECTION_STRING` environment variable. If left empty, a local PGLite database will be created. This is great because it means you don't need to start Postgres on your machine to develop locally!
-
-```ts [my-indexer.indexer.ts]
-import {
-  drizzle,
-  drizzleStorage,
-  useDrizzleStorage,
-} from "@apibara/plugin-drizzle";
-
-import { transfers } from "@/lib/schema";
-
-const db = drizzle({
-  schema: {
-    transfers,
-  },
-});
-
-export default defineIndexer(EvmStream)({
-  // ...
-  plugins: [drizzleStorage({ db })],
   // ...
 });
 ```
