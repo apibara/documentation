@@ -3,6 +3,13 @@
   "previous": "2025-03.json",
   "entries": [
     {
+      "type": "bugfix",
+      "title": "Add support for ByteArray in Starknet event decoder",
+      "author": "fracek",
+      "publishedAt": "2025-05-17T15:00:00Z",
+      "summary": "The Starknet event decoding helpers now support byte arrays. Byte arrays are decode as 0x hex strings."
+    },
+    {
       "type": "change",
       "title": "DNA v2 is now the default version in the documentation",
       "author": "fracek",
