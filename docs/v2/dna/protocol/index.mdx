@@ -92,6 +92,7 @@ The message contains the following fields:
  - `end_cursor`: this block's cursor. Reconnecting to the stream using this
    cursor will resume the stream.
  - `finality`: finality status of this block.
+ - `production`: how the block was produced. Either `backfill` or `live`.
  - `data`: a list of encoded block data.
 
 Notice how the `data` field is a _list of block data_. This sounds
@@ -248,6 +249,8 @@ message Data {
   //
   // This message contains chain-specific data serialized using protobuf.
   repeated bytes data = 4;
+  // The production mode of the block.
+  DataProduction production = 5;
 }
 
 // Sent to clients to check if stream is still connected.
@@ -272,5 +275,14 @@ enum DataFinality {
   DATA_FINALITY_ACCEPTED = 2;
   // Data is finalized and cannot be invalidated.
   DATA_FINALITY_FINALIZED = 3;
+}
+
+// Data production mode.
+enum DataProduction {
+  DATA_PRODUCTION_UNKNOWN = 0;
+  // Data is for a backfilled block.
+  DATA_PRODUCTION_BACKFILL = 1;
+  // Data is for a live block.
+  DATA_PRODUCTION_LIVE = 2;
 }
 ```
