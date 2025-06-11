@@ -2,7 +2,7 @@
 title: Installation
 description: "Learn how to install and get started with Apibara."
 diataxis: tutorial
-updatedAt: 2025-03-11
+updatedAt: 2025-06-11
 ---
 
 # Installation
@@ -122,15 +122,14 @@ export default defineConfig({
 Implement the indexer by editing `indexers/rocket-pool.indexer.ts`.
 
 ```typescript [rocket-pool.indexer.ts]
-import { EvmStream } from "@apibara/evm";
-import { defineIndexer } from "@apibara/indexer";
+import { defineIndexer } from "apibara/indexer";
+import { useLogger } from "apibara/plugins";
 
+import { EvmStream } from "@apibara/evm";
 import type { ApibaraRuntimeConfig } from "apibara/types";
-import { useLogger } from "@apibara/indexer/plugins";
 
 export default function (runtimeConfig: ApibaraRuntimeConfig) {
-  const indexerId = "rocketPool";
-  const { startingBlock, streamUrl } = runtimeConfig[indexerId];
+  const { startingBlock, streamUrl } = runtimeConfig.rocketPool;
 
   return defineIndexer(EvmStream)({
     streamUrl,
@@ -277,15 +276,14 @@ export default defineConfig({
 Then you can implement the indexer.
 
 ```typescript [strk-staking.indexer.ts]
-import { StarknetStream } from "@apibara/starknet";
-import { defineIndexer } from "@apibara/indexer";
+import { defineIndexer } from "apibara/indexer";
+import { useLogger } from "apibara/plugins";
 
 import type { ApibaraRuntimeConfig } from "apibara/types";
-import { useLogger } from "@apibara/indexer/plugins";
+import { StarknetStream } from "@apibara/starknet";
 
 export default function (runtimeConfig: ApibaraRuntimeConfig) {
-  const indexerId = "strkStaking";
-  const { startingBlock, streamUrl } = runtimeConfig[indexerId];
+  const { startingBlock, streamUrl } = runtimeConfig.strkStaking;
 
   return defineIndexer(StarknetStream)({
     streamUrl,
@@ -427,9 +425,10 @@ since the types of `config.streamUrl` and `config.contractAddress` are unknown, 
 explain how to solve that issue.
 
 ```ts [strk-staking.indexer.ts]
+import { defineIndexer } from "apibara/indexer";
+import { useLogger } from "apibara/plugins";
+
 import { StarknetStream } from "@apibara/starknet";
-import { defineIndexer } from "@apibara/indexer";
-import { useLogger } from "@apibara/indexer/plugins";
 import { ApibaraRuntimeConfig } from "apibara/types";
 
 export default function (runtimeConfig: ApibaraRuntimeConfig) {
