@@ -7,7 +7,8 @@
       "title": "Webhook sink now checks the HTTP response status code",
       "author": "fracek",
       "publishedAt": "2025-07-14T10:00:00Z",
-      "summary": "The webhook sink now checks that the response is successful (2xx) and if not, retries sending data.",
+      "summary": "The webhook sink now checks that the response is successful (2xx) and if not, retries sending data."
+    },
     {
       "type": "bugfix",
       "title": "Add support for ByteArray in Starknet event decoder",
