@@ -150,3 +150,94 @@ In version 1, the indexer would write data returned by `transform` to a sink.
 Now, you use plugins to write data to databases like PostgreSQL or MongoDB.
 
 Refer to the plugins documentation for more information.
+
+## Sink-specific instructions
+
+### Webhook
+
+Depending on your use-case, you have two strategies to update your existing webhook sink script to v2:
+
+ - Call the external webhook using the `fetch` API.
+ - Inline the webhook script in your indexer.
+
+In the first case, transform the block's data like in V1 and then call the `fetch` method.
+
+```ts [my-indexer.indexer.ts]
+import { defineIndexer } from "apibara/indexer";
+import { StarknetStream } from "@apibara/starknet";
+
+import { transformBlock } from "../lib/helpers";
+
+export default defineIndexer(StarknetStream)({
+  streamUrl,
+  finality: "accepted",
+  startingBlock: 1_000_000n,
+  filter: {
+    events: [
+      {
+        address:
+          "0x028d709c875c0ceac3dce7065bec5328186dc89fe254527084d1689910954b0a",
+      },
+    ],
+  },
+  plugins: [],
+  async transform({ block }) {
+    const payload = transformBlock(block);
+
+    // Make an HTTP POST request to the webhook URL
+    const response = await fetch("https://example.org/webhook", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    // Handle the response if needed.
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    const result = await response.json();
+  },
+});
+```
+
+If you were using the "raw" mode for the webhook sink script, you also need to register a hook to call the webhook URL on invalidate messages.
+
+```ts [my-indexer.indexer.ts]
+import { defineIndexer } from "apibara/indexer";
+import { StarknetStream } from "@apibara/starknet";
+
+export default defineIndexer(StarknetStream)({
+  /* same as before */
+  async transform({ block }) {
+    /* ... */
+  },
+  hooks: {
+    async "message:invalidate"({ message }) {
+      const { cursor } = message;
+      const response = await fetch("https://example.org/webhook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          // orderKey is a BigInt, so convert it to a string to safely send it to the webhook
+          invalidate: {
+            orderKey: String(cursor.orderKey),
+            uniqueKey: cursor.uniqueKey,
+          }
+        }),
+      });
+
+      // Handle the response if needed.
+    },
+  },
+});
+```
+
+Some users found that they can implement the webhook script inline in their indexer.
+This results in a more efficient indexer that is easier to maintain and deploy.
+
+Please refer to the [installation and getting started](/docs/getting-started/installation) page for more information.
