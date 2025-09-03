@@ -1,29 +1,34 @@
 {
-    "items": [
-        {
-            "name": "Overview",
-            "type": "page",
-            "path": "/"
-        },
-        {
-            "name": "Filter",
-            "type": "page",
-            "path": "/filter"
-        },
-        {
-            "name": "Block data",
-            "type": "page",
-            "path": "/data"
-        },
-        {
-            "name": "Helpers",
-            "type": "page",
-            "path": "/helpers"
-        },
-        {
-            "name": "Upgrading",
-            "type": "page",
-            "path": "/upgrade-from-v1"
-        }
-    ]
+  "items": [
+    {
+      "name": "Overview",
+      "type": "page",
+      "path": "/"
+    },
+    {
+      "name": "Filter",
+      "type": "page",
+      "path": "/filter"
+    },
+    {
+      "name": "Block data",
+      "type": "page",
+      "path": "/data"
+    },
+    {
+      "name": "Event decoder",
+      "type": "page",
+      "path": "/decoder"
+    },
+    {
+      "name": "Helpers",
+      "type": "page",
+      "path": "/helpers"
+    },
+    {
+      "name": "Upgrading",
+      "type": "page",
+      "path": "/upgrade-from-v1"
+    }
+  ]
 }

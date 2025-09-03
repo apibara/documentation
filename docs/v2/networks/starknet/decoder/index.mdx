@@ -1,0 +1,155 @@
+---
+title: Starknet event decoder
+description: "Starknet: Event decoder reference guide."
+diataxis: reference
+updatedAt: 2025-09-03
+---
+
+# Starknet event decoder
+
+The Starknet SDK provides a `decodeEvent` function to help you decode Starknet events.
+
+## Installation
+
+Make sure you have the most recent Apibara Starknet package installed:
+
+```bash
+pnpm add @apibara/starknet@next
+```
+
+## Setup
+
+To use the `decodeEvent` you need to define your contract ABI. We use `as const satisfies Abi` to ensure type safety and correctness. If you get a compile time error, it means that the ABI is not valid.
+
+```typescript
+import type { Abi } from "@apibara/starknet";
+
+export const myAbi = [
+  {
+    kind: "enum",
+    name: "myapp::core::Core::Event",
+    type: "event",
+    variants: [
+      {
+        kind: "flat",
+        name: "UpgradeableEvent",
+        type: "myapp::components::upgradeable::Upgradeable::Event",
+      },
+      {
+        kind: "nested",
+        name: "OwnedEvent",
+        type: "myapp::components::owned::Owned::Event",
+      },
+    ],
+  },
+  /* ... a lot more events and types here ... */
+] as const satisfies Abi;
+```
+
+## Usage
+
+Once you have the ABI defined, you can decode events received from the Starknet stream.
+Notice that if you setup your editor correctly, the value of `eventName` will be autocompleted with the available events.
+
+```typescript
+import { defineIndexer } from "apibara/indexer";
+import { useLogger } from "apibara/plugins";
+
+import { StarknetStream, decodeEvent } from "@apibara/starknet";
+
+import { myAbi } from "./abi";
+
+export default defineIndexer(StarknetStream)({
+    async transform({ block }) {
+      const { events } = block;
+      for (const event of events) {
+        const decoded = decodeEvent({
+          abi: myAbi,
+          event,
+          eventName: "myapp::core::Core::Event",
+          strict: false,
+        });
+      }
+    },
+  });
+```
+
+### Enum events
+
+In most cases, you want to decode the "root" application event. This event is an enum that contains all the event types emitted by the contract.
+The SDK supports this type of event and uses the special `_tag` field to identify which variant of the enum was emitted. The event's data is stored in a property with the name of the variant.
+
+For example, let's consider the following Cairo code.
+
+```rust
+#[event]
+#[derive(Drop, starknet::Event)]
+pub enum Event {
+    BookAdded: BookAdded,
+    BookRemoved: BookRemoved,
+}
+
+#[derive(Drop, starknet::Event)]
+pub struct BookAdded {
+    pub id: u32,
+    pub title: felt252,
+    #[key]
+    pub author: felt252,
+}
+
+#[derive(Drop, starknet::Event)]
+pub struct BookRemoved {
+    pub id: u32,
+}
+```
+
+The Apibara SDK automatically infers the following event type (without code generation).
+
+```typescript
+type BookAdded = { id: number, title: FieldElement, author: FieldElement };
+type BookRemoved = { id: number };
+type Event =
+  { _tag: "BookAdded", BookAdded: BookAdded }
+  | { _tag: "BookRemoved", BookRemoved: BookRemoved };
+```
+
+This type works very well with the Typescript `switch` statement.
+
+```typescript
+const { args } = decodeEvent({ strict: true, /* ... */});
+
+switch (args._tag) {
+  case "BookAdded":
+    // Notice that `args.BookAdded` is inferred not null.
+    console.log(`Book added: ${args.BookAdded.id} ${args.BookAdded.title} ${args.BookAdded.author}`);
+    break;
+  case "BookRemoved":
+    console.log(`Book removed: ${args.BookRemoved.id}`);
+    break;
+}
+````
+
+## Reference
+
+### decodeEvent
+
+**Parameters**
+
+ - `abi`: the ABI of the contract.
+ - `event`: the event to decode.
+ - `eventName`: the name of the event to decode, as defined in the ABI.
+ - `strict`: if `true`, the decoder will throw an error if the event is not found in the ABI. If `false`, the decoder will return `null` if the event is not found.
+
+**Returns**
+
+ - `args`: the decoded data of the event. The shape of the object depends on the event type.
+ - `eventName`: the name of the event that was decoded.
+ - `address`: the address of the contract that emitted the event.
+ - `data`: the raw event data.
+ - `keys`: the raw keys of the event.
+ - `filterIds`: the IDs of the filters that matched the event.
+ - `eventIndex`: the index of the event in the block.
+ - `eventIndexInTransaction`: the index of the event in the transaction.
+ - `transactionHash`: the hash of the transaction that emitted the event.
+ - `transactionIndex`: the index of the transaction in the block.
+ - `transactionStatus`: the status of the transaction that emitted the event.
