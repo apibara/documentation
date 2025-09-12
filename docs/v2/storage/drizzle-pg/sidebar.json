@@ -1,20 +1,24 @@
 {
-    "items": [
-        {
-            "name": "Overview",
-            "type": "page",
-            "path": "/"
-        },
-        {
-            "name": "Internals",
-            "type": "page",
-            "path": "/internals"
-        },
-        {
-            "name": "FAQ",
-            "type": "page",
-            "path": "/faq"
-        }
-    ]
+  "items": [
+    {
+      "name": "Overview",
+      "type": "page",
+      "path": "/"
+    },
+    {
+      "name": "Testing",
+      "type": "page",
+      "path": "/testing"
+    },
+    {
+      "name": "Internals",
+      "type": "page",
+      "path": "/internals"
+    },
+    {
+      "name": "FAQ",
+      "type": "page",
+      "path": "/faq"
+    }
+  ]
 }
-

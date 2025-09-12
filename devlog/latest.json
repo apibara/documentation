@@ -4,6 +4,13 @@
   "entries": [
     {
       "type": "feature",
+      "title": "Add hooks to the VCR run method",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-09-12T10:00:00Z",
+      "summary": "You can now add additional hooks to the indexer when testing. Use this to initialize external resources like the database."
+    },
+    {
+      "type": "feature",
       "title": "Add Starknet event decoder to the documentation",
       "author": "fracek",
       "publishedAt": "2025-09-03T10:00:00Z",

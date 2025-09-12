@@ -1,0 +1,106 @@
+---
+title: Testing
+description: "Learn how to test your indexer's when using the Drizzle plugin."
+diataxis: how-to
+updatedAt: 2025-09-12
+---
+
+# Testing
+
+The Drizzle plugin provides an in-memory database to simplify testing, powered by [PGLite](https://pglite.dev/).
+
+## Indexer setup
+
+Register the Drizzle plugin with your indexer. The default configuration automatically creates a PGLite database when running tests.
+
+```ts [my-indexer.indexer.ts]
+import { drizzleStorage, useDrizzleStorage } from "@apibara/plugin-drizzle";
+import { drizzle } from "@apibara/plugin-drizzle";
+import { StarknetStream } from "@apibara/starknet";
+import { defineIndexer } from "apibara/indexer";
+
+import { myTable } from "@/lib/schema";
+
+export default function (runtimeConfig: ApibaraRuntimeConfig) {
+  const database = drizzle({
+    schema: {
+      myTable,
+    },
+  });
+
+  return defineIndexer(StarknetStream)({
+    plugins: [
+      drizzleStorage({
+        db: database,
+      }),
+    ],
+    async transform({ endCursor, block, context, finality }) {
+      const { db } = useDrizzleStorage();
+
+      // Do something with the database
+    },
+  });
+}
+```
+
+## Testing
+
+The `@apibara/plugin-drizzle` package provides two helper functions to work with test databases:
+
+ - `useTestDrizzleStorage`: get the Drizzle database object internally created by the plugin.
+ - `getTestDatabase`: call it with the value returned by the vcr to get the Drizzle database after running the test.
+
+If you need to initialize data in the database, you can add a hook to `run:before` and initialize the database there.
+
+## Example
+
+The following example shows a complete end-te-end test for the indexer.
+
+ - Pass a custom runtime configuration to the indexer's constructor.
+ - Initialize the database before running the indexer.
+ - Read the data from the database and assert its content with [vitest snapshot matching](https://vitest.dev/guide/snapshot).
+
+```ts [test/my-indexer.test.ts]
+import { describe, expect, it } from "vitest";
+import { createVcr } from "apibara/testing";
+import { useTestDrizzleStorage } from "@apibara/plugin-drizzle";
+import { getTestDatabase } from "@apibara/plugin-drizzle/testing";
+
+// Import the indexer's constructor
+import createIndexer from "@/indexers/my-indexer.indexer";
+
+const vcr = createVcr();
+
+describe("my indexer", () => {
+  it("should work", async () => {
+    const indexer = createIndexer({
+      /* runtime configuration */
+    });
+
+    const testResult = await vcr.run("ethereum-usdc-transfers", indexer, {
+      range: {
+        fromBlock: 10_000_000n,
+        toBlock: 10_000_005n,
+      },
+      hooks: {
+        "run:before": async () => {
+          // Initialize the database
+          const db = useTestDrizzleStorage();
+          await db.insert(myTable).values({ /* ... */});
+
+        },
+      },
+    });
+
+    // Get the database created for this test.
+    const database = getTestDatabase(testResult);
+
+    // Use the database like any other Drizzle database object
+    const rows = await database.select().from(myTable);
+
+    expect(rows.map(({ _id, ...rest }) => rest)).toMatchInlineSnapshot(`
+      /* ... */
+    `);
+  });
+});
+```
