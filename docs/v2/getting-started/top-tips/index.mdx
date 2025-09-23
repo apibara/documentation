@@ -1,0 +1,90 @@
+---
+title: Top tips
+description: "Find most useful tips and patterns to help you get the most out of Apibara."
+updatedAt: 2025-09-23
+---
+
+# Top tips
+
+Find most useful tips and patterns to help you get the most out of Apibara.
+
+## General
+
+### Watching a file
+
+You can watch files for changes during indexer execution, which is useful for development workflows and dynamic configuration updates. Here's an example of how to implement file watching using Node.js's built-in `fs.watch`:
+
+```ts [watchfile.indexer.ts]
+import { watch } from "node:fs";
+import { StarknetStream } from "@apibara/starknet";
+import { defineIndexer, reloadIndexer } from "apibara/indexer";
+import { useLogger } from "apibara/plugins";
+import type { ApibaraRuntimeConfig } from "apibara/types";
+
+export default function (runtimeConfig: ApibaraRuntimeConfig) {
+  return defineIndexer(StarknetStream)({
+    streamUrl: "https://mainnet.starknet.a5a.ch",
+    finality: "accepted",
+    startingBlock: 10_000n,
+    filter: {
+      // ...
+    },
+    hooks: {
+      "run:before": ({ abortSignal }) => {
+        const logger = useLogger();
+        logger.info("=== FILE WATCHER SET UP ===");
+
+        watch("./tmp/test", { signal: abortSignal }, () => {
+          logger.info("=== FILE CHANGED ===");
+          reloadIndexer();
+        });
+      },
+    },
+    async transform({ endCursor, finality }) {
+      // ...
+    },
+  });
+}
+```
+
+**⚠️ Important warnings:**
+
+- **Use `watch` instead of `watchFile`**: When watching files, use `fs.watch()` instead of `fs.watchFile()`. The `watch` function works fine with `reloadIndexer()` or `useIndexerContext()`, but `watchFile` has compatibility issues with `AsyncLocalStorage` from `node:async_hooks` which is used internally by Apibara.
+
+- **If you must use `watchFile`**, make sure to call `fs.unwatchFile()` before setting up a new callback to prevent callback accumulation during indexer reloads and ensure latest context is used.
+
+- **Multiple triggers per file change**: Watch callbacks may be triggered multiple times for a single file change due to OS-level differences. Different operating systems handle file system events differently, so your callback might fire 2-3 times for one modification.
+
+**💡 Best practices:**
+
+- Use the `abortSignal` parameter from hooks to properly clean up watchers when the indexer stops or reloads. This prevents orphaned watchers and ensures clean shutdown.
+- The abort signal is automatically triggered when the indexer is stopped or killed, making it perfect for cleanup scenarios during indexer reloads.
+
+### Reloading the indexer
+
+You can programmatically reload your indexer using the `reloadIndexer()` function:
+
+```ts [watchfile.indexer.ts]
+import { watch } from "node:fs";
+import { StarknetStream } from "@apibara/starknet";
+import { defineIndexer, reloadIndexer } from "apibara/indexer";
+import { useLogger } from "apibara/plugins";
+import type { ApibaraRuntimeConfig } from "apibara/types";
+
+export default function (runtimeConfig: ApibaraRuntimeConfig) {
+  return defineIndexer(StarknetStream)({
+    streamUrl: "https://mainnet.starknet.a5a.ch",
+    finality: "accepted",
+    startingBlock: 10_000n,
+    filter: {
+      // ...
+    },
+    async transform({ endCursor, finality }) {
+      // ...
+      if (endCursor?.orderKey === 150000n) {
+        reloadIndexer();
+      }
+    },
+  });
+}
+```
