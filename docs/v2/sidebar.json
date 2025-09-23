@@ -35,6 +35,11 @@
           "path": "/getting-started/instrumentation"
         },
         {
+          "name": "Top tips",
+          "type": "page",
+          "path": "/getting-started/top-tips"
+        },
+        {
           "name": "Upgrading from v1",
           "type": "page",
           "path": "/getting-started/upgrading"

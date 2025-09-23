@@ -4,6 +4,13 @@
   "entries": [
     {
       "type": "feature",
+      "title": "Add reloadIndexer method",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-09-23T15:00:00Z",
+      "summary": "You can now programmatically reload your indexer using the `reloadIndexer()` function. Checkout the new Top Tips page for more development patterns and best practices."
+    },
+    {
+      "type": "feature",
       "title": "Add hooks to the VCR run method",
       "author": "jaipaljadeja",
       "publishedAt": "2025-09-12T10:00:00Z",
