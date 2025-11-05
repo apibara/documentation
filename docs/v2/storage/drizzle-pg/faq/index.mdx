@@ -30,6 +30,57 @@ indexers/my-indexer.indexer.ts:172:25 - error TS2345: Argument of type 'PgTableW
 This error is caused by different versions of `drizzle-orm`, `pg`, and `@types/pg` being used in different packages in your project.
 The solution is to make sure all of them use the same version, delete the `node_modules` folder and reinstall your dependencies.
 
+###  Cancelling statement due to statement timeout
+
+When running the indexer, it hangs due to a statement timeout. The error looks like this:
+
+```txt
+[error] Failed to run handler:middleware
+  at .apibara/build/start.mjs:48165:12
+  at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+  at async dispatch (.apibara/build/start.mjs:32196:4)
+  at async .apibara/build/start.mjs:32982:5
+  at async dispatch (.apibara/build/start.mjs:32196:4)
+  at async _composedIndexerMiddleware (.apibara/build/start.mjs:32427:3)
+  at async .apibara/build/start.mjs:32317:7
+  at async .apibara/build/start.mjs:32310:6
+  at async Object.callAsync (.apibara/build/start.mjs:30357:12)
+  at async run (.apibara/build/start.mjs:32270:2)
+
+  [cause]: canceling statement due to statement timeout
+    at node_modules/.pnpm/pg-pool@3.10.1_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.transform (.apibara/build/start.mjs:79558:6)
+    at async .apibara/build/start.mjs:32352:9
+    at async .apibara/build/start.mjs:32351:19
+    at async dispatch (.apibara/build/start.mjs:32190:15)
+    at async .apibara/build/start.mjs:48153:7
+    at async .apibara/build/start.mjs:47632:10
+    at async NodePgSession.transaction (.apibara/build/start.mjs:47307:20)
+    at async withTransaction (.apibara/build/start.mjs:47631:9)
+
+[error] Failed to run handler:middleware
+```
+
+This happens because internally the Drizzle plugin creates a transaction for each block to ensure data consistency.
+This means you cannot use the root Drizzle database object directly because it will hang indefinitely while waiting for the transaction to complete.
+
+**Solution**: Use the database object returned by the `useDrizzleStorage()` hook. This is the current database transaction.
+
+```ts
+import { useDrizzleStorage } from "@apibara/plugin-drizzle";
+
+export default defineIndexer(StarknetStream)({
+  // ...
+  async transform({ endCursor, block, context, finality }) {
+    // Use this database object.
+    // This object provides all the methods available in the root Drizzle
+    // database object, but it's a transaction-specific database object.
+    const { db } = useDrizzleStorage();
+  },
+});
+````
+
 ## Performance
 
 ### Why is indexing slower after I add the plugin?
