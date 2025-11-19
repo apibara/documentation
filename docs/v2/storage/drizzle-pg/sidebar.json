@@ -16,6 +16,11 @@
       "path": "/internals"
     },
     {
+      "name": "API Ref",
+      "type": "page",
+      "path": "/api-reference"
+    },
+    {
       "name": "FAQ",
       "type": "page",
       "path": "/faq"

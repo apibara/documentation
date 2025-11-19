@@ -4,6 +4,13 @@
   "entries": [
     {
       "type": "feature",
+      "title": "Add option to record chain reorganizations",
+      "author": "jaipaljadeja",
+      "publishedAt": "2025-11-19T11:00:00Z",
+      "summary": "The Drizzle plugins can now record chain reorganizations for debugging and monitoring purpose."
+    },
+    {
+      "type": "feature",
       "title": "Add reloadIndexer method",
       "author": "jaipaljadeja",
       "publishedAt": "2025-09-23T15:00:00Z",

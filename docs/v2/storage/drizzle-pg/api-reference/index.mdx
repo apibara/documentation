@@ -1,0 +1,111 @@
+---
+title: Drizzle's plugin API reference
+description: "Learn all available options and functions in the Drizzle's plugin."
+diataxis: reference
+updatedAt: 2025-11-19
+---
+
+# Drizzle's plugin API reference
+
+## drizzle
+
+This helper is used to create a Drizzle database that integrates with the Apibara indexer and cli.
+
+```ts
+import { drizzle } from "@apibara/plugin-drizzle";
+
+// Here `transfers` and `balances` are standard Drizzle tables.
+const database = drizzle({
+  schema: {
+    transfers,
+    balances,
+  }
+});
+```
+
+### Arguments
+
+**schema: TSchema**
+
+A standard Drizzle schema, that is a map of tables.
+
+**connectionString: string**
+
+The connection string. By default, the helper uses the value of the `POSTGRES_CONNECTION_STRING` environment variable.
+If the connection string is `memory://`, the indexer will run with an in-memory PgLite database.
+
+## drizzleStorage
+
+This function is used to create the Drizzle's plugin. This is how you configure its behaviour.
+
+```ts
+import { drizzleStorage } from "@apibara/plugin-drizzle";
+
+export default defineIndexer(...)({
+  plugins: [
+    drizzleStorage({
+      db: database,
+      migrate: {
+        migrationsFolder: "./drizzle",
+      },
+    }),
+  ]
+})
+```
+
+### Arguments
+
+**db: PgDatabase**
+
+The Drizzle database instance.
+
+**persistState: boolean**
+
+Whether to persist the indexer's state. Defaults to `true`.
+
+**indexerName: string**
+
+The name of the indexer. The default is the filename of the indexer.
+
+**schema: TSchema**
+
+The Drizzle schema containing the tables used by indexers.
+
+**idColumn: string | IdColumnMap**
+
+The column to use as the row id. Defaults to `id`.
+
+If your tables use different names for the id columns, you can pass a record to this argument. For example, the following snippets uses the `address` column for the `balances` table, and `id` for all other tables (specified using the special `*` name):
+
+```ts
+drizzleStorage({
+  idColumn: {
+    "balances": "address",
+    "*": "id"
+  }
+})
+```
+
+**migrate: MigrateConfig**
+
+The options for the database migration. When provided, the database will automatically run migrations before the indexer runs.
+
+**recordChainReorganizations: boolean**
+
+Whether to record chain reorganizations in the database. Defaults to `false`.
+
+## useDrizzleStorage
+
+This hook returns the current Postgres transaction and is the only way to access the database from within the indexer.
+
+```ts
+import { useDrizzleStorage } from "@apibara/plugin-drizzle";
+
+export default defineIndexer(...)({
+  async transform({ ... }) {
+    const { db } = useDrizzleStorage();
+
+    await db.insert(...);
+  }
+})
+```
